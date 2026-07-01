@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.39.7/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --bg:#0f1117;--surface:#161b26;--surface-2:#1c2232;--inset:#0c0f17;
@@ -332,10 +332,18 @@ const MERA_BRANDS = ['buddy blooms','litti','litti.','greazy','shatterizer','ell
 ================================================================ */
 let sb = null;
 function sbClient(){
-  if(!sb && window.supabase){
-    sb = window.supabase.createClient(SB_URL, SB_ANON);
+  if(!sb){
+    const lib = window.supabase || window.Supabase || window.supabaseJs;
+    const fn = lib?.createClient || window.createClient;
+    if(fn) sb = fn(SB_URL, SB_ANON);
   }
   return sb;
+}
+// Eagerly init after scripts load
+function initSb(){
+  const lib = window.supabase || window.Supabase || window.supabaseJs;
+  const fn = lib?.createClient || window.createClient;
+  if(fn && !sb){ sb = fn(SB_URL, SB_ANON); }
 }
 
 /* ================================================================
@@ -352,6 +360,7 @@ let pendingAfterAuth = null;
    INIT
 ================================================================ */
 window.addEventListener('DOMContentLoaded', async () => {
+  initSb();
   initConn();
   await loadFromBucket();
   populateMonthSelects();
