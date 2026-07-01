@@ -333,25 +333,8 @@ html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-f
     </div>
 
     <div class="setup-card">
-      <h3>2 — Create the datasets table (run once in Supabase SQL editor)</h3>
-      <p>If the table doesn't exist yet, open your Supabase project → SQL Editor → paste and run this:</p>
-      <div class="code-block" id="sqlBlock">create table if not exists public.datasets (
-  key        text primary key,
-  payload    jsonb,
-  updated_at timestamptz default now()
-);
-
--- Allow anyone to read (public dashboard access)
-alter table public.datasets enable row level security;
-
-create policy "Public read" on public.datasets
-  for select using (true);
-
--- Allow authenticated users to write
-create policy "Auth write" on public.datasets
-  for all using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');</div>
-      <button class="copy-btn" onclick="copySQL()">Copy SQL</button>
+      <h3>2 — Storage bucket</h3>
+      <p>This dashboard reads and writes JSON files directly to the <strong style="color:var(--fg);">PRICE INT</strong> Supabase Storage bucket. No database table needed.<br>Each monthly upload saves as <code>month-YYYY-MM.json</code> and presets save as <code>presets.json</code>.<br>Bucket policies (public read + auth write) are already configured.</p>
     </div>
 
     <div class="setup-card">
@@ -371,43 +354,57 @@ create policy "Auth write" on public.datasets
 /* ════════════════════════════════════════
    Supabase client
 ════════════════════════════════════════ */
-const SB_URL  = 'https://sxkaswnhqgatbpoeapsz.supabase.co';
-const SB_ANON = 'PASTE_YOUR_PRICE_INT_ANON_KEY_HERE';
-const PFX     = 'segpos:';
+const SB_URL    = 'https://sxkaswnhqgatbpoeapsz.supabase.co';
+const SB_ANON   = 'PASTE_YOUR_PRICE_INT_ANON_KEY_HERE';
+const SB_BUCKET = 'PRICE INT';
 
-let _sb = null, SESSION = null, _pendingAfterAuth = null;
+let sb = null, SESSION = null, pendingAfterAuth = null;
 
 function sbClient() {
-  if (!_sb && window.supabase?.createClient) _sb = window.supabase.createClient(SB_URL, SB_ANON);
+  if (!sb && window.supabase?.createClient) sb = window.supabase.createClient(SB_URL, SB_ANON);
   return sb;
 }
+
 function isConnected() { return !!sbClient(); }
 function isSignedIn()  { return !!SESSION; }
 
-async function sbGet(key) {
+async function sbGet(filename) {
   const c = sbClient(); if (!c) return null;
   try {
-    const { data, error } = await c.from('datasets').select('payload').eq('key', key).maybeSingle();
+    const { data, error } = await c.storage.from(SB_BUCKET).download(filename);
     if (error) { console.warn('[sb] get', error.message); return null; }
-    return data ? data.payload : null;
+    const text = await data.text();
+    return JSON.parse(text);
   } catch(e) { console.warn('[sb] get', e); return null; }
 }
+
 async function sbList(prefix) {
   const c = sbClient(); if (!c) return [];
   try {
-    const { data, error } = await c.from('datasets').select('key,payload').like('key', prefix+'%');
+    const { data, error } = await c.storage.from(SB_BUCKET).list('');
     if (error) { console.warn('[sb] list', error.message); return []; }
-    return data || [];
+    const results = [];
+    for (const file of (data || [])) {
+      if (!file.name.startsWith(prefix)) continue;
+      const payload = await sbGet(file.name);
+      if (payload) results.push({ key: file.name, payload });
+    }
+    return results;
   } catch(e) { console.warn('[sb] list', e); return []; }
 }
-async function sbPut(key, payload) {
+
+async function sbPut(filename, payload) {
   const c = sbClient(); if (!c) throw new Error('Not connected');
-  const { error } = await c.from('datasets').upsert({ key, payload, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const { error } = await c.storage.from(SB_BUCKET).upload(filename, blob, {
+    upsert: true, contentType: 'application/json'
+  });
   if (error) throw error;
 }
-async function sbDel(key) {
+
+async function sbDel(filename) {
   const c = sbClient(); if (!c) return;
-  try { await c.from('datasets').delete().eq('key', key); } catch(e) { console.warn('[sb] del', e); }
+  try { await c.storage.from(SB_BUCKET).remove([filename]); } catch(e) { console.warn('[sb] del', e); }
 }
 async function sbSignIn(email, password) {
   const c = sbClient(); if (!c) throw new Error('Not connected');
@@ -527,15 +524,15 @@ async function loadFromSupabase() {
     } catch(e) { console.warn('[sb] session', e); }
 
     // months
-    const monthRows = await sbList(PFX+'month:');
+    const monthRows = await sbList('month-');
     let got = false;
     monthRows.forEach(r => {
-      const m = r.key.replace(PFX+'month:', '');
+      const m = r.key.replace('month-', '').replace('.json', '');
       if (r.payload?.rows) { monthsData[m] = r.payload.rows; got = true; }
     });
 
     // presets
-    const pp = await sbGet(PFX+'presets');
+    const pp = await sbGet('presets.json');
     if (pp?.presets?.length) { presets = pp.presets; got = true; }
 
     return got;
@@ -549,17 +546,17 @@ async function saveMonthToSupabase(key, rows) {
   monthsData[key] = rows;
   if (!isConnected()) return;
   try {
-    await requireAuthAsync(async () => { await sbPut(PFX+'month:'+key, { month:key, rows }); });
+    await requireAuthAsync(async () => { await sbPut('month-'+key+'.json', { month:key, rows }); });
   } catch(e) { console.warn('[sb] month save', e); }
 }
 async function deleteMonthFromSupabase(key) {
   delete monthsData[key];
   if (!isConnected() || !isSignedIn()) return;
-  try { await sbDel(PFX+'month:'+key); } catch(e) {}
+  try { await sbDel('month-'+key+'.json'); } catch(e) {}
 }
 async function savePresets() {
   if (!isConnected()) { flashSave(); return; }
-  await requireAuthAsync(async () => { await sbPut(PFX+'presets', { presets }); flashSave(); });
+  await requireAuthAsync(async () => { await sbPut('presets.json', { presets }); flashSave(); });
 }
 function flashSave() {
   const el = document.getElementById('presetSaveMsg');
@@ -1066,7 +1063,7 @@ function renderSetupStatus() {
   const months = Object.keys(monthsData).sort();
   const rows = [
     statusRow(isConnected(), 'Supabase SDK loaded', 'SDK not available'),
-    statusRow(isConnected(), 'Project connected ('+SB_URL+')', 'Cannot reach project'),
+    statusRow(isConnected(), 'Connected to PRICE INT bucket · '+SB_URL, 'Cannot reach Supabase project'),
     statusRow(months.length>0, months.length+' month(s) loaded from Supabase: '+(months.join(', ')||'none'), 'No data in Supabase yet — upload a month in Data & Presets'),
     statusRow(presets.some(p=>p.name), presets.length+' segment presets loaded', 'No presets — load Mera presets in Data & Presets'),
     statusRow(isSignedIn(), 'Signed in as '+((SESSION?.email)||'—'), 'Not signed in — read-only mode'),
@@ -1083,9 +1080,9 @@ document.getElementById('testConnBtn').addEventListener('click', async () => {
   try {
     const c = sbClient();
     if (!c) throw new Error('Supabase SDK not loaded');
-    const { data, error } = await c.from('datasets').select('key').limit(1);
+    const { data, error } = await c.storage.from('PRICE INT').list('', { limit: 1 });
     if (error) throw error;
-    out.innerHTML = '<div class="status-row ok">✓ Connection successful — datasets table is accessible. '+(data&&data.length?'Found existing rows.':'Table is empty — upload data to get started.')+'</div>';
+    out.innerHTML = '<div class="status-row ok">✓ Connected to PRICE INT bucket — '+(data&&data.length?data.length+' file(s) found.':'Bucket is empty — upload a month in Data & Presets to get started.')+'</div>';
   } catch(e) {
     out.innerHTML = '<div class="status-row err">✗ '+( e.message||'Unknown error')+'</div><div class="note" style="margin-top:8px;">If the error mentions the table doesn\'t exist, run the SQL in Step 2 above in your Supabase SQL editor.</div>';
   }
