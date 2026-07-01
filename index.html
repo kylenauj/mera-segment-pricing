@@ -11,7 +11,7 @@
 <style>
 :root{
   --bg:#0f1117; --surface:#161b26; --surface-2:#1c2232; --inset:#0c0f17;
-  --fg:#f0f2f6; --fg-2:#b8bdd0; --muted:#6b7494; --faint:#404666;
+  --fg:#f0f2f6; --fg-2:#b8bdd0; --muted:#6b7494; --faint:#404666;h
   --border:#232a3e; --border-soft:#1a2030;
   --accent:#ff7a3d; --accent-on:#fff;
   --accent-soft:rgba(255,122,61,.12);
@@ -328,7 +328,7 @@ html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-f
     <div class="setup-card">
       <h3>1 — Supabase project</h3>
       <p>This dashboard reads and writes to your existing Mera Supabase project:<br>
-      <strong style="color:var(--fg);">https://moqxkknwrpizddtbywog.supabase.co</strong><br>
+      <strong style="color:var(--fg);">https://sxkaswnhqgatbpoeapsz.supabase.co</strong><br>
       Data is stored in a <code>datasets</code> table, namespaced under <code>segpos:</code> keys so it never collides with other tools.</p>
     </div>
 
@@ -371,15 +371,15 @@ create policy "Auth write" on public.datasets
 /* ════════════════════════════════════════
    Supabase client
 ════════════════════════════════════════ */
-const SB_URL  = 'https://moqxkknwrpizddtbywog.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vcXhra253cnBpemRkdGJ5d29nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMzQ1ODQsImV4cCI6MjA5NzgxMDU4NH0.BtPzVs51mZSLw9WlNCQmRruZ8z1fwMGWmVDgoPuGdsM';
+const SB_URL  = 'https://sxkaswnhqgatbpoeapsz.supabase.co';
+const SB_ANON = 'PASTE_YOUR_PRICE_INT_ANON_KEY_HERE';
 const PFX     = 'segpos:';
 
 let _sb = null, SESSION = null, _pendingAfterAuth = null;
 
 function sbClient() {
   if (!_sb && window.supabase?.createClient) _sb = window.supabase.createClient(SB_URL, SB_ANON);
-  return _sb;
+  return sb;
 }
 function isConnected() { return !!sbClient(); }
 function isSignedIn()  { return !!SESSION; }
@@ -443,9 +443,9 @@ async function trySignIn() {
   }
 }
 document.getElementById('sbGo').addEventListener('click', trySignIn);
-document.getElementById('sbCancel').addEventListener('click', () => { _pendingAfterAuth = null; closeAuth(); });
-overlay.addEventListener('click', e => { if (e.target === overlay) { _pendingAfterAuth = null; closeAuth(); } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) { _pendingAfterAuth = null; closeAuth(); } });
+document.getElementById('sbCancel').addEventListener('click', () => { pendingAfterAuth = null; closeAuth(); });
+overlay.addEventListener('click', e => { if (e.target === overlay) { pendingAfterAuth = null; closeAuth(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) { pendingAfterAuth = null; closeAuth(); } });
 
 function requireAuth(action) {
   if (isSignedIn()) { action(); return; }
