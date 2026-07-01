@@ -220,7 +220,7 @@ main{padding:24px 28px;overflow-y:auto;}
   </div>
   <div class="topbar-right">
     <span class="conn-badge connecting" id="connBadge"><span class="conn-dot"></span><span id="connText">Connecting…</span></span>
-    <button class="btn btn-ghost btn-sm" id="authBtn" onclick="handleAuth()">Sign in</button>
+
   </div>
 </div>
 
@@ -313,16 +313,7 @@ main{padding:24px 28px;overflow-y:auto;}
 </main>
 </div>
 
-<!-- Auth Overlay -->
-<div class="overlay hidden" id="authOverlay">
-  <div class="dialog">
-    <h2>Sign in to upload data</h2>
-    <p>Enter your email and we'll send you a magic link. Only authorized Mera team members can upload data.</p>
-    <input type="email" id="authEmail" placeholder="you@mera.ca" onkeydown="if(event.key==='Enter')submitAuth()">
-    <button class="btn btn-accent" style="width:100%;margin-top:4px" onclick="submitAuth()">Send Magic Link</button>
-    <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="closeOverlay()">Cancel</button>
-  </div>
-</div>
+<!-- Auth Overlay removed: public upload enabled -->
 
 <!-- Toast container -->
 <div class="toast-wrap" id="toastWrap"></div>
@@ -531,10 +522,8 @@ function renderMonthList(){
 ================================================================ */
 async function deleteMonth(key){
   if(!confirm('Delete '+key+' permanently from bucket?')) return;
-  await requireAuthAsync(async () => {
-    await storageRemove('month-'+key+'.json');
-    delete monthsData[key];
-  });
+  await storageRemove('month-'+key+'.json');
+  delete monthsData[key];
   renderMonthList();
   populateMonthSelects();
   runAll();
@@ -616,16 +605,14 @@ async function processFile(file){
     const rows = normalizeRows(raw);
     const key  = detectMonthKey(raw, file.name);
     setUploadStatus('⏳ Saving '+key+' ('+rows.length+' SKUs) to bucket…');
-    requireAuth(async () => {
-      await storagePut('month-'+key+'.json', rows);
-      monthsData[key] = rows;
-      setUploadStatus('✅ '+key+' saved — '+rows.length+' SKUs');
-      renderMonthList();
-      populateMonthSelects();
-      populateCategorySelect();
-      runAll();
-      toast('Uploaded '+key+' ('+rows.length+' SKUs)','success');
-    });
+    await storagePut('month-'+key+'.json', rows);
+    monthsData[key] = rows;
+    setUploadStatus('✅ '+key+' saved — '+rows.length+' SKUs');
+    renderMonthList();
+    populateMonthSelects();
+    populateCategorySelect();
+    runAll();
+    toast('Uploaded '+key+' ('+rows.length+' SKUs)','success');
   } catch(err){
     toast('Error reading file: '+err.message,'error');
     setUploadStatus('');
