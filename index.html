@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Segment Positioning · Mera</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.39.7/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#0f1117; --surface:#161b26; --surface-2:#1c2232; --inset:#0c0f17;
+  --fg:#f0f2f6; --fg-2:#b8bdd0; --muted:#6b7494; --faint:#404666;
+  --border:#232a3e; --border-soft:#1a2030;
+  --accent:#ff7a3d; --accent-on:#fff;
+  --accent-soft:rgba(255,122,61,.12);
+  --success:#3ddc8a; --success-bg:rgba(61,220,138,.1);
+  --warn:#f0b73d; --warn-bg:rgba(240,183,61,.1);
+  --danger:#ff6b5c; --danger-bg:rgba(255,107,92,.1);
+  --violet:#a78bfa;
+  --cat-pre:#5b9bf0; --cat-infused:#29c3d4; --cat-vape:#f0b73d; --cat-extract:#97cf3f; --cat-flower:#e879b9;
+  --font:'Syne',-apple-system,sans-serif;
+  --mono:'DM Mono',ui-monospace,monospace;
+  --r-sm:8px; --r-md:12px; --r-lg:16px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+  --shadow-lg:0 8px 40px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+
+/* ── Layout ── */
+.app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh;}
+
+/* ── Top bar ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;border-bottom:1px solid var(--border);
+  background:var(--surface);gap:16px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:baseline;gap:10px;}
+.brand-name{font-size:17px;font-weight:700;letter-spacing:-.01em;}
+.brand-tag{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;background:var(--inset);border:1px solid var(--border);border-radius:6px;padding:2px 8px;}
+.topbar-center{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+
+/* connection badge */
+.conn-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:5px 11px;border:1px solid;}
+.conn-badge.live{color:var(--success);border-color:rgba(61,220,138,.3);background:var(--success-bg);}
+.conn-badge.read-only{color:var(--warn);border-color:rgba(240,183,61,.3);background:var(--warn-bg);}
+.conn-badge.offline{color:var(--muted);border-color:var(--border);background:var(--inset);}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* ── Navbar ── */
+.navbar{display:flex;align-items:center;gap:2px;padding:8px 28px;background:var(--surface);border-bottom:1px solid var(--border);}
+.nav-btn{font-family:var(--font);font-size:13px;font-weight:500;padding:7px 16px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--muted);cursor:pointer;transition:color .15s,background .15s;}
+.nav-btn:hover{color:var(--fg);background:var(--surface-2);}
+.nav-btn.active{color:var(--fg);background:var(--surface-2);font-weight:600;}
+.nav-sep{width:1px;height:18px;background:var(--border);margin:0 6px;}
+
+/* ── Panels ── */
+.panel{display:none;padding:24px 28px 60px;}
+.panel.active{display:block;}
+
+/* ── Dashboard header row ── */
+.dash-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.dash-controls label{font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.ctrl-select{font-family:var(--mono);font-size:12px;border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 10px;background:var(--surface);color:var(--fg);outline:none;cursor:pointer;}
+.ctrl-select:focus{border-color:var(--accent);}
+.refresh-btn{font-family:var(--font);font-size:12px;font-weight:600;padding:7px 14px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--fg-2);cursor:pointer;transition:color .15s,border-color .15s;}
+.refresh-btn:hover{color:var(--fg);border-color:var(--accent);}
+.refresh-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── KPI strip ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px 18px;}
+.kpi .label{font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;}
+.kpi .value{font-size:26px;font-weight:700;font-family:var(--mono);line-height:1;color:var(--fg);}
+.kpi .sub{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:4px;}
+
+/* ── Macro filter pills ── */
+.pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.pill{border:1px solid var(--border);background:var(--surface);border-radius:20px;padding:6px 13px;font-size:11px;font-family:var(--mono);cursor:pointer;color:var(--muted);transition:color .15s,background .15s,border-color .15s;}
+.pill:hover{color:var(--fg);}
+.pill.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+
+/* ── Segment blocks ── */
+.segment-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:12px;overflow:hidden;}
+.seg-head{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;cursor:pointer;transition:background .15s;}
+.seg-head:hover{background:var(--surface-2);}
+.seg-head-left{display:flex;align-items:center;gap:12px;}
+.seg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.seg-title{font-size:15px;font-weight:600;}
+.seg-meta{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:2px;}
+.seg-head-right{text-align:right;flex-shrink:0;}
+.seg-avg{font-size:16px;font-weight:700;font-family:var(--mono);}
+.seg-delta{font-size:11px;font-family:var(--mono);font-weight:700;margin-top:2px;}
+.seg-body{border-top:1px solid var(--border-soft);padding:0 20px 16px;}
+.seg-body.collapsed{display:none;}
+
+/* micro block */
+.micro-block{margin-top:16px;padding-top:14px;border-top:1px solid var(--border-soft);}
+.micro-block:first-child{border-top:none;}
+.micro-title{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;font-family:var(--mono);margin-bottom:10px;}
+.stat-row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;}
+.stat{border-left:2px solid var(--accent);padding-left:10px;}
+.stat .v{font-size:19px;font-weight:700;font-family:var(--mono);color:var(--fg);}
+.stat .l{font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:.07em;font-family:var(--mono);margin-top:2px;}
+
+/* table */
+.seg-table{width:100%;border-collapse:collapse;font-size:12px;}
+.seg-table th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-2);border-bottom:1px solid var(--border);padding:7px 10px;font-weight:700;font-family:var(--mono);white-space:nowrap;}
+.seg-table td{padding:8px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;font-family:var(--mono);color:var(--fg-2);}
+.seg-table tr:last-child td{border-bottom:none;}
+.seg-table tr.mera td{background:rgba(255,122,61,.06);}
+.seg-table tr.mera td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
+.seg-table tr:hover td{background:var(--surface-2);}
+.seg-table tr.mera:hover td{background:rgba(255,122,61,.11);}
+
+.bar-track{width:100%;height:5px;background:var(--inset);border-radius:3px;}
+.bar-fill{height:5px;border-radius:3px;background:var(--accent);}
+.bar-fill.mera{background:var(--success);}
+
+.delta{font-weight:700;font-family:var(--mono);}
+.delta.up{color:var(--danger);}
+.delta.down{color:var(--success);}
+.delta.flat{color:var(--muted);}
+
+/* ── Empty / loading states ── */
+.state-box{text-align:center;padding:56px 24px;color:var(--muted);font-family:var(--mono);font-size:12px;border:1px dashed var(--border);border-radius:var(--r-lg);}
+.state-box .icon{font-size:28px;margin-bottom:12px;}
+.state-box h3{font-size:14px;font-family:var(--font);font-weight:600;color:var(--fg-2);margin-bottom:6px;}
+.state-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px 0;color:var(--muted);font-family:var(--mono);font-size:12px;}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── Manage tab ── */
+.section-header{font-size:13px;font-weight:600;color:var(--fg-2);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;margin-bottom:16px;}
+.card-title{font-size:14px;font-weight:600;margin-bottom:8px;}
+.note{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.6;}
+
+/* upload zone */
+.dropzone{border:1.5px dashed var(--border);border-radius:var(--r-md);padding:28px;text-align:center;color:var(--muted);cursor:pointer;background:var(--inset);transition:border-color .15s,background .15s;}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accent-soft);}
+.dropzone input{display:none;}
+.dropzone .dz-label{font-size:13px;color:var(--fg);margin-bottom:5px;font-weight:600;}
+.month-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.month-chip{border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 11px;font-size:11px;font-family:var(--mono);background:var(--surface-2);display:flex;align-items:center;gap:9px;}
+.month-chip b{font-weight:700;color:var(--fg);}
+.month-chip .count{color:var(--muted);}
+.month-chip button{background:none;border:none;color:var(--danger);cursor:pointer;font-family:var(--mono);font-size:11px;padding:0;}
+
+/* preset table */
+.preset-head{display:grid;grid-template-columns:22px 1.4fr 1fr 1fr 1fr 1.1fr 28px;gap:8px;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em;padding:0 0 8px;border-bottom:1px solid var(--border);font-family:var(--mono);}
+.preset-row{display:grid;grid-template-columns:22px 1.4fr 1fr 1fr 1fr 1.1fr 28px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--border-soft);}
+.preset-row:first-of-type{border-top:none;}
+.preset-row input[type=text]{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--inset);color:var(--fg);outline:none;}
+.preset-row input[type=text]:focus{border-color:var(--accent);}
+.preset-row select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--inset);color:var(--fg);outline:none;}
+.preset-row select:focus{border-color:var(--accent);}
+
+/* buttons */
+.btn{font-family:var(--font);font-size:12px;font-weight:600;border-radius:var(--r-sm);padding:8px 14px;cursor:pointer;border:1px solid var(--border);transition:filter .15s,background .15s,color .15s,border-color .15s;}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-on);}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--border);}
+.btn-ghost:hover{color:var(--fg);background:var(--surface-2);}
+.btn-icon{background:var(--surface-2);border:1px solid var(--border);width:24px;height:24px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;}
+.btn-icon:hover{color:var(--fg);border-color:var(--accent);}
+.btn-icon:disabled{opacity:.3;cursor:not-allowed;}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;}
+.save-msg{font-size:11px;color:var(--success);font-family:var(--mono);}
+
+/* ── Supabase setup panel ── */
+.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;margin-bottom:20px;}
+.setup-card h3{font-size:15px;font-weight:600;margin-bottom:6px;}
+.setup-card p{font-size:12px;color:var(--fg-2);font-family:var(--mono);line-height:1.7;margin-bottom:14px;}
+.code-block{background:var(--inset);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;font-family:var(--mono);font-size:11px;color:var(--fg-2);white-space:pre;overflow-x:auto;line-height:1.65;}
+.copy-btn{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--muted);cursor:pointer;margin-top:8px;}
+.copy-btn:hover{color:var(--fg);}
+
+.status-row{display:flex;align-items:center;gap:10px;font-size:12px;font-family:var(--mono);padding:10px 14px;border-radius:var(--r-sm);margin-bottom:10px;}
+.status-row.ok{background:var(--success-bg);color:var(--success);}
+.status-row.warn{background:var(--warn-bg);color:var(--warn);}
+.status-row.err{background:var(--danger-bg);color:var(--danger);}
+
+/* ── Sign-in modal ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;padding:24px;opacity:0;pointer-events:none;transition:opacity .18s;}
+.overlay.open{opacity:1;pointer-events:auto;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);width:min(360px,100%);padding:24px;box-shadow:var(--shadow-lg);transform:translateY(10px) scale(.98);transition:transform .18s;}
+.overlay.open .modal{transform:none;}
+.modal.shake{animation:shake .4s;}
+@keyframes shake{10%,90%{transform:translateX(-2px);}20%,80%{transform:translateX(4px);}30%,50%,70%{transform:translateX(-6px);}40%,60%{transform:translateX(6px);}}
+.modal-head{display:flex;align-items:center;gap:11px;margin-bottom:14px;}
+.modal-icon{width:34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex-shrink:0;font-size:16px;}
+.modal-title{font-size:15px;font-weight:600;}
+.modal-desc{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.6;margin-bottom:14px;}
+.modal input{width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;background:var(--inset);color:var(--fg);outline:none;margin-bottom:8px;}
+.modal input:focus{border-color:var(--accent);}
+.modal-err{font-size:11px;color:var(--danger);font-family:var(--mono);height:14px;opacity:0;margin-top:4px;}
+.modal-err.show{opacity:1;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+
+/* ── Brief ── */
+.brief-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.brief-controls label{font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+
+/* ── Unclassified notice ── */
+.unclassified-box{margin-top:12px;padding:10px 14px;background:var(--inset);border:1px dashed var(--border);border-radius:var(--r-sm);font-size:11px;color:var(--muted);font-family:var(--mono);}
+
+/* responsive */
+@media(max-width:720px){
+  .topbar{padding:12px 16px;}
+  .navbar{padding:8px 16px;}
+  .panel{padding:16px 16px 48px;}
+  .preset-head,.preset-row{grid-template-columns:22px 1fr 28px;display:flex;flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+<!-- Sign-in modal -->
+<div class="overlay" id="sbOverlay">
+  <form class="modal" id="sbForm">
+    <div class="modal-head">
+      <div class="modal-icon">●</div>
+      <div class="modal-title">Sign in to publish</div>
+    </div>
+    <div class="modal-desc">Public read access is open. Sign in with your Mera Supabase credentials to upload data and save presets for the whole team.</div>
+    <input type="email" id="sbEmail" placeholder="Email" autocomplete="username">
+    <input type="password" id="sbPass" placeholder="Password" autocomplete="current-password">
+    <div class="modal-err" id="sbErr">Sign-in failed</div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="sbCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="sbGo">Sign in</button>
+    </div>
+  </form>
+</div>
+
+<div class="app">
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-name">Segment Positioning</span>
+      <span class="brand-tag">Mera Cannabis</span>
+    </div>
+    <div class="topbar-center" id="monthControls">
+      <label style="font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Period</label>
+      <select class="ctrl-select" id="curMonthSelect"></select>
+      <label style="font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">vs.</label>
+      <select class="ctrl-select" id="prevMonthSelect"><option value="">(single month)</option></select>
+    </div>
+    <div class="topbar-right">
+      <div class="conn-badge offline" id="connBadge"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></div>
+      <button class="btn btn-ghost" id="topSignBtn" style="font-size:11px;padding:6px 12px;">Sign in</button>
+    </div>
+  </header>
+
+  <!-- Nav -->
+  <nav class="navbar">
+    <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" data-tab="manage">Data &amp; Presets</button>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" data-tab="brief">Leadership Brief</button>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" data-tab="setup">Setup &amp; Status</button>
+  </nav>
+
+  <!-- Dashboard panel -->
+  <div class="panel active" id="panel-dashboard">
+    <div id="dashKpis"></div>
+    <div class="pill-row" id="macroFilterRow"></div>
+    <div id="dashOut"><div class="state-loading"><div class="spinner"></div>Loading from Supabase…</div></div>
+  </div>
+
+  <!-- Manage panel -->
+  <div class="panel" id="panel-manage">
+    <div class="section-header">Upload monthly OCS data</div>
+    <div class="card">
+      <div class="dropzone" id="dropzone">
+        <div class="dz-label">Drop the monthly .xlsx export here, or click to browse</div>
+        <div class="note">Expects: SKU, Brand, Item Name, SubCategory, SubSubCategory, Sales ($), Sales Units, OCS.ca Sales Price ($) Exclude Tax, THC Range (%), Retail Pack Net Content, Units per pack, Extraction Process</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls">
+      </div>
+      <div class="month-list" id="monthList"></div>
+    </div>
+
+    <div class="section-header" style="margin-top:24px;">Segment presets</div>
+    <div class="card">
+      <p class="note" style="margin-bottom:14px;">Define your micro-segments. Rules are checked top → bottom — first match wins. Rows sharing a Macro Group roll up together in the dashboard view.</p>
+      <div class="preset-head">
+        <div></div><div>Micro-segment name / macro group</div><div>Category</div><div>Format</div><div>Pack size</div><div>Keywords (comma-sep)</div><div></div>
+      </div>
+      <div id="presetRows"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="addPresetBtn">+ Add row</button>
+        <button class="btn btn-ghost" id="loadMeraPresetsBtn">Load Mera presets</button>
+        <button class="btn btn-primary" id="savePresetsBtn">Save to Supabase</button>
+        <span class="save-msg" id="presetSaveMsg"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leadership Brief panel -->
+  <div class="panel" id="panel-brief">
+    <div class="brief-controls">
+      <label>Current month</label><select class="ctrl-select" id="briefCurMonth"></select>
+      <label>vs.</label><select class="ctrl-select" id="briefPrevMonth"></select>
+      <label>Flag threshold</label>
+      <select class="ctrl-select" id="briefThreshold">
+        <option value="10">±10% (standard)</option>
+        <option value="15">±15% (high priority)</option>
+        <option value="5">±5% (sensitive)</option>
+        <option value="20">±20%</option>
+      </select>
+      <button class="btn btn-primary" id="generateBriefBtn">Generate brief</button>
+    </div>
+    <div id="briefOut"><div class="state-box"><div class="icon">📋</div><h3>No brief generated</h3><span>Pick two months above and click Generate brief.</span></div></div>
+  </div>
+
+  <!-- Setup panel -->
+  <div class="panel" id="panel-setup">
+    <div id="setupStatus"></div>
+
+    <div class="setup-card">
+      <h3>1 — Supabase project</h3>
+      <p>This dashboard reads and writes to your existing Mera Supabase project:<br>
+      <strong style="color:var(--fg);">https://moqxkknwrpizddtbywog.supabase.co</strong><br>
+      Data is stored in a <code>datasets</code> table, namespaced under <code>segpos:</code> keys so it never collides with other tools.</p>
+    </div>
+
+    <div class="setup-card">
+      <h3>2 — Create the datasets table (run once in Supabase SQL editor)</h3>
+      <p>If the table doesn't exist yet, open your Supabase project → SQL Editor → paste and run this:</p>
+      <div class="code-block" id="sqlBlock">create table if not exists public.datasets (
+  key        text primary key,
+  payload    jsonb,
+  updated_at timestamptz default now()
+);
+
+-- Allow anyone to read (public dashboard access)
+alter table public.datasets enable row level security;
+
+create policy "Public read" on public.datasets
+  for select using (true);
+
+-- Allow authenticated users to write
+create policy "Auth write" on public.datasets
+  for all using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');</div>
+      <button class="copy-btn" onclick="copySQL()">Copy SQL</button>
+    </div>
+
+    <div class="setup-card">
+      <h3>3 — Upload your data</h3>
+      <p>Go to <strong style="color:var(--fg);">Data &amp; Presets</strong> tab, drop in your monthly OCS .xlsx export, enter the month label (e.g. <code>2025-04</code>), and sign in when prompted. Data saves to Supabase and is immediately visible to anyone with the link.</p>
+    </div>
+
+    <div class="setup-card">
+      <h3>4 — Verify connection</h3>
+      <button class="btn btn-ghost" id="testConnBtn" style="margin-bottom:12px;">Test Supabase connection</button>
+      <div id="connTestOut"></div>
+    </div>
+  </div>
+</div><!-- /app -->
+
+<script>
+/* ════════════════════════════════════════
+   Supabase client
+════════════════════════════════════════ */
+const SB_URL  = 'https://moqxkknwrpizddtbywog.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vcXhra253cnBpemRkdGJ5d29nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMzQ1ODQsImV4cCI6MjA5NzgxMDU4NH0.BtPzVs51mZSLw9WlNCQmRruZ8z1fwMGWmVDgoPuGdsM';
+const PFX     = 'segpos:';
+
+let _sb = null, SESSION = null, _pendingAfterAuth = null;
+
+function sbClient() {
+  if (!_sb && window.supabase?.createClient) _sb = window.supabase.createClient(SB_URL, SB_ANON);
+  return _sb;
+}
+function isConnected() { return !!sbClient(); }
+function isSignedIn()  { return !!SESSION; }
+
+async function sbGet(key) {
+  const c = sbClient(); if (!c) return null;
+  try {
+    const { data, error } = await c.from('datasets').select('payload').eq('key', key).maybeSingle();
+    if (error) { console.warn('[sb] get', error.message); return null; }
+    return data ? data.payload : null;
+  } catch(e) { console.warn('[sb] get', e); return null; }
+}
+async function sbList(prefix) {
+  const c = sbClient(); if (!c) return [];
+  try {
+    const { data, error } = await c.from('datasets').select('key,payload').like('key', prefix+'%');
+    if (error) { console.warn('[sb] list', error.message); return []; }
+    return data || [];
+  } catch(e) { console.warn('[sb] list', e); return []; }
+}
+async function sbPut(key, payload) {
+  const c = sbClient(); if (!c) throw new Error('Not connected');
+  const { error } = await c.from('datasets').upsert({ key, payload, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  if (error) throw error;
+}
+async function sbDel(key) {
+  const c = sbClient(); if (!c) return;
+  try { await c.from('datasets').delete().eq('key', key); } catch(e) { console.warn('[sb] del', e); }
+}
+async function sbSignIn(email, password) {
+  const c = sbClient(); if (!c) throw new Error('Not connected');
+  const { error } = await c.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+}
+async function sbSignOut() {
+  const c = sbClient(); if (c) await c.auth.signOut();
+}
+
+/* ════════════════════════════════════════
+   Auth modal
+════════════════════════════════════════ */
+const overlay = document.getElementById('sbOverlay');
+const sbForm  = document.getElementById('sbForm');
+const sbEmail = document.getElementById('sbEmail');
+const sbPass  = document.getElementById('sbPass');
+const sbErr   = document.getElementById('sbErr');
+
+function openAuth()  { sbErr.classList.remove('show'); overlay.classList.add('open'); setTimeout(()=>sbEmail.focus(),60); }
+function closeAuth() { overlay.classList.remove('open'); }
+
+async function trySignIn() {
+  try {
+    await sbSignIn(sbEmail.value.trim(), sbPass.value);
+    sbPass.value = ''; closeAuth();
+    const fn = _pendingAfterAuth; _pendingAfterAuth = null;
+    if (fn) await fn();
+  } catch(err) {
+    sbForm.classList.remove('shake'); void sbForm.offsetWidth; sbForm.classList.add('shake');
+    sbErr.textContent = err?.message || 'Sign-in failed'; sbErr.classList.add('show');
+    sbPass.value = ''; sbPass.focus();
+  }
+}
+document.getElementById('sbGo').addEventListener('click', trySignIn);
+document.getElementById('sbCancel').addEventListener('click', () => { _pendingAfterAuth = null; closeAuth(); });
+overlay.addEventListener('click', e => { if (e.target === overlay) { _pendingAfterAuth = null; closeAuth(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) { _pendingAfterAuth = null; closeAuth(); } });
+
+function requireAuth(action) {
+  if (isSignedIn()) { action(); return; }
+  _pendingAfterAuth = action;
+  openAuth();
+}
+function requireAuthAsync(fn) {
+  return new Promise(resolve => {
+    if (isSignedIn()) { fn().then(resolve); return; }
+    _pendingAfterAuth = async () => { await fn(); resolve(); };
+    openAuth();
+  });
+}
+
+/* ════════════════════════════════════════
+   Connection badge / top sign-in btn
+════════════════════════════════════════ */
+const connBadge = document.getElementById('connBadge');
+const connLabel = document.getElementById('connLabel');
+const topSignBtn = document.getElementById('topSignBtn');
+
+function updateConnectionUI() {
+  if (!isConnected()) {
+    connBadge.className = 'conn-badge offline';
+    connLabel.textContent = 'Offline';
+    topSignBtn.textContent = 'Sign in'; topSignBtn.style.display = '';
+    return;
+  }
+  if (isSignedIn()) {
+    connBadge.className = 'conn-badge live';
+    connLabel.textContent = 'Live · ' + (SESSION.email || 'signed in');
+    topSignBtn.textContent = 'Sign out'; topSignBtn.style.display = '';
+  } else {
+    connBadge.className = 'conn-badge read-only';
+    connLabel.textContent = 'Connected · read-only';
+    topSignBtn.textContent = 'Sign in'; topSignBtn.style.display = '';
+  }
+}
+topSignBtn.addEventListener('click', async () => {
+  if (isSignedIn()) { await sbSignOut(); } else { openAuth(); }
+});
+
+/* ════════════════════════════════════════
+   Data model
+════════════════════════════════════════ */
+const MERA_BRANDS = ['Buddy Blooms','LITTI.','GREAZY','Shatterizer','Ellevia',
+  'Countryside Cannabis','Countryside Cannabis Harvest Reserve','CCHR'];
+const isMera = b => MERA_BRANDS.some(m => (b||'').trim().toLowerCase() === m.toLowerCase());
+
+function detectFormat(subSubCat, subCat) { return (subSubCat && String(subSubCat).trim()) || subCat || 'Other'; }
+function detectPack(netContent, unitsPerPack) {
+  const units = unitsPerPack != null && unitsPerPack !== '' && Number(unitsPerPack) > 1 ? Number(unitsPerPack) : null;
+  const content = netContent != null && netContent !== '' ? String(netContent).trim() : '';
+  return units ? units+'x'+content : content || '—';
+}
+
+let monthsData = {};
+let presets = [];
+let knownCategories = new Set(['Any']);
+let knownFormats = new Set(['Any']);
+let knownPacks = new Set(['Any']);
+
+/* ════════════════════════════════════════
+   Storage
+════════════════════════════════════════ */
+async function loadFromSupabase() {
+  const c = sbClient();
+  if (!c) return false;
+  try {
+    // session
+    try {
+      const { data } = await c.auth.getSession();
+      SESSION = data?.session ? { email: data.session.user.email } : null;
+      c.auth.onAuthStateChange((_e, s) => {
+        SESSION = s ? { email: s.user.email } : null;
+        updateConnectionUI();
+        renderSetupStatus();
+      });
+    } catch(e) { console.warn('[sb] session', e); }
+
+    // months
+    const monthRows = await sbList(PFX+'month:');
+    let got = false;
+    monthRows.forEach(r => {
+      const m = r.key.replace(PFX+'month:', '');
+      if (r.payload?.rows) { monthsData[m] = r.payload.rows; got = true; }
+    });
+
+    // presets
+    const pp = await sbGet(PFX+'presets');
+    if (pp?.presets?.length) { presets = pp.presets; got = true; }
+
+    return got;
+  } catch(e) {
+    console.warn('[sb] load failed', e);
+    return false;
+  }
+}
+
+async function saveMonthToSupabase(key, rows) {
+  monthsData[key] = rows;
+  if (!isConnected()) return;
+  try {
+    await requireAuthAsync(async () => { await sbPut(PFX+'month:'+key, { month:key, rows }); });
+  } catch(e) { console.warn('[sb] month save', e); }
+}
+async function deleteMonthFromSupabase(key) {
+  delete monthsData[key];
+  if (!isConnected() || !isSignedIn()) return;
+  try { await sbDel(PFX+'month:'+key); } catch(e) {}
+}
+async function savePresets() {
+  if (!isConnected()) { flashSave(); return; }
+  await requireAuthAsync(async () => { await sbPut(PFX+'presets', { presets }); flashSave(); });
+}
+function flashSave() {
+  const el = document.getElementById('presetSaveMsg');
+  el.textContent = 'Saved ✓'; setTimeout(() => el.textContent = '', 2200);
+}
+
+/* ════════════════════════════════════════
+   File upload
+════════════════════════════════════════ */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { defval: null });
+      const rows = json.map(r => ({
+        sku: r['SKU'], brand: r['Brand'], item: r['Item Name'],
+        subCat: r['SubCategory'], subSubCat: r['SubSubCategory'],
+        salesDollars: r['Sales ($)'], salesUnits: r['Sales Units'],
+        price: r['OCS.ca Sales Price ($) Exclude Tax'],
+        thcRange: r['THC Range (%)'],
+        netContent: r['Retail Pack Net Content'], unitsPerPack: r['Units per pack'],
+        extractionProcess: r['Extraction Process']
+      })).filter(r => r.sku && r.price != null);
+
+      const guess = guessMonth(file.name);
+      const label = prompt('Label this month (YYYY-MM):', guess || '');
+      if (!label) return;
+
+      rebuildOptions();
+      renderPresetRows();
+      renderMonthList();
+      populateMonthSelects();
+      autoRunDashboard();
+
+      await saveMonthToSupabase(label, rows);
+    } catch(err) { alert('Could not parse file: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function guessMonth(name) {
+  const mo = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+  const m = name.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*[_\- ]?(\d{4})/);
+  return m ? m[2]+'-'+mo[m[1]] : '';
+}
+
+function rebuildOptions() {
+  knownCategories = new Set(['Any']); knownFormats = new Set(['Any']); knownPacks = new Set(['Any']);
+  Object.values(monthsData).forEach(rows => rows.forEach(r => {
+    if (r.subCat) knownCategories.add(String(r.subCat).trim());
+    knownFormats.add(detectFormat(r.subSubCat, r.subCat));
+    knownPacks.add(detectPack(r.netContent, r.unitsPerPack));
+  }));
+}
+
+function renderMonthList() {
+  const el = document.getElementById('monthList');
+  const months = Object.keys(monthsData).sort();
+  el.innerHTML = months.map(m =>
+    '<div class="month-chip"><b>'+m+'</b><span class="count">'+monthsData[m].length+' SKUs</span>'+
+    '<button data-m="'+m+'" class="del-month">remove</button></div>'
+  ).join('') || '<div class="note">No months uploaded yet.</div>';
+  el.querySelectorAll('.del-month').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const m = btn.dataset.m;
+      await deleteMonthFromSupabase(m);
+      rebuildOptions(); renderPresetRows(); renderMonthList(); populateMonthSelects(); autoRunDashboard();
+    });
+  });
+}
+
+/* ════════════════════════════════════════
+   Tab nav
+════════════════════════════════════════ */
+document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'setup') renderSetupStatus();
+  });
+});
+
+/* ════════════════════════════════════════
+   Preset builder
+════════════════════════════════════════ */
+function renderPresetRows() {
+  const c = document.getElementById('presetRows');
+  c.innerHTML = presets.map((p, i) =>
+    '<div class="preset-row" data-i="'+i+'">'+
+      '<div style="display:flex;flex-direction:column;gap:3px;">'+
+        '<button class="btn-icon up-btn" '+(i===0?'disabled':'')+'>↑</button>'+
+        '<button class="btn-icon dn-btn" '+(i===presets.length-1?'disabled':'')+'>↓</button>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px;">'+
+        '<input type="text" class="nm-in" value="'+ea(p.name)+'" placeholder="Micro-segment name">'+
+        '<input type="text" class="mc-in" value="'+ea(p.macro)+'" placeholder="Macro group" style="opacity:.7;">'+
+      '</div>'+
+      '<select class="cat-sel">'+[...knownCategories].map(v=>'<option '+(v===p.category?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
+      '<select class="fmt-sel">'+[...knownFormats].map(v=>'<option '+(v===p.format?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
+      '<select class="pk-sel">'+[...knownPacks].map(v=>'<option '+(v===p.pack?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
+      '<input type="text" class="kw-in" value="'+ea(p.keywords)+'" placeholder="keywords…">'+
+      '<button class="btn-icon del-btn">✕</button>'+
+    '</div>'
+  ).join('');
+
+  c.querySelectorAll('.preset-row').forEach(row => {
+    const i = +row.dataset.i;
+    row.querySelector('.nm-in').addEventListener('input', e => presets[i].name = e.target.value);
+    row.querySelector('.mc-in').addEventListener('input', e => presets[i].macro = e.target.value);
+    row.querySelector('.cat-sel').addEventListener('change', e => presets[i].category = e.target.value);
+    row.querySelector('.fmt-sel').addEventListener('change', e => presets[i].format = e.target.value);
+    row.querySelector('.pk-sel').addEventListener('change', e => presets[i].pack = e.target.value);
+    row.querySelector('.kw-in').addEventListener('input', e => presets[i].keywords = e.target.value);
+    row.querySelector('.del-btn').addEventListener('click', () => { presets.splice(i,1); renderPresetRows(); });
+    row.querySelector('.up-btn').addEventListener('click', () => { if(i>0){ [presets[i-1],presets[i]]=[presets[i],presets[i-1]]; renderPresetRows(); } });
+    row.querySelector('.dn-btn').addEventListener('click', () => { if(i<presets.length-1){ [presets[i+1],presets[i]]=[presets[i],presets[i+1]]; renderPresetRows(); } });
+  });
+}
+function ea(s){ return (s||'').replace(/"/g,'&quot;'); }
+
+const MERA_PRESETS = [{"name":"Liquid Diamonds AIO 1g","macro":"AIO 1g","category":"Vapes","format":"Disposable Vape Pens","pack":"1g","keywords":"liquid diamond"},{"name":"Live Resin AIO 1g","macro":"AIO 1g","category":"Vapes","format":"Disposable Vape Pens","pack":"1g","keywords":"live resin"},{"name":"CBD/CBG Blend AIO 1g","macro":"AIO 1g","category":"Vapes","format":"Disposable Vape Pens","pack":"1g","keywords":"cbd, cbg"},{"name":"AIO 1g — Standard/Other","macro":"AIO 1g","category":"Vapes","format":"Disposable Vape Pens","pack":"1g","keywords":""},{"name":"Liquid Diamonds 510 Cart 1g","macro":"510 Cart 1g","category":"Vapes","format":"510 Thread Vape Cartridges","pack":"1g","keywords":"liquid diamond"},{"name":"Live Resin 510 Cart 1g","macro":"510 Cart 1g","category":"Vapes","format":"510 Thread Vape Cartridges","pack":"1g","keywords":"live resin"},{"name":"510 Cart 1g — Standard/Other","macro":"510 Cart 1g","category":"Vapes","format":"510 Thread Vape Cartridges","pack":"1g","keywords":""},{"name":"Diamond Infused 1x1g","macro":"Infused Pre-Roll 1x1g","category":"Infused Pre-Rolls","format":"Any","pack":"1x1g","keywords":"diamond"},{"name":"Hash Oil Infused 1x1g","macro":"Infused Pre-Roll 1x1g","category":"Infused Pre-Rolls","format":"Any","pack":"1x1g","keywords":"hash oil"},{"name":"Infused Pre-Roll 1x1g — Other","macro":"Infused Pre-Roll 1x1g","category":"Infused Pre-Rolls","format":"Any","pack":"1x1g","keywords":""},{"name":"Diamond Infused 3x0.5g","macro":"Infused Pre-Roll 3x0.5g","category":"Infused Pre-Rolls","format":"Any","pack":"3x0.5g","keywords":"diamond"},{"name":"Hash Oil Infused 3x0.5g","macro":"Infused Pre-Roll 3x0.5g","category":"Infused Pre-Rolls","format":"Any","pack":"3x0.5g","keywords":"hash oil"},{"name":"Infused Pre-Roll 3x0.5g — Other","macro":"Infused Pre-Roll 3x0.5g","category":"Infused Pre-Rolls","format":"Any","pack":"3x0.5g","keywords":""},{"name":"Diamond Infused 5x0.5g","macro":"Infused Pre-Roll 5x0.5g","category":"Infused Pre-Rolls","format":"Any","pack":"5x0.5g","keywords":"diamond"},{"name":"Infused Pre-Roll 5x0.5g — Other","macro":"Infused Pre-Roll 5x0.5g","category":"Infused Pre-Rolls","format":"Any","pack":"5x0.5g","keywords":""},{"name":"Flower Pre-Roll 10x0.5g","macro":"Pre-Roll 10x0.5g","category":"Pre-Rolled","format":"Any","pack":"10x0.5g","keywords":""},{"name":"Flower Pre-Roll 5x0.5g","macro":"Pre-Roll 5x0.5g","category":"Pre-Rolled","format":"Any","pack":"5x0.5g","keywords":""},{"name":"Flower Pre-Roll 1x1g","macro":"Pre-Roll 1x1g","category":"Pre-Rolled","format":"Any","pack":"1x1g","keywords":""},{"name":"Flower Pre-Roll 2x1g","macro":"Pre-Roll 2x1g","category":"Pre-Rolled","format":"Any","pack":"2x1g","keywords":""},{"name":"Rosin 1g","macro":"Concentrate 1g","category":"Concentrates","format":"Any","pack":"1g","keywords":"rosin"},{"name":"Shatter 1g","macro":"Concentrate 1g","category":"Concentrates","format":"Any","pack":"1g","keywords":"shatter"},{"name":"Concentrate 1g — Other","macro":"Concentrate 1g","category":"Concentrates","format":"Any","pack":"1g","keywords":""},{"name":"Dried Flower 3.5g","macro":"Flower 3.5g","category":"Dried Flower","format":"Any","pack":"3.5g","keywords":""}];
+
+document.getElementById('loadMeraPresetsBtn').addEventListener('click', () => {
+  if (presets.length && !confirm('Replace current presets with Mera portfolio presets?')) return;
+  presets = JSON.parse(JSON.stringify(MERA_PRESETS));
+  rebuildOptions(); renderPresetRows();
+});
+document.getElementById('addPresetBtn').addEventListener('click', () => {
+  presets.push({ name:'', macro:'', category:'Any', format:'Any', pack:'Any', keywords:'' });
+  renderPresetRows();
+});
+document.getElementById('savePresetsBtn').addEventListener('click', () => savePresets());
+
+/* ════════════════════════════════════════
+   Month selectors
+════════════════════════════════════════ */
+function populateMonthSelects() {
+  const months = Object.keys(monthsData).sort();
+  const curSel  = document.getElementById('curMonthSelect');
+  const prevSel = document.getElementById('prevMonthSelect');
+  const bCur    = document.getElementById('briefCurMonth');
+  const bPrev   = document.getElementById('briefPrevMonth');
+  const opts    = months.map(m => '<option value="'+m+'">'+m+'</option>').join('');
+
+  curSel.innerHTML  = opts;
+  prevSel.innerHTML = '<option value="">(single month)</option>'+opts;
+  bCur.innerHTML    = opts;
+  bPrev.innerHTML   = opts;
+
+  if (months.length) {
+    curSel.value = months[months.length-1];
+    if (months.length > 1) prevSel.value = months[months.length-2];
+    bCur.value  = months[months.length-1];
+    bPrev.value = months.length > 1 ? months[months.length-2] : months[0];
+  }
+  // auto-refresh dashboard on month change
+  curSel.addEventListener('change',  autoRunDashboard);
+  prevSel.addEventListener('change', autoRunDashboard);
+}
+
+/* ════════════════════════════════════════
+   Classification
+════════════════════════════════════════ */
+function classifyRow(r) {
+  const name = (r.item||'').toLowerCase();
+  const format = detectFormat(r.subSubCat, r.subCat);
+  const pack   = detectPack(r.netContent, r.unitsPerPack);
+  const cat    = r.subCat || 'Other';
+  for (const p of presets) {
+    if (!p.name) continue;
+    const kws = (p.keywords||'').split(',').map(k=>k.trim().toLowerCase()).filter(Boolean);
+    const kwOk   = kws.length === 0 || kws.some(k => name.includes(k));
+    const catOk  = !p.category || p.category==='Any' || p.category===cat;
+    const fmtOk  = !p.format   || p.format==='Any'   || p.format===format;
+    const packOk = !p.pack     || p.pack==='Any'     || p.pack===pack;
+    if (kwOk && catOk && fmtOk && packOk) return { micro: p.name, macro: p.macro || p.name };
+  }
+  return null;
+}
+function buildSegMap(rows) {
+  const map = {}; let unclassed = 0;
+  rows.forEach(r => {
+    const c = classifyRow(r);
+    if (!c) { unclassed++; return; }
+    if (!map[c.macro]) map[c.macro] = {};
+    if (!map[c.macro][c.micro]) map[c.macro][c.micro] = [];
+    map[c.macro][c.micro].push(r);
+  });
+  return { map, unclassed };
+}
+function segStats(entries) {
+  const prices = entries.map(e=>e.price).filter(p=>p!=null);
+  const thcs   = entries.map(e=>parseThcMid(e.thcRange)).filter(t=>t!=null);
+  const revW   = () => { const d=entries.reduce((s,e)=>s+(e.salesDollars||0),0), u=entries.reduce((s,e)=>s+(e.salesUnits||0),0); return u>0?d/u:null; };
+  return {
+    avgPrice: prices.length ? prices.reduce((a,b)=>a+b,0)/prices.length : null,
+    revWtd: revW(),
+    avgThc: thcs.length ? thcs.reduce((a,b)=>a+b,0)/thcs.length : null,
+    n: entries.length
+  };
+}
+function parseThcMid(r) {
+  if (!r || typeof r!=='string') return null;
+  if (r.includes('>')) { const n=parseFloat(r); return isNaN(n)?null:n+2; }
+  const m = r.match(/([\d.]+)%?-([\d.]+)%?/);
+  if (m) return (parseFloat(m[1])+parseFloat(m[2]))/2;
+  const n=parseFloat(r); return isNaN(n)?null:n;
+}
+function fm(n)  { return n==null||isNaN(n)?'—':'$'+n.toFixed(2); }
+function fmP(n) { return n==null||isNaN(n)?'—':n.toFixed(1)+'%'; }
+
+/* ════════════════════════════════════════
+   Dashboard render
+════════════════════════════════════════ */
+let lastReport = null;
+
+function autoRunDashboard() {
+  const cur  = document.getElementById('curMonthSelect').value;
+  const prev = document.getElementById('prevMonthSelect').value;
+  if (!cur) return;
+  const curRows  = monthsData[cur]  || [];
+  const prevRows = prev ? (monthsData[prev] || []) : [];
+  const curRes   = buildSegMap(curRows);
+  const prevMap  = prev ? buildSegMap(prevRows).map : {};
+  const prevBySku = {}; prevRows.forEach(r => prevBySku[r.sku] = r);
+  lastReport = { curMap: curRes.map, prevMap, prevBySku, unclassed: curRes.unclassed };
+  renderKpis(curRows, prevRows);
+  renderMacroFilter(curRes.map);
+  renderDashboard(curRes.map, prevMap, prevBySku, null, curRes.unclassed);
+}
+
+const CAT_COLORS = ['var(--cat-pre)','var(--cat-infused)','var(--cat-vape)','var(--cat-extract)','var(--cat-flower)','var(--violet)'];
+function colorFor(s) { let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return CAT_COLORS[h%CAT_COLORS.length]; }
+
+function renderKpis(curRows, prevRows) {
+  const el = document.getElementById('dashKpis');
+  const mera = curRows.filter(r => isMera(r.brand));
+  const classified = curRows.filter(r => classifyRow(r));
+  const totalSkus = curRows.length;
+  const meraSkus  = mera.length;
+  const segs      = new Set(curRows.map(r => { const c=classifyRow(r); return c?c.macro:null; }).filter(Boolean)).size;
+  el.innerHTML =
+    '<div class="kpi-strip">'+
+    kpi(totalSkus,'Market SKUs','in current month')+
+    kpi(meraSkus, 'Mera SKUs', 'in current month')+
+    kpi(segs,     'Segments',  'matched to presets')+
+    kpi(classified.length,'Classified SKUs', curRows.length ? ((classified.length/curRows.length*100).toFixed(0)+'% coverage') : '—')+
+    '</div>';
+}
+function kpi(v,label,sub) {
+  return '<div class="kpi"><div class="label">'+label+'</div><div class="value">'+v+'</div><div class="sub">'+sub+'</div></div>';
+}
+
+function renderMacroFilter(curMap) {
+  const row = document.getElementById('macroFilterRow');
+  const macros = Object.keys(curMap).sort();
+  row.innerHTML = '<div class="pill active" data-macro="">All segments</div>' +
+    macros.map(m => '<div class="pill" data-macro="'+ea(m)+'">'+m+'</div>').join('');
+  row.querySelectorAll('.pill').forEach(p => {
+    p.addEventListener('click', () => {
+      row.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      const d = lastReport;
+      renderDashboard(d.curMap, d.prevMap, d.prevBySku, p.dataset.macro || null, d.unclassed);
+    });
+  });
+}
+
+function renderDashboard(curMap, prevMap, prevBySku, macroFilter, unclassed) {
+  const out = document.getElementById('dashOut');
+  if (!Object.keys(curMap).length) {
+    out.innerHTML = '<div class="state-box"><div class="icon">📊</div><h3>No data yet</h3><span>Upload a monthly .xlsx in the Data &amp; Presets tab to see the analysis.</span></div>';
+    return;
+  }
+  if (!presets.some(p => p.name)) {
+    out.innerHTML = '<div class="state-box"><div class="icon">⚙️</div><h3>No presets defined</h3><span>Go to Data &amp; Presets and click "Load Mera presets" to get started.</span></div>';
+    return;
+  }
+
+  const macros = Object.keys(curMap).sort((a,b) => {
+    const am = Object.values(curMap[a]).flat().some(e=>isMera(e.brand));
+    const bm = Object.values(curMap[b]).flat().some(e=>isMera(e.brand));
+    return (bm-am) || a.localeCompare(b);
+  });
+  const filtered = macroFilter ? macros.filter(m=>m===macroFilter) : macros;
+
+  const html = filtered.map(macro => {
+    const microMap = curMap[macro];
+    const allCur   = Object.values(microMap).flat();
+    const allPrev  = Object.values(prevMap[macro]||{}).flat();
+    const mStats   = segStats(allCur);
+    const pStats   = segStats(allPrev);
+    const delta    = pStats.avgPrice!=null && mStats.avgPrice!=null ? mStats.avgPrice - pStats.avgPrice : null;
+    const hasMera  = allCur.some(e => isMera(e.brand));
+    const color    = colorFor(macro);
+
+    const microHtml = Object.keys(microMap).sort((a,b) => {
+      const am = microMap[a].some(e=>isMera(e.brand));
+      const bm = microMap[b].some(e=>isMera(e.brand));
+      return (bm-am) || a.localeCompare(b);
+    }).map(micro => renderMicro(micro, microMap[micro], (prevMap[macro]||{})[micro]||[], prevBySku)).join('');
+
+    return '<div class="segment-block">'+
+      '<div class="seg-head" onclick="this.nextElementSibling.classList.toggle(\'collapsed\')">'+
+        '<div class="seg-head-left">'+
+          '<span class="seg-dot" style="background:'+color+'"></span>'+
+          '<div>'+
+            '<div class="seg-title">'+macro+(hasMera?' <span style="color:var(--success);font-size:11px;font-family:var(--mono);margin-left:8px;">Mera ✓</span>':'')+'</div>'+
+            '<div class="seg-meta">'+allCur.length+' SKUs · '+Object.keys(microMap).length+' micro-segment'+(Object.keys(microMap).length>1?'s':'')+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="seg-head-right">'+
+          '<div class="seg-avg">'+fm(mStats.avgPrice)+'</div>'+
+          (delta!=null ? '<div class="seg-delta delta '+(delta>0.01?'up':delta<-0.01?'down':'flat')+'">'+(delta>0?'+':'')+delta.toFixed(2)+' vs prior</div>' : '<div class="seg-meta">—</div>')+
+        '</div>'+
+      '</div>'+
+      '<div class="seg-body">'+microHtml+'</div>'+
+    '</div>';
+  }).join('') || '<div class="state-box"><div class="icon">🔍</div><h3>No matches</h3><span>No SKUs matched your presets for this filter.</span></div>';
+
+  const unclassNote = unclassed ? '<div class="unclassified-box">'+unclassed+' SKUs didn\'t match any preset and are excluded. Add a catch-all row (blank keyword) to capture them.</div>' : '';
+  out.innerHTML = html + unclassNote;
+}
+
+function renderMicro(micro, entries, prevEntries, prevBySku) {
+  const s  = segStats(entries);
+  const ps = segStats(prevEntries);
+  const pd = s.avgPrice!=null && ps.avgPrice!=null ? s.avgPrice - ps.avgPrice : null;
+  const td = s.avgThc!=null  && ps.avgThc!=null   ? s.avgThc  - ps.avgThc   : null;
+  const sorted = entries.slice().sort((a,b) => (a.price||0)-(b.price||0));
+  const maxP   = Math.max(...sorted.map(e=>e.price||0), 0.01);
+
+  const rows = sorted.map(e => {
+    const prev  = prevBySku[e.sku];
+    const pDelt = prev ? e.price - prev.price : null;
+    const mc    = isMera(e.brand) ? 'mera' : '';
+    const thcM  = parseThcMid(e.thcRange);
+    return '<tr class="'+mc+'">'+
+      '<td>'+e.brand+'</td>'+
+      '<td title="'+(e.item||'')+'">'+((e.item||'').length>40?(e.item||'').slice(0,38)+'…':e.item||'—')+'</td>'+
+      '<td>'+fm(e.price)+(pDelt!=null?' <span class="delta '+(pDelt>0.01?'up':pDelt<-0.01?'down':'flat')+'">'+(pDelt>0?'+':'')+pDelt.toFixed(2)+'</span>':'')+'</td>'+
+      '<td>'+(e.thcRange||'—')+(thcM!=null?' <span style="color:var(--muted);">(~'+thcM.toFixed(1)+'%)</span>':'')+'</td>'+
+      '<td>'+(e.salesUnits??'—')+'</td>'+
+      '<td><div class="bar-track"><div class="bar-fill '+mc+'" style="width:'+((e.price||0)/maxP*100).toFixed(0)+'%"></div></div></td>'+
+    '</tr>';
+  }).join('');
+
+  return '<div class="micro-block">'+
+    '<div class="micro-title">'+micro+'</div>'+
+    '<div class="stat-row">'+
+      stat(fm(s.avgPrice),'avg price')+
+      stat(fmP(s.avgThc),'avg THC')+
+      stat(s.n,'SKUs')+
+      (pd!=null ? stat('<span class="delta '+(pd>0.01?'up':pd<-0.01?'down':'flat')+'">'+(pd>0?'+':'')+pd.toFixed(2)+'</span>','price Δ') : '')+
+      (td!=null ? stat('<span class="delta '+(td>0.1?'up':td<-0.1?'down':'flat')+'">'+(td>0?'+':'')+td.toFixed(1)+'%</span>','THC Δ') : '')+
+    '</div>'+
+    '<table class="seg-table"><thead><tr><th>Brand</th><th>Item</th><th>Price</th><th>THC</th><th>Units sold</th><th>Position</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+  '</div>';
+}
+function stat(v,l) { return '<div class="stat"><div class="v">'+v+'</div><div class="l">'+l+'</div></div>'; }
+
+/* ════════════════════════════════════════
+   Leadership brief
+════════════════════════════════════════ */
+function revWtdAvg(entries) {
+  const d = entries.reduce((s,e)=>s+(e.salesDollars||0),0);
+  const u = entries.reduce((s,e)=>s+(e.salesUnits||0),0);
+  return u > 0 ? d/u : null;
+}
+function genFlags(curMap, prevMap, thr) {
+  const flags = [];
+  Object.keys(curMap).forEach(macro => {
+    const mm = curMap[macro], pm = prevMap[macro]||{};
+    const cAll = Object.values(mm).flat(), pAll = Object.values(pm).flat();
+    const cAvg=revWtdAvg(cAll), pAvg=revWtdAvg(pAll);
+    if (cAvg!=null && pAvg!=null && pAvg>0) {
+      const pct=((cAvg-pAvg)/pAvg)*100;
+      if (Math.abs(pct)>=thr) flags.push({ level:'Macro', segment:macro, curAvg:cAvg, prevAvg:pAvg, pct, n:cAll.length, merain:cAll.some(e=>isMera(e.brand)) });
+    }
+    Object.keys(mm).forEach(micro => {
+      const cE=mm[micro], pE=pm[micro]||[];
+      const ca=revWtdAvg(cE), pa=revWtdAvg(pE);
+      if (ca!=null && pa!=null && pa>0) {
+        const pct=((ca-pa)/pa)*100;
+        if (Math.abs(pct)>=thr) flags.push({ level:'Micro', segment:micro, macro, curAvg:ca, prevAvg:pa, pct, n:cE.length, merain:cE.some(e=>isMera(e.brand)) });
+      }
+    });
+  });
+  return flags.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
+}
+
+document.getElementById('generateBriefBtn').addEventListener('click', () => {
+  const cur=document.getElementById('briefCurMonth').value, prev=document.getElementById('briefPrevMonth').value;
+  const thr=parseFloat(document.getElementById('briefThreshold').value);
+  if (!cur||!prev) { alert('Select both months'); return; }
+  if (cur===prev)  { alert('Pick two different months'); return; }
+  if (!presets.some(p=>p.name)) { alert('Define segment presets first'); return; }
+  const cMap=buildSegMap(monthsData[cur]||[]).map, pMap=buildSegMap(monthsData[prev]||[]).map;
+  const flags=genFlags(cMap, pMap, thr);
+  renderBrief(flags, cur, prev, thr);
+});
+
+function renderBrief(flags, cur, prev, thr) {
+  const out = document.getElementById('briefOut');
+  const rows = flags.map(f => {
+    const mc = f.merain ? 'mera' : '';
+    return '<tr class="'+mc+'"><td>'+f.level+'</td>'+
+      '<td>'+f.segment+(f.level==='Micro'?' <span style="color:var(--muted);">('+f.macro+')</span>':'')+'</td>'+
+      '<td>$'+f.prevAvg.toFixed(2)+'</td><td>$'+f.curAvg.toFixed(2)+'</td>'+
+      '<td><span class="delta '+(f.pct>0?'up':'down')+'">'+(f.pct>0?'+':'')+f.pct.toFixed(1)+'%</span></td>'+
+      '<td>'+f.n+'</td></tr>';
+  }).join('');
+
+  const emailText = buildEmail(flags, cur, prev, thr);
+
+  out.innerHTML =
+    '<div class="card">'+
+    '<div class="card-title" style="margin-bottom:8px;">Draft email</div>'+
+    '<textarea id="emailBox" style="width:100%;min-height:100px;font-family:var(--mono);font-size:12px;padding:10px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--inset);color:var(--fg);line-height:1.6;">'+emailText+'</textarea>'+
+    '<div class="btn-row">'+
+      '<button class="btn btn-ghost" id="copyEmailBtn">Copy email</button>'+
+      '<button class="btn btn-primary" id="dlPdfBtn">Download PDF</button>'+
+    '</div></div>'+
+    '<div class="card" style="margin-top:8px;">'+
+    '<div class="card-title">Flagged segments ('+flags.length+') — ±'+thr+'% threshold · '+cur+' vs '+prev+'</div>'+
+    (flags.length ?
+      '<table class="seg-table" style="margin-top:10px;"><thead><tr><th>Level</th><th>Segment</th><th>Prior rev-wtd avg</th><th>Current</th><th>Δ</th><th>SKUs</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      : '<div class="state-box" style="padding:28px;"><h3>No segments crossed the threshold</h3></div>')+
+    '</div>';
+
+  document.getElementById('copyEmailBtn').addEventListener('click', () => {
+    const box = document.getElementById('emailBox');
+    navigator.clipboard.writeText(box.value).then(() => {
+      const btn=document.getElementById('copyEmailBtn'); const o=btn.textContent;
+      btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent=o, 1500);
+    });
+  });
+  document.getElementById('dlPdfBtn').addEventListener('click', () => downloadPdf(flags, cur, prev, thr));
+}
+
+function buildEmail(flags, cur, prev, thr) {
+  if (!flags.length) return 'Pricing scan for '+cur+' vs. '+prev+': no segments moved beyond the ±'+thr+'% threshold. Market pricing held broadly steady.';
+  const top=flags.slice(0,3);
+  const lines=top.map(f=>(f.level==='Micro'?f.segment+' (within '+f.macro+')':f.segment+' overall')+' '+(f.pct>0?'increased':'decreased')+' '+Math.abs(f.pct).toFixed(0)+'% on a revenue-weighted avg price basis ($'+f.prevAvg.toFixed(2)+' → $'+f.curAvg.toFixed(2)+')'+(f.merain?', a segment where Mera has SKUs':''));
+  return 'Pricing scan for '+cur+' vs. '+prev+' flagged '+flags.length+' segment'+(flags.length>1?'s':'')+' beyond the ±'+thr+'% threshold. '+lines.join('. ')+'. Full detail in the attached PDF.';
+}
+
+function downloadPdf(flags, cur, prev, thr) {
+  const { jsPDF }=window.jspdf;
+  const doc=new jsPDF({unit:'pt',format:'letter'});
+  const pw=doc.internal.pageSize.getWidth(), mx=48;
+  let y=56;
+  doc.setFillColor(15,17,23); doc.rect(0,0,pw,doc.internal.pageSize.getHeight(),'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(240,242,246);
+  doc.text('Mera Cannabis — Pricing Intelligence Brief', mx, y); y+=17;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(107,116,148);
+  doc.text(cur+' vs. '+prev+' · ±'+thr+'% threshold · Generated '+new Date().toLocaleDateString(), mx, y); y+=18;
+  doc.setDrawColor(255,122,61); doc.setLineWidth(1.2); doc.line(mx, y, pw-mx, y); y+=20;
+  if (!flags.length) {
+    doc.setFont('helvetica','italic'); doc.setFontSize(11); doc.setTextColor(196,200,212);
+    doc.text('No segments moved beyond the threshold this period.', mx, y);
+  } else {
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(240,242,246);
+    doc.text('Flagged segments ('+flags.length+')', mx, y); y+=14;
+    const cx=[mx,mx+88,mx+325,mx+390,mx+455];
+    doc.setFontSize(8); doc.setTextColor(107,116,148);
+    ['LEVEL','SEGMENT','PRIOR','CURRENT','Δ'].forEach((h,i)=>doc.text(h,cx[i],y)); y+=7;
+    doc.setDrawColor(35,42,62); doc.setLineWidth(.5); doc.line(mx,y,pw-mx,y); y+=11;
+    flags.slice(0,18).forEach(f=>{
+      if(y>700){doc.addPage();doc.setFillColor(15,17,23);doc.rect(0,0,pw,doc.internal.pageSize.getHeight(),'F');y=56;}
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(184,189,208);
+      doc.text(f.level,cx[0],y);
+      const sl=f.level==='Micro'?f.segment+' ('+f.macro+')':f.segment;
+      doc.text(sl.length>46?sl.slice(0,44)+'…':sl,cx[1],y);
+      doc.text('$'+f.prevAvg.toFixed(2),cx[2],y); doc.text('$'+f.curAvg.toFixed(2),cx[3],y);
+      doc.setTextColor(f.pct>0?255:94, f.pct>0?107:227, f.pct>0?92:160);
+      doc.setFont('helvetica','bold');
+      doc.text((f.pct>0?'+':'')+f.pct.toFixed(1)+'%',cx[4],y); y+=14;
+      if(f.merain){doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(255,122,61);doc.text('Mera has SKUs in this segment',cx[1],y);y+=11;}
+    });
+  }
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(107,116,148);
+  doc.text('Revenue-weighted avg price = total $ ÷ total units per segment. OCS wholesale market data.',mx,760);
+  doc.save('Mera_Pricing_Brief_'+cur+'_vs_'+prev+'.pdf');
+}
+
+/* ════════════════════════════════════════
+   Setup & Status tab
+════════════════════════════════════════ */
+function renderSetupStatus() {
+  const el = document.getElementById('setupStatus');
+  const months = Object.keys(monthsData).sort();
+  const rows = [
+    statusRow(isConnected(), 'Supabase SDK loaded', 'SDK not available'),
+    statusRow(isConnected(), 'Project connected ('+SB_URL+')', 'Cannot reach project'),
+    statusRow(months.length>0, months.length+' month(s) loaded from Supabase: '+(months.join(', ')||'none'), 'No data in Supabase yet — upload a month in Data & Presets'),
+    statusRow(presets.some(p=>p.name), presets.length+' segment presets loaded', 'No presets — load Mera presets in Data & Presets'),
+    statusRow(isSignedIn(), 'Signed in as '+((SESSION?.email)||'—'), 'Not signed in — read-only mode'),
+  ];
+  el.innerHTML = rows.join('');
+}
+function statusRow(ok, good, bad) {
+  return '<div class="status-row '+(ok?'ok':'warn')+'">'+(ok?'✓':'⚠')+' &nbsp;'+(ok?good:bad)+'</div>';
+}
+
+document.getElementById('testConnBtn').addEventListener('click', async () => {
+  const out = document.getElementById('connTestOut');
+  out.innerHTML = '<div class="state-loading"><div class="spinner"></div>Testing…</div>';
+  try {
+    const c = sbClient();
+    if (!c) throw new Error('Supabase SDK not loaded');
+    const { data, error } = await c.from('datasets').select('key').limit(1);
+    if (error) throw error;
+    out.innerHTML = '<div class="status-row ok">✓ Connection successful — datasets table is accessible. '+(data&&data.length?'Found existing rows.':'Table is empty — upload data to get started.')+'</div>';
+  } catch(e) {
+    out.innerHTML = '<div class="status-row err">✗ '+( e.message||'Unknown error')+'</div><div class="note" style="margin-top:8px;">If the error mentions the table doesn\'t exist, run the SQL in Step 2 above in your Supabase SQL editor.</div>';
+  }
+});
+
+function copySQL() {
+  const sql = document.getElementById('sqlBlock').textContent;
+  navigator.clipboard.writeText(sql).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    const orig = btn.textContent; btn.textContent = 'Copied ✓';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+/* ════════════════════════════════════════
+   Default presets
+════════════════════════════════════════ */
+function defaultPresets() {
+  return [
+    { name:'Liquid Diamonds AIO 1g', macro:'AIO 1g', category:'Vapes', format:'Disposable Vape Pens', pack:'1g', keywords:'liquid diamond' },
+    { name:'Live Resin AIO 1g',      macro:'AIO 1g', category:'Vapes', format:'Disposable Vape Pens', pack:'1g', keywords:'live resin' },
+    { name:'AIO 1g — Other',         macro:'AIO 1g', category:'Vapes', format:'Disposable Vape Pens', pack:'1g', keywords:'' },
+  ];
+}
+
+/* ════════════════════════════════════════
+   Init
+════════════════════════════════════════ */
+async function init() {
+  // Render defaults immediately so UI isn't blank
+  presets = defaultPresets();
+  rebuildOptions();
+  renderPresetRows();
+  renderMonthList();
+  populateMonthSelects();
+  updateConnectionUI();
+
+  // Try to load from Supabase
+  const got = await loadFromSupabase();
+  if (got) {
+    rebuildOptions();
+    renderPresetRows();
+    renderMonthList();
+    populateMonthSelects();
+  }
+  updateConnectionUI();
+
+  // Auto-run dashboard once data is loaded
+  const months = Object.keys(monthsData);
+  if (months.length && presets.some(p=>p.name)) {
+    autoRunDashboard();
+  } else {
+    const out = document.getElementById('dashOut');
+    out.innerHTML = months.length === 0
+      ? '<div class="state-box"><div class="icon">📂</div><h3>No data loaded</h3><span>Go to <strong>Data &amp; Presets</strong> and upload a monthly .xlsx export.<br>Data saves to Supabase and loads automatically for everyone.</span></div>'
+      : '<div class="state-box"><div class="icon">⚙️</div><h3>No presets defined</h3><span>Go to <strong>Data &amp; Presets</strong> → click "Load Mera presets" to classify the market into segments.</span></div>';
+    document.getElementById('dashKpis').innerHTML = '';
+  }
+}
+
+window.addEventListener('error', e => {
+  let b = document.getElementById('errBanner');
+  if (!b) { b=document.createElement('div'); b.id='errBanner'; b.style.cssText='position:fixed;bottom:16px;right:16px;background:var(--danger-bg);border:1px solid var(--danger);color:var(--danger);font-family:var(--mono);font-size:11px;padding:10px 14px;border-radius:var(--r-sm);z-index:999;max-width:360px;'; document.body.appendChild(b); }
+  b.textContent = 'Script error: '+(e.message||'unknown');
+});
+
+init().catch(e => { console.error('init', e); });
+</script>
+</body>
+</html>
