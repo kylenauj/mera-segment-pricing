@@ -11,14 +11,14 @@
 <style>
 :root{
   --bg:#0f1117;--surface:#161b26;--surface-2:#1c2232;--inset:#0c0f17;
-  --fg:#f0f2f6;--fg-2:#b8bdd0;--muted:#6b7494;--faint:#2a3050;
-  --border:#232a3e;--border-soft:#1a2030;
+  --fg:#f0f2f6;--fg-2:#8b8dd0;--muted:#06b7494;--faint:#2a3050;
+  --border:#2323e;--border-soft:#1a2030;
   --accent:#ff7a3d;--accent-on:#fff;--accent-soft:rgba(255,122,61,.12);
   --success:#3ddc8a;--success-bg:rgba(61,220,138,.08);
-  --warn:#f0b73d;--warn-bg:rgba(240,183,61,.08);
-  --danger:#ff6b5c;--danger-bg:rgba(255,107,92,.08);
+  --warn:#f0b73d;--warn-bg:rgba(248,183,61,.08);
+  --danger:#f6b5c;--danger-bg:rgba(255,107,92,.08);
   --violet:#a78bfa;--blue:#5b9bf0;--teal:#29c3d4;
-  --font:'Syne',-apple-system,sans-serif;
+  --font:'Syne',apple-system,sans-serif;
   --mono:'DM Mono',ui-monospace,monospace;
   --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:20px;
   --shadow:0 4px 24px rgba(0,0,0,.4);
@@ -28,1105 +28,942 @@
 html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;height:100%;}
 .app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh;}
 
-/* ── Topbar ── */
+/* Topbar */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--surface);gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:50;}
 .brand{display:flex;align-items:baseline;gap:10px;}
 .brand-name{font-size:17px;font-weight:700;letter-spacing:-.01em;}
-.brand-tag{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;background:var(--inset);border:1px solid var(--border);border-radius:6px;padding:2px 8px;}
+.brand-tag{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;background:var(--inset);border:1px solid var(--border);border-radius:6px;padding:2px 8px;}
 .topbar-right{display:flex;align-items:center;gap:10px;}
 .conn-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:5px 12px;border:1px solid;}
-.conn-badge.live{color:var(--success);border-color:rgba(61,220,138,.3);background:var(--success-bg);}
-.conn-badge.read-only{color:var(--warn);border-color:rgba(240,183,61,.3);background:var(--warn-bg);}
 .conn-badge.offline{color:var(--muted);border-color:var(--border);background:var(--inset);}
+.conn-badge.online{color:var(--success);border-color:rgba(61,220,138,.3);background:var(--success-bg);}
+.conn-badge.connecting{color:var(--warn);border-color:rgba(248,183,61,.3);background:var(--warn-bg);}
 .conn-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
-.period-sel{display:flex;align-items:center;gap:8px;}
-.period-sel label{font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-.ctrl-select{font-family:var(--mono);font-size:12px;border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 10px;background:var(--surface-2);color:var(--fg);outline:none;cursor:pointer;}
-.ctrl-select:focus{border-color:var(--accent);}
-
-/* ── Navbar ── */
-.navbar{display:flex;align-items:center;gap:2px;padding:0 28px;background:var(--surface);border-bottom:1px solid var(--border);}
-.nav-btn{font-family:var(--font);font-size:13px;font-weight:500;padding:12px 16px;border-radius:0;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s;margin-bottom:-1px;}
-.nav-btn:hover{color:var(--fg);}
-.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
-.nav-sep{width:1px;height:18px;background:var(--border);margin:0 4px;}
-
-/* ── Panels ── */
-.panel{display:none;padding:24px 28px 60px;}
-.panel.active{display:block;}
-
-/* ── Buttons ── */
-.btn{font-family:var(--font);font-size:12px;font-weight:600;border-radius:var(--r-sm);padding:8px 16px;cursor:pointer;border:1px solid var(--border);transition:all .15s;}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
-.btn-primary:hover{filter:brightness(1.1);}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.conn-badge.connecting .conn-dot{animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+.period-select{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.period-select label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+select{background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;}
+select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-sm);font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;}
 .btn-ghost{background:transparent;color:var(--muted);border-color:var(--border);}
-.btn-ghost:hover{color:var(--fg);background:var(--surface-2);}
-.btn-danger{background:transparent;color:var(--danger);border-color:var(--danger);}
-.btn-danger:hover{background:var(--danger-bg);}
-.btn-sm{padding:5px 10px;font-size:11px;}
-.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;}
+.btn-ghost:hover{background:var(--surface-2);color:var(--fg);}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-accent:hover{filter:brightness(1.1);}
+.btn-sm{padding:5px 10px;font-size:12px;}
 
-/* ── KPI Strip ── */
-.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px;}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px 18px;position:relative;overflow:hidden;}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:.5;}
-.kpi .label{font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;}
-.kpi .value{font-size:24px;font-weight:700;font-family:var(--mono);line-height:1;color:var(--fg);}
-.kpi .sub{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:5px;}
-.kpi .delta-badge{font-size:10px;font-family:var(--mono);font-weight:700;padding:2px 6px;border-radius:4px;margin-top:5px;display:inline-block;}
-.delta-up{color:var(--danger);background:var(--danger-bg);}
-.delta-down{color:var(--success);background:var(--success-bg);}
-.delta-flat{color:var(--muted);background:var(--inset);}
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 28px;gap:0;overflow-x:auto;}
+.tab{display:flex;align-items:center;gap:8px;padding:12px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;letter-spacing:.01em;}
+.tab:hover{color:var(--fg);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-badge{font-size:10px;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;font-weight:700;}
 
-/* ── Segment filter pills ── */
-.pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
-.pill{border:1px solid var(--border);background:var(--surface);border-radius:20px;padding:5px 13px;font-size:11px;font-family:var(--mono);cursor:pointer;color:var(--muted);transition:all .15s;white-space:nowrap;}
-.pill:hover{color:var(--fg);border-color:var(--fg-2);}
-.pill.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
-.pill.mera-pill.active{background:rgba(61,220,138,.1);color:var(--success);border-color:var(--success);}
+/* Main */
+main{padding:24px 28px;overflow-y:auto;}
 
-/* ── Pricing Ladder ── */
-.ladder-wrap{display:flex;flex-direction:column;gap:28px;}
-.ladder-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
-.ladder-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);}
-.ladder-head-left{display:flex;align-items:center;gap:12px;}
-.seg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.ladder-title{font-size:15px;font-weight:700;}
-.ladder-sub{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:2px;}
-.ladder-stats{display:flex;gap:24px;align-items:center;}
-.lstat{text-align:right;}
-.lstat .lv{font-size:18px;font-weight:700;font-family:var(--mono);}
-.lstat .ll{font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
-.ladder-body{padding:0;}
-.ladder-row{display:grid;grid-template-columns:32px 1fr 1fr 90px 80px 80px 60px 48px;gap:0;align-items:center;padding:10px 20px;border-bottom:1px solid var(--border-soft);transition:background .1s;position:relative;}
-.ladder-row:last-child{border-bottom:none;}
-.ladder-row:hover{background:var(--surface-2);}
-.ladder-row.mera-row{background:rgba(255,122,61,.05);}
-.ladder-row.mera-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);}
-.ladder-row.mera-row:hover{background:rgba(255,122,61,.1);}
-.rank-num{font-size:11px;font-family:var(--mono);color:var(--faint);font-weight:700;text-align:center;}
-.rank-num.mera-rank{color:var(--accent);font-size:12px;}
-.brand-col{min-width:0;}
-.brand-name-cell{font-size:12px;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.brand-name-cell.mera-brand{color:var(--accent);}
-.item-name-cell{font-size:10px;font-family:var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
-.price-col{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--fg);}
-.price-col.mera-price{color:var(--accent);}
-.move-col{font-size:11px;font-family:var(--mono);font-weight:700;display:flex;align-items:center;gap:4px;}
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;}
+.card-title{font-size:14px;font-weight:700;letter-spacing:.02em;}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* Pricing Ladder */
+.ladder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+.ladder-segment{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.ladder-seg-header{padding:14px 16px;border-bottom:1px solid var(--border-soft);background:var(--inset);}
+.ladder-seg-title{font-size:13px;font-weight:700;letter-spacing:.02em;}
+.ladder-seg-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+.ladder-items{padding:8px 0;}
+.ladder-item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:7px 16px;border-bottom:1px solid var(--border-soft);transition:background .1s;}
+.ladder-item:last-child{border-bottom:none;}
+.ladder-item:hover{background:var(--surface-2);}
+.ladder-item.mera-sku{background:rgba(255,122,61,.06);border-left:2px solid var(--accent);}
+.sku-info{min-width:0;}
+.sku-name{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sku-brand{font-size:10px;color:var(--muted);margin-top:1px;}
+.sku-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;}
+.badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;}
+.badge-mera{background:var(--accent);color:#fff;}
+.badge-pack{background:var(--surface-2);color:var(--muted);border:1px solid var(--border);}
+.sku-price{font-size:13px;font-weight:700;font-family:var(--mono);text-align:right;white-space:nowrap;}
+.sku-move{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.move-arrow{font-size:11px;font-weight:700;}
 .move-up{color:var(--danger);}
 .move-down{color:var(--success);}
-.move-flat{color:var(--faint);}
-.units-col{font-size:11px;font-family:var(--mono);color:var(--fg-2);}
-.rev-col{font-size:11px;font-family:var(--mono);color:var(--fg-2);}
-.share-col{width:60px;}
-.share-bar-track{height:4px;background:var(--inset);border-radius:2px;margin-top:3px;}
-.share-bar-fill{height:4px;border-radius:2px;background:var(--accent);}
-.share-bar-fill.mera-bar{background:var(--success);}
-.ladder-header-row{display:grid;grid-template-columns:32px 1fr 1fr 90px 80px 80px 60px 48px;gap:0;padding:8px 20px;background:var(--inset);border-bottom:1px solid var(--border);}
-.lh-cell{font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;}
-.ladder-divider{display:flex;align-items:center;gap:10px;padding:6px 20px;background:var(--inset);border-top:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft);}
-.ladder-divider span{font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;}
-.ladder-divider::before,.ladder-divider::after{content:'';flex:1;height:1px;background:var(--border-soft);}
+.move-neutral{color:var(--muted);}
+.move-pct{font-size:9px;color:var(--muted);font-family:var(--mono);}
+.rev-bar-wrap{height:3px;background:var(--border-soft);border-radius:2px;margin-top:4px;}
+.rev-bar{height:100%;border-radius:2px;background:var(--fg-2);opacity:.5;}
+.mera-sku .rev-bar{background:var(--accent);}
+.rank-num{font-size:10px;font-weight:700;color:var(--muted);font-family:var(--mono);min-width:20px;text-align:center;}
+.ladder-rank-1 .rank-num{color:var(--warn);}
 
-/* ── Dashboard ── */
-.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px;font-family:var(--mono);}
-.dash-seg-grid{display:flex;flex-direction:column;gap:16px;}
-.dash-seg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
-.dash-seg-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;transition:background .15s;}
-.dash-seg-head:hover{background:var(--surface-2);}
-.dash-seg-body{border-top:1px solid var(--border-soft);padding:16px 18px;display:none;}
-.dash-seg-body.open{display:block;}
-.rev-table{width:100%;border-collapse:collapse;font-size:12px;}
-.rev-table th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:7px 10px;border-bottom:1px solid var(--border);font-family:var(--mono);white-space:nowrap;font-weight:700;}
-.rev-table td{padding:9px 10px;border-bottom:1px solid var(--border-soft);font-family:var(--mono);color:var(--fg-2);vertical-align:middle;}
-.rev-table tr:last-child td{border-bottom:none;}
-.rev-table tr.mera-tr td{background:rgba(255,122,61,.05);}
-.rev-table tr.mera-tr td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
-.rev-table tr:hover td{background:var(--surface-2);}
-.rev-table tr.mera-tr:hover td{background:rgba(255,122,61,.1);}
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:12px;color:var(--muted);}
+.empty-icon{font-size:40px;opacity:.5;}
+.empty-title{font-size:16px;font-weight:700;color:var(--fg);}
+.empty-desc{font-size:13px;max-width:400px;line-height:1.6;}
 
-/* ── Upload / Manage ── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;margin-bottom:16px;}
-.card-title{font-size:14px;font-weight:600;margin-bottom:10px;}
-.section-header{font-size:12px;font-weight:700;color:var(--fg-2);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;}
-.note{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.6;}
-.dropzone{border:1.5px dashed var(--border);border-radius:var(--r-md);padding:32px;text-align:center;color:var(--muted);cursor:pointer;background:var(--inset);transition:all .15s;}
-.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accent-soft);}
-.dropzone input{display:none;}
-.dropzone .dz-icon{font-size:28px;margin-bottom:10px;}
-.dropzone .dz-label{font-size:14px;color:var(--fg);margin-bottom:5px;font-weight:600;}
-.month-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
-.month-chip{border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 12px;font-size:11px;font-family:var(--mono);background:var(--surface-2);display:flex;align-items:center;gap:10px;}
-.month-chip b{font-weight:700;color:var(--fg);}
-.month-chip .count{color:var(--muted);}
-.month-chip button{background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;}
-.upload-progress{margin-top:12px;font-size:11px;font-family:var(--mono);color:var(--warn);}
+/* Market Dashboard */
+.segments-grid{display:grid;gap:12px;}
+.seg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.seg-card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;}
+.seg-card-header:hover{background:var(--surface-2);}
+.seg-card-title{font-size:13px;font-weight:700;}
+.seg-stats{display:flex;gap:16px;align-items:center;}
+.seg-stat{text-align:right;}
+.seg-stat-val{font-size:14px;font-weight:700;font-family:var(--mono);}
+.seg-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.seg-mera-val{color:var(--accent);}
+.seg-delta-pos{color:var(--danger);}
+.seg-delta-neg{color:var(--success);}
+.seg-body{padding:0 16px 14px;display:none;}
+.seg-body.open{display:block;}
+.seg-toggle{color:var(--muted);transition:transform .2s;}
+.seg-toggle.open{transform:rotate(180deg);}
+.mini-table{width:100%;border-collapse:collapse;margin-top:8px;}
+.mini-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border-bottom:1px solid var(--border-soft);text-align:left;}
+.mini-table td{font-size:12px;padding:6px 8px;border-bottom:1px solid var(--border-soft);}
+.mini-table tr:last-child td{border-bottom:none;}
+.mini-table tr.mera-row{background:rgba(255,122,61,.06);}
+.mini-table tr.mera-row td{font-weight:600;}
 
-/* ── Preset builder ── */
-.preset-head{display:grid;grid-template-columns:22px 1.4fr 1fr 1fr 1fr 1fr 1.2fr 28px;gap:8px;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em;padding:0 0 8px;border-bottom:1px solid var(--border);font-family:var(--mono);}
-.preset-row{display:grid;grid-template-columns:22px 1.4fr 1fr 1fr 1fr 1fr 1.2fr 28px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--border-soft);}
-.preset-row input[type=text],.preset-row select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--inset);color:var(--fg);outline:none;}
-.preset-row input[type=text]:focus,.preset-row select:focus{border-color:var(--accent);}
-.btn-icon{background:var(--surface-2);border:1px solid var(--border);width:24px;height:24px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.btn-icon:hover{color:var(--fg);border-color:var(--accent);}
-.btn-icon:disabled{opacity:.3;cursor:not-allowed;}
-.save-msg{font-size:11px;color:var(--success);font-family:var(--mono);}
+/* Leadership Brief */
+.brief-layout{display:grid;grid-template-columns:1fr;gap:16px;}
+.brief-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.threshold-row{display:flex;align-items:center;gap:8px;}
+.threshold-row label{font-size:12px;color:var(--muted);}
+.threshold-input{width:70px;background:var(--inset);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--fg);font:inherit;font-size:12px;text-align:center;}
+.flag-list{display:grid;gap:8px;}
+.flag-item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-radius:var(--r-sm);border:1px solid;}
+.flag-item.flag-up{background:rgba(255,107,92,.06);border-color:rgba(255,107,92,.2);}
+.flag-item.flag-down{background:rgba(61,220,138,.06);border-color:rgba(61,220,138,.2);}
+.flag-item.flag-new{background:rgba(91,155,240,.06);border-color:rgba(91,155,240,.2);}
+.flag-icon{font-size:16px;}
+.flag-text{font-size:12px;line-height:1.5;}
+.flag-brand{font-weight:700;}
+.flag-delta{font-size:13px;font-weight:700;font-family:var(--mono);text-align:right;}
+.flag-delta.up{color:#f66b5c;}
+.flag-delta.down{color:var(--success);}
 
-/* ── Brief ── */
-.brief-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;}
-.brief-card h3{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.flag-row{display:grid;grid-template-columns:80px 1fr 100px 100px 80px 60px;gap:0;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border-soft);}
-.flag-row:last-child{border-bottom:none;}
-.flag-row:hover{background:var(--surface-2);}
-.flag-row.mera-flag{background:rgba(255,122,61,.05);}
-.flag-head{display:grid;grid-template-columns:80px 1fr 100px 100px 80px 60px;gap:0;padding:8px 14px;background:var(--inset);border-bottom:1px solid var(--border);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;}
+/* Data & Segments Tab */
+.data-layout{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;}
+@media(max-width:900px){.data-layout{grid-template-columns:1fr;}}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--r-md);padding:32px;text-align:center;cursor:pointer;transition:all .2s;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-soft);}
+.upload-icon{font-size:32px;margin-bottom:8px;}
+.upload-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.upload-desc{font-size:12px;color:var(--muted);}
+.month-list{display:grid;gap:8px;margin-top:16px;}
+.month-chip{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r-sm);}
+.month-chip b{font-size:13px;}
+.month-chip .count{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.month-chip button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:2px 4px;border-radius:4px;}
+.month-chip button:hover{color:var(--danger);background:rgba(255,107,92,.1);}
+.note{font-size:12px;color:var(--muted);font-style:italic;}
 
-/* ── States ── */
-.state-box{text-align:center;padding:56px 24px;color:var(--muted);font-family:var(--mono);font-size:12px;border:1px dashed var(--border);border-radius:var(--r-lg);}
-.state-box .icon{font-size:32px;margin-bottom:14px;}
-.state-box h3{font-size:15px;font-family:var(--font);font-weight:600;color:var(--fg-2);margin-bottom:8px;}
-.state-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px 0;color:var(--muted);font-family:var(--mono);font-size:12px;}
-.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+/* Segment builder */
+.seg-builder{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;}
+.seg-builder h3{font-size:13px;font-weight:700;margin-bottom:12px;}
+.field-group{margin-bottom:12px;}
+.field-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.field-group input,.field-group select{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 10px;font:inherit;font-size:12px;}
+.seg-list{display:grid;gap:6px;margin-top:12px;}
+.seg-pill{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;}
+.seg-pill button{background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;border-radius:3px;}
+.seg-pill button:hover{color:var(--danger);}
+
+/* Spinner */
+.spinner{display:flex;align-items:center;justify-content:center;padding:48px;gap:10px;color:var(--muted);}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── Sign-in overlay ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:200;padding:24px;opacity:0;pointer-events:none;transition:opacity .18s;}
-.overlay.open{opacity:1;pointer-events:auto;}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);width:min(380px,100%);padding:28px;box-shadow:var(--shadow-lg);transform:translateY(10px);transition:transform .18s;}
-.overlay.open .modal{transform:none;}
-.modal.shake{animation:shake .4s;}
-@keyframes shake{10%,90%{transform:translateX(-2px);}20%,80%{transform:translateX(4px);}30%,50%,70%{transform:translateX(-6px);}40%,60%{transform:translateX(6px);}}
-.modal-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
-.modal-icon{width:36px;height:36px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:18px;}
-.modal-title{font-size:16px;font-weight:700;}
-.modal-desc{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.6;margin-bottom:16px;}
-.modal input{width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;background:var(--inset);color:var(--fg);outline:none;margin-bottom:10px;}
-.modal input:focus{border-color:var(--accent);}
-.modal-err{font-size:11px;color:var(--danger);font-family:var(--mono);min-height:16px;opacity:0;margin-bottom:8px;}
-.modal-err.show{opacity:1;}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px;}
+/* Toast */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999;}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:600;box-shadow:var(--shadow);animation:slideIn .2s ease;border:1px solid;}
+.toast.success{background:var(--success-bg);border-color:rgba(61,220,138,.3);color:var(--success);}
+.toast.error{background:var(--danger-bg);border-color:rgba(255,107,92,.3);color:#f66b5c;}
+.toast.info{background:var(--surface);border-color:var(--border);color:var(--fg);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
 
-/* ── Responsive ── */
-@media(max-width:900px){
-  .topbar,.navbar{padding:12px 16px;}
-  .panel{padding:16px 16px 48px;}
-  .ladder-row,.ladder-header-row{grid-template-columns:28px 1fr 90px 70px 60px;}
-  .lh-cell:nth-child(n+6),.ladder-row>*:nth-child(n+6){display:none;}
-  .preset-head,.preset-row{grid-template-columns:22px 1fr 1fr 28px;display:flex;flex-wrap:wrap;}
-}
+/* Auth overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);}
+.overlay.hidden{display:none;}
+.dialog{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;max-width:380px;width:90%;box-shadow:var(--shadow-lg);}
+.dialog h2{font-size:16px;margin-bottom:8px;}
+.dialog p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.dialog input{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font:inherit;font-size:14px;margin-bottom:8px;}
+.dialog input:focus{outline:2px solid var(--accent);}
+
+/* Utilities */
+.flex{display:flex;}.gap-8{gap:8px;}.gap-12{gap:12px;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
+.text-muted{color:var(--muted);}.text-accent{color:var(--accent);}.text-success{color:var(--success);}
+.mt-8{margin-top:8px;}.mt-12{margin-top:12px;}.mt-16{margin-top:16px;}
+.fw-700{font-weight:700;}.fs-12{font-size:12px;}.fs-11{font-size:11px;}
+.font-mono{font-family:var(--mono);}
 </style>
 </head>
 <body>
-<div class="overlay" id="sbOverlay">
-  <form class="modal" id="sbForm">
-    <div class="modal-head"><div class="modal-icon">🔐</div><div class="modal-title">Sign in to upload</div></div>
-    <div class="modal-desc">Data is public (read-only). Sign in with your Mera Supabase credentials to upload months and save presets.</div>
-    <input type="email" id="sbEmail" placeholder="Email" autocomplete="username">
-    <input type="password" id="sbPass" placeholder="Password" autocomplete="current-password">
-    <div class="modal-err" id="sbErr">Sign-in failed</div>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" id="sbCancel">Cancel</button>
-      <button type="button" class="btn btn-primary" id="sbGo">Sign in</button>
-    </div>
-  </form>
-</div>
-
 <div class="app">
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-name">Price Intelligence</span>
-      <span class="brand-tag">Mera Cannabis</span>
-    </div>
-    <div class="period-sel" id="periodControls">
-      <label>Current</label>
-      <select class="ctrl-select" id="curMonthSelect"></select>
-      <label>vs.</label>
-      <select class="ctrl-select" id="prevMonthSelect"><option value="">(none)</option></select>
-    </div>
-    <div class="topbar-right">
-      <div class="conn-badge offline" id="connBadge"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></div>
-      <button class="btn btn-ghost btn-sm" id="topSignBtn">Sign in</button>
-    </div>
-  </header>
-
-  <nav class="navbar">
-    <button class="nav-btn active" data-tab="ladder">Pricing Ladder</button>
-    <div class="nav-sep"></div>
-    <button class="nav-btn" data-tab="dashboard">Market Dashboard</button>
-    <div class="nav-sep"></div>
-    <button class="nav-btn" data-tab="brief">Leadership Brief</button>
-    <div class="nav-sep"></div>
-    <button class="nav-btn" data-tab="manage">Data &amp; Segments</button>
-  </nav>
-
-  <!-- PRICING LADDER -->
-  <div class="panel active" id="panel-ladder">
-    <div id="ladderKpis"></div>
-    <div class="pill-row" id="ladderFilterRow"></div>
-    <div id="ladderOut"><div class="state-loading"><div class="spinner"></div>Loading…</div></div>
+<!-- Topbar -->
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-name">Price Intelligence</span>
+    <span class="brand-tag">Mera Cannabis</span>
   </div>
-
-  <!-- MARKET DASHBOARD -->
-  <div class="panel" id="panel-dashboard">
-    <div id="dashKpis"></div>
-    <div class="pill-row" id="dashFilterRow"></div>
-    <div id="dashOut"><div class="state-loading"><div class="spinner"></div>Loading…</div></div>
+  <div class="period-select">
+    <label>Current</label>
+    <select id="selCurrent"><option value="">— pick month —</option></select>
+    <span style="color:var(--muted);font-size:12px">vs.</span>
+    <select id="selCompare"><option value="">(none)</option></select>
   </div>
-
-  <!-- LEADERSHIP BRIEF -->
-  <div class="panel" id="panel-brief">
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
-      <label style="font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;">Current</label>
-      <select class="ctrl-select" id="briefCur"></select>
-      <label style="font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;">vs.</label>
-      <select class="ctrl-select" id="briefPrev"></select>
-      <label style="font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;">Flag threshold</label>
-      <select class="ctrl-select" id="briefThr">
-        <option value="3">±3% (sensitive)</option>
-        <option value="5" selected>±5% (standard)</option>
-        <option value="10">±10%</option>
-        <option value="15">±15%</option>
-      </select>
-      <button class="btn btn-primary" id="genBriefBtn">Generate Brief</button>
-      <button class="btn btn-ghost" id="dlPdfBtn" style="display:none">Download PDF</button>
-    </div>
-    <div id="briefOut"><div class="state-box"><div class="icon">📋</div><h3>Select months and generate</h3></div></div>
-  </div>
-
-  <!-- DATA & SEGMENTS -->
-  <div class="panel" id="panel-manage">
-    <div class="section-header">Upload Monthly OCS Data</div>
-    <div class="card">
-      <div class="dropzone" id="dropzone">
-        <div class="dz-icon">📊</div>
-        <div class="dz-label">Drop monthly .xlsx here or click to browse</div>
-        <p class="note" style="margin-top:6px;">Expects: SKU, Brand, Item Name, SubCategory, SubSubCategory, Sales ($), Sales Units, OCS.ca Sales Price ($) Exclude Tax, THC Range (%), Retail Pack Net Content, Units per pack, Extraction Process</p>
-        <input type="file" id="fileInput" accept=".xlsx,.xls">
-      </div>
-      <div class="upload-progress" id="uploadProgress"></div>
-      <div class="month-list" id="monthList"></div>
-    </div>
-
-    <div class="section-header" style="margin-top:28px;">Segment Presets</div>
-    <div class="card">
-      <p class="note" style="margin-bottom:16px;">Rules checked top→bottom, first match wins. Use keywords to target specific product lines (e.g. "60" for 60+ Infused). Macro group = how segments roll up in the Pricing Ladder.</p>
-      <div class="preset-head">
-        <div></div><div>Micro-segment / Macro group</div><div>Category</div><div>Format</div><div>Pack</div><div>Brand filter</div><div>Keywords (comma-sep)</div><div></div>
-      </div>
-      <div id="presetRows"></div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" id="addPresetBtn">+ Add row</button>
-        <button class="btn btn-ghost" id="loadDefaultsBtn">Load Mera presets</button>
-        <button class="btn btn-primary" id="savePresetsBtn">Save to Supabase</button>
-        <span class="save-msg" id="presetSaveMsg"></span>
-      </div>
-    </div>
+  <div class="topbar-right">
+    <span class="conn-badge connecting" id="connBadge"><span class="conn-dot"></span><span id="connText">Connecting…</span></span>
+    <button class="btn btn-ghost btn-sm" id="authBtn" onclick="handleAuth()">Sign in</button>
   </div>
 </div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-tab="ladder" onclick="showTab('ladder')">Pricing Ladder</div>
+  <div class="tab" data-tab="market" onclick="showTab('market')">Market Dashboard</div>
+  <div class="tab" data-tab="brief" onclick="showTab('brief')">Leadership Brief</div>
+  <div class="tab" data-tab="data" onclick="showTab('data')">Data &amp; Segments</div>
+</div>
+
+<!-- Main -->
+<main>
+  <!-- Pricing Ladder -->
+  <div id="tab-ladder">
+    <div id="ladderContent"><div class="spinner"><div class="spin"></div>Loading…</div></div>
+  </div>
+
+  <!-- Market Dashboard -->
+  <div id="tab-market" style="display:none">
+    <div id="marketContent"><div class="spinner"><div class="spin"></div>Loading…</div></div>
+  </div>
+
+  <!-- Leadership Brief -->
+  <div id="tab-brief" style="display:none">
+    <div class="brief-header">
+      <div>
+        <div style="font-size:16px;font-weight:700">Leadership Brief</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">Notable price movements &amp; competitor flags</div>
+      </div>
+      <div class="flex gap-8 items-center">
+        <div class="threshold-row">
+          <label>Flag threshold ±</label>
+          <input type="number" class="threshold-input" id="threshold" value="5" min="1" max="50" onchange="renderBrief()">
+          <label>%</label>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="exportPDF()">⬇ PDF</button>
+      </div>
+    </div>
+    <div id="briefContent" class="mt-16"><div class="spinner"><div class="spin"></div>Loading…</div></div>
+  </div>
+
+  <!-- Data & Segments -->
+  <div id="tab-data" style="display:none">
+    <div class="data-layout">
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Upload Market Data</div><div class="card-sub">Drop OCS .xlsx files — saved permanently to PRICE INT bucket</div></div>
+          </div>
+          <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
+            <div class="upload-icon">📊</div>
+            <div class="upload-title">Drop .xlsx file here or click to browse</div>
+            <div class="upload-desc">OCS licensee sales data — columns: Licensee Name, Product Name, Category, Total Sales ($), Units Sold</div>
+          </div>
+          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFileSelect(event)">
+          <div id="uploadStatus" class="mt-8"></div>
+          <div class="month-list" id="monthList"></div>
+        </div>
+      </div>
+      <div>
+        <div class="seg-builder">
+          <h3>Segment Rules</h3>
+          <div class="field-group">
+            <label>Segment Name</label>
+            <input type="text" id="segName" placeholder="e.g. Greazy 60+ Infused Pre-Rolls">
+          </div>
+          <div class="field-group">
+            <label>Brand Keyword (optional)</label>
+            <input type="text" id="segBrand" placeholder="e.g. GREAZY">
+          </div>
+          <div class="field-group">
+            <label>Name Keyword (optional)</label>
+            <input type="text" id="segKeyword" placeholder="e.g. 60+">
+          </div>
+          <div class="field-group">
+            <label>Pack / Size Keyword (optional)</label>
+            <input type="text" id="segPack" placeholder="e.g. 3x0.5g">
+          </div>
+          <div class="field-group">
+            <label>Category (optional)</label>
+            <select id="segCategory"><option value="">All Categories</option></select>
+          </div>
+          <button class="btn btn-accent" style="width:100%" onclick="addSegment()">+ Add Segment</button>
+          <div class="seg-list" id="segList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- Auth Overlay -->
+<div class="overlay hidden" id="authOverlay">
+  <div class="dialog">
+    <h2>Sign in to upload data</h2>
+    <p>Enter your email and we'll send you a magic link. Only authorized Mera team members can upload data.</p>
+    <input type="email" id="authEmail" placeholder="you@mera.ca" onkeydown="if(event.key==='Enter')submitAuth()">
+    <button class="btn btn-accent" style="width:100%;margin-top:4px" onclick="submitAuth()">Send Magic Link</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="closeOverlay()">Cancel</button>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
 <script>
-/* ════════ CONFIG ════════ */
-const SB_URL    = 'https://sxkaswnhqgatbpoeapsz.supabase.co';
-const SB_ANON   = 'PASTE_YOUR_PRICE_INT_ANON_KEY_HERE';
-const SB_BUCKET = 'PRICE INT';
-const MERA_BRANDS = ['Buddy Blooms','LITTI.','GREAZY','Shatterizer','Ellevia','Countryside Cannabis','Countryside Cannabis Harvest Reserve','CCHR'];
-const isMera = b => MERA_BRANDS.some(m => (b||'').trim().toLowerCase() === m.toLowerCase());
+/* ================================================================
+   CONFIG
+================================================================ */
+const SB_URL  = 'https://sxkaswnhqgatbpoeapsz.supabase.co';
+const SB_ANON = 'PASTE_YOUR_PRICE_INT_ANON_KEY_HERE';
 
-let sb = null, SESSION = null, pendingAfterAuth = null;
+const MERA_BRANDS = ['buddy blooms','litti','litti.','greazy','shatterizer','ellevia','countryside cannabis','countryside cannabis harvest reserve','cchr'];
 
+/* ================================================================
+   SUPABASE CLIENT
+================================================================ */
+let sb = null;
 function sbClient(){
-  if(!sb && window.supabase?.createClient) sb = window.supabase.createClient(SB_URL, SB_ANON);
+  if(!sb && window.supabase){
+    sb = window.supabase.createClient(SB_URL, SB_ANON);
+  }
   return sb;
 }
-function isConnected(){ return !!sbClient(); }
-function isSignedIn(){ return !!SESSION; }
 
-/* ════════ STORAGE (PRICE INT bucket) ════════ */
+/* ================================================================
+   STATE
+================================================================ */
+let monthsData   = {};   // { 'YYYY-MM': [ rowObjects ] }
+let segments     = [];   // user-defined segment rules
+let currentMonth = '';
+let compareMonth = '';
+let currentUser  = null;
+let pendingAfterAuth = null;
+
+/* ================================================================
+   INIT
+================================================================ */
+window.addEventListener('DOMContentLoaded', async () => {
+  initConn();
+  await loadFromBucket();
+  populateMonthSelects();
+  renderMonthList();
+  renderSegList();
+  runAll();
+  populateCategorySelect();
+});
+
+/* ================================================================
+   CONNECTION STATUS
+================================================================ */
+function initConn(){
+  const badge  = document.getElementById('connBadge');
+  const text   = document.getElementById('connText');
+  const client = sbClient();
+  if(!client){
+    badge.className = 'conn-badge offline';
+    text.textContent = 'Offline (add key)';
+    return;
+  }
+  badge.className = 'conn-badge connecting';
+  text.textContent = 'Connecting…';
+
+  client.auth.getUser().then(({data,error}) => {
+    if(error && error.message && error.message.includes('Invalid API key')){
+      badge.className = 'conn-badge offline';
+      text.textContent = 'Invalid API key';
+    } else {
+      badge.className = 'conn-badge online';
+      text.textContent = 'Connected';
+      if(data && data.user){
+        currentUser = data.user;
+        document.getElementById('authBtn').textContent = 'Sign out';
+      }
+    }
+  }).catch(() => {
+    badge.className = 'conn-badge offline';
+    text.textContent = 'Offline';
+  });
+
+  client.auth.onAuthStateChange((event, session) => {
+    currentUser = session ? session.user : null;
+    if(currentUser){
+      badge.className = 'conn-badge online';
+      text.textContent = 'Connected · ' + (currentUser.email || '').split('@')[0];
+      document.getElementById('authBtn').textContent = 'Sign out';
+      if(pendingAfterAuth){ pendingAfterAuth(); pendingAfterAuth = null; }
+    } else {
+      document.getElementById('authBtn').textContent = 'Sign in';
+    }
+  });
+}
+
+/* ================================================================
+   AUTH
+================================================================ */
+function handleAuth(){
+  if(currentUser){ sbClient().auth.signOut(); return; }
+  showOverlay();
+}
+function showOverlay(){ document.getElementById('authOverlay').classList.remove('hidden'); }
+function closeOverlay(){ document.getElementById('authOverlay').classList.add('hidden'); }
+async function submitAuth(){
+  const email = document.getElementById('authEmail').value.trim();
+  if(!email){ toast('Enter your email address','error'); return; }
+  const c = sbClient();
+  if(!c){ toast('Supabase not connected','error'); return; }
+  const {error} = await c.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href } });
+  if(error){ toast(error.message,'error'); } else { toast('Magic link sent! Check your email.','success'); closeOverlay(); }
+}
+function requireAuth(fn){
+  if(currentUser){ fn(); return; }
+  pendingAfterAuth = fn;
+  showOverlay();
+}
+async function requireAuthAsync(fn){
+  if(currentUser){ await fn(); return; }
+  pendingAfterAuth = fn;
+  showOverlay();
+}
+
+/* ================================================================
+   STORAGE HELPERS (PRICE INT bucket)
+================================================================ */
 async function storageGet(filename){
   const c = sbClient(); if(!c) return null;
-  try{
-    const {data,error} = await c.storage.from(SB_BUCKET).download(filename);
-    if(error){ console.warn('[sb]',error.message); return null; }
-    return JSON.parse(await data.text());
-  }catch(e){ console.warn('[sb]',e); return null; }
+  const {data,error} = await c.storage.from('PRICE INT').download(filename);
+  if(error) return null;
+  const text = await data.text();
+  try { return JSON.parse(text); } catch(e){ return null; }
 }
-
 async function storageList(){
   const c = sbClient(); if(!c) return [];
-  try{
-    const {data,error} = await c.storage.from(SB_BUCKET).list('',{limit:200,sortBy:{column:'name',order:'asc'}});
-    if(error){ console.warn('[sb]',error.message); return []; }
-    return data||[];
-  }catch(e){ return []; }
+  const {data,error} = await c.storage.from('PRICE INT').list('',{limit:200});
+  return error ? [] : (data || []);
 }
-
 async function storagePut(filename, obj){
-  const c = sbClient(); if(!c) throw new Error('Not connected');
+  const c = sbClient(); if(!c) throw new Error('No Supabase client');
   const blob = new Blob([JSON.stringify(obj)],{type:'application/json'});
-  const {error} = await c.storage.from(SB_BUCKET).upload(filename, blob, {upsert:true, contentType:'application/json'});
+  const {error} = await c.storage.from('PRICE INT').upload(filename, blob, {upsert:true, contentType:'application/json'});
+  if(error) throw error;
+}
+async function storageRemove(filename){
+  const c = sbClient(); if(!c) throw new Error('No Supabase client');
+  const {error} = await c.storage.from('PRICE INT').remove([filename]);
   if(error) throw error;
 }
 
-async function storageRemove(filename){
-  const c = sbClient(); if(!c) return;
-  try{ await c.storage.from(SB_BUCKET).remove([filename]); }catch(e){}
-}
-
-/* ════════ AUTH ════════ */
-const overlay   = document.getElementById('sbOverlay');
-const sbForm    = document.getElementById('sbForm');
-const sbEmailEl = document.getElementById('sbEmail');
-const sbPassEl  = document.getElementById('sbPass');
-const sbErrEl   = document.getElementById('sbErr');
-
-function openAuth(){ sbErrEl.classList.remove('show'); overlay.classList.add('open'); setTimeout(()=>sbEmailEl.focus(),60); }
-function closeAuth(){ overlay.classList.remove('open'); }
-
-async function trySignIn(){
-  try{
-    const c = sbClient();
-    const {error} = await c.auth.signInWithPassword({email:sbEmailEl.value.trim(),password:sbPassEl.value});
-    if(error) throw error;
-    sbPassEl.value=''; closeAuth();
-    const fn = pendingAfterAuth; pendingAfterAuth=null;
-    if(fn) await fn();
-  }catch(err){
-    sbForm.classList.remove('shake'); void sbForm.offsetWidth; sbForm.classList.add('shake');
-    sbErrEl.textContent=err?.message||'Sign-in failed'; sbErrEl.classList.add('show');
-    sbPassEl.value=''; sbPassEl.focus();
-  }
-}
-
-document.getElementById('sbGo').addEventListener('click', trySignIn);
-document.getElementById('sbCancel').addEventListener('click',()=>{ pendingAfterAuth=null; closeAuth(); });
-overlay.addEventListener('click', e=>{ if(e.target===overlay){ pendingAfterAuth=null; closeAuth(); }});
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&overlay.classList.contains('open')){ pendingAfterAuth=null; closeAuth(); }});
-sbForm.addEventListener('keydown',e=>{ if(e.key==='Enter') trySignIn(); });
-
-function requireAuthAsync(fn){
-  return new Promise(resolve=>{
-    if(isSignedIn()){ fn().then(resolve); return; }
-    pendingAfterAuth = async()=>{ await fn(); resolve(); };
-    openAuth();
-  });
-}
-
-/* ════════ CONNECTION UI ════════ */
-const connBadge = document.getElementById('connBadge');
-const connLabel = document.getElementById('connLabel');
-const topSignBtn = document.getElementById('topSignBtn');
-
-function updateConnectionUI(){
-  if(!isConnected()){ connBadge.className='conn-badge offline'; connLabel.textContent='Offline'; topSignBtn.textContent='Sign in'; return; }
-  if(isSignedIn()){ connBadge.className='conn-badge live'; connLabel.textContent='Live · '+(SESSION.email||'signed in'); topSignBtn.textContent='Sign out'; }
-  else{ connBadge.className='conn-badge read-only'; connLabel.textContent='Connected · read-only'; topSignBtn.textContent='Sign in'; }
-}
-
-topSignBtn.addEventListener('click', async()=>{
-  if(isSignedIn()){ await sbClient().auth.signOut(); SESSION=null; updateConnectionUI(); } else openAuth();
-});
-
-/* ════════ DATA MODEL ════════ */
-let monthsData = {};  // { 'YYYY-MM': rows[] }
-let presets    = [];
-
-function detectFormat(ssc, sc){ return (ssc&&String(ssc).trim())||sc||'Other'; }
-function detectPack(net, upp){
-  const u = upp!=null&&upp!==''&&Number(upp)>1 ? Number(upp) : null;
-  const c = net!=null&&net!=='' ? String(net).trim() : '';
-  return u ? u+'x'+c : c||'—';
-}
-function parseThcMid(r){
-  if(!r||typeof r!=='string') return null;
-  if(r.includes('>')){ const n=parseFloat(r); return isNaN(n)?null:n+2; }
-  const m=r.match(/([d.]+)%?-([d.]+)%?/);
-  if(m) return (parseFloat(m[1])+parseFloat(m[2]))/2;
-  const n=parseFloat(r); return isNaN(n)?null:n;
-}
-function revWtd(rows){
-  const d=rows.reduce((s,r)=>s+(r.salesDollars||0),0);
-  const u=rows.reduce((s,r)=>s+(r.salesUnits||0),0);
-  return u>0?d/u:null;
-}
-function totalRev(rows){ return rows.reduce((s,r)=>s+(r.salesDollars||0),0); }
-function totalUnits(rows){ return rows.reduce((s,r)=>s+(r.salesUnits||0),0); }
-function fm(n){ return n==null||isNaN(n)?'—':'$'+n.toFixed(2); }
-function fmRev(n){ if(n==null||isNaN(n)) return '—'; if(n>=1000000) return '$'+(n/1000000).toFixed(1)+'M'; if(n>=1000) return '$'+(n/1000).toFixed(0)+'K'; return '$'+n.toFixed(0); }
-function fmPct(n){ return n==null||isNaN(n)?'—':n.toFixed(1)+'%'; }
-function deltaClass(d,inv=false){ if(d==null||Math.abs(d)<0.01) return 'delta-flat'; if(d>0) return inv?'delta-down':'delta-up'; return inv?'delta-up':'delta-down'; }
-function deltaStr(d,decimals=2){ if(d==null) return '—'; return (d>0?'+':'')+d.toFixed(decimals); }
-const CAT_COLORS=['#5b9bf0','#29c3d4','#f0b73d','#97cf3f','#e879b9','#a78bfa','#ff7a3d','#ff9f7a'];
-function colorFor(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return CAT_COLORS[h%CAT_COLORS.length]; }
-function ea(s){ return (s||'').replace(/"/g,'&quot;'); }
-
-/* ════════ CLASSIFICATION ════════ */
-function classifyRow(r){
-  const name=(r.item||'').toLowerCase();
-  const format=detectFormat(r.subSubCat, r.subCat);
-  const pack=detectPack(r.netContent, r.unitsPerPack);
-  const cat=r.subCat||'Other';
-  const brand=(r.brand||'').trim();
-  for(const p of presets){
-    if(!p.name) continue;
-    const kws=(p.keywords||'').split(',').map(k=>k.trim().toLowerCase()).filter(Boolean);
-    const kwOk  = kws.length===0 || kws.some(k=>name.includes(k));
-    const catOk = !p.category||p.category==='Any'||p.category===cat;
-    const fmtOk = !p.format  ||p.format==='Any'  ||p.format===format;
-    const pkOk  = !p.pack    ||p.pack==='Any'    ||p.pack===pack;
-    const brOk  = !p.brand   ||p.brand==='Any'   ||p.brand===''||(brand.toLowerCase()===p.brand.toLowerCase());
-    if(kwOk&&catOk&&fmtOk&&pkOk&&brOk) return {micro:p.name, macro:p.macro||p.name};
-  }
-  return null;
-}
-
-function buildSegMap(rows){
-  const map={}; let unclassed=0;
-  rows.forEach(r=>{
-    const c=classifyRow(r);
-    if(!c){ unclassed++; return; }
-    if(!map[c.macro]) map[c.macro]={};
-    if(!map[c.macro][c.micro]) map[c.macro][c.micro]=[];
-    map[c.macro][c.micro].push(r);
-  });
-  return {map,unclassed};
-}
-
-/* ════════ LOAD FROM SUPABASE (persistent) ════════ */
-async function loadAllData(){
-  const c = sbClient(); if(!c) return;
-  try{
-    const {data:session} = await c.auth.getSession();
-    SESSION = session?.session ? {email:session.session.user.email} : null;
-    c.auth.onAuthStateChange((_,s)=>{ SESSION=s?{email:s.user.email}:null; updateConnectionUI(); });
-  }catch(e){}
-
+/* ================================================================
+   LOAD ALL DATA FROM BUCKET
+================================================================ */
+async function loadFromBucket(){
+  showSpinner('ladderContent');
   const files = await storageList();
-  const monthFiles = files.filter(f=>f.name.startsWith('month-')&&f.name.endsWith('.json'));
-  const presetFile = files.find(f=>f.name==='presets.json');
+  const monthFiles = files.filter(f => f.name && f.name.startsWith('month-') && f.name.endsWith('.json'));
+  const presetsFile = files.find(f => f.name === 'presets.json');
 
-  // Load all months in parallel
-  const loads = monthFiles.map(async f=>{
+  monthsData = {};
+  for(const f of monthFiles){
     const key = f.name.replace('month-','').replace('.json','');
-    const payload = await storageGet(f.name);
-    if(payload?.rows) monthsData[key] = payload.rows;
-  });
-  if(presetFile){
-    loads.push(storageGet('presets.json').then(p=>{ if(p?.presets?.length) presets=p.presets; }));
+    const rows = await storageGet(f.name);
+    if(Array.isArray(rows)) monthsData[key] = rows;
   }
-  await Promise.all(loads);
+
+  if(presetsFile){
+    const p = await storageGet('presets.json');
+    if(p && Array.isArray(p.segments)) segments = p.segments;
+  }
 }
 
-/* ════════ FILE UPLOAD ════════ */
-const dropzone  = document.getElementById('dropzone');
-const fileInput = document.getElementById('fileInput');
-const uploadProg = document.getElementById('uploadProgress');
-
-dropzone.addEventListener('click',()=>fileInput.click());
-dropzone.addEventListener('dragover',e=>{e.preventDefault();dropzone.classList.add('drag');});
-dropzone.addEventListener('dragleave',()=>dropzone.classList.remove('drag'));
-dropzone.addEventListener('drop',e=>{e.preventDefault();dropzone.classList.remove('drag');if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);});
-fileInput.addEventListener('change',e=>{if(e.target.files[0]) handleFile(e.target.files[0]); e.target.value='';});
-
-function guessMonth(name){
-  const mo={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-  const m=name.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)w*[_\- ]?(\d{4})/);
-  return m ? m[2]+'-'+mo[m[1]] : '';
+/* ================================================================
+   MONTH SELECTS
+================================================================ */
+function populateMonthSelects(){
+  const months = Object.keys(monthsData).sort().reverse();
+  const selC = document.getElementById('selCurrent');
+  const selP = document.getElementById('selCompare');
+  const prevC = selC.value;
+  const prevP = selP.value;
+  selC.innerHTML = '<option value="">— pick month —</option>' + months.map(m => '<option value="'+m+'">'+m+'</option>').join('');
+  selP.innerHTML = '<option value="">(none)</option>' + months.map(m => '<option value="'+m+'">'+m+'</option>').join('');
+  selC.value = months.includes(prevC) ? prevC : (months[0] || '');
+  selP.value = months.includes(prevP) ? prevP : (months[1] || '');
+  currentMonth = selC.value;
+  compareMonth = selP.value;
+  selC.onchange = () => { currentMonth = selC.value; runAll(); };
+  selP.onchange = () => { compareMonth = selP.value; runAll(); };
 }
 
-async function handleFile(file){
-  const reader = new FileReader();
-  reader.onload = async e=>{
-    try{
-      uploadProg.textContent='Parsing file…';
-      const wb = XLSX.read(e.target.result,{type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(ws,{defval:null});
-      const rows = json.map(r=>({
-        sku:r['SKU'], brand:r['Brand'], item:r['Item Name'],
-        subCat:r['SubCategory'], subSubCat:r['SubSubCategory'],
-        salesDollars:r['Sales ($)'], salesUnits:r['Sales Units'],
-        price:r['OCS.ca Sales Price ($) Exclude Tax'],
-        thcRange:r['THC Range (%)'],
-        netContent:r['Retail Pack Net Content'], unitsPerPack:r['Units per pack'],
-        extractionProcess:r['Extraction Process']
-      })).filter(r=>r.sku&&r.price!=null);
-
-      const guess = guessMonth(file.name);
-      const label = prompt('Label this month (YYYY-MM):',guess||'');
-      if(!label){ uploadProg.textContent=''; return; }
-
-      uploadProg.textContent='Uploading to PRICE INT bucket…';
-      await requireAuthAsync(async()=>{
-        await storagePut('month-'+label+'.json',{month:label,rows,uploadedAt:new Date().toISOString()});
-        monthsData[label]=rows;
-      });
-
-      uploadProg.textContent='✓ Saved permanently to bucket';
-      setTimeout(()=>uploadProg.textContent='',3000);
-      renderMonthList(); populateMonthSelects(); runAll();
-    }catch(err){ uploadProg.textContent='Error: '+err.message; console.error(err); }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-async function deleteMonth(key){
-  if(!confirm('Delete '+key+' permanently from bucket?')) return;
-  await requireAuthAsync(async()=>{ await storageRemove('month-'+key+'.json'); delete monthsData[key]; });
-  renderMonthList(); populateMonthSelects(); runAll();
-}
-
+/* ================================================================
+   RENDER MONTH LIST (Data tab)
+================================================================ */
 function renderMonthList(){
   const el = document.getElementById('monthList');
   const months = Object.keys(monthsData).sort();
-  el.innerHTML = months.length
-    ? months.map(m=>'<div class="month-chip"><b>'+m+'</b><span class="count">'+monthsData[m].length+' SKUs</span><button onclick="deleteMonth(''+m+'')">✕</button></div>').join('')
-    : '<span class="note">No months uploaded yet. Drop a .xlsx to get started.</span>';
-}
-
-/* ════════ MONTH SELECTORS ════════ */
-function populateMonthSelects(){
-  const months = Object.keys(monthsData).sort();
-  const opts = months.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
-  const noOpt = '<option value="">(none)</option>';
-  ['curMonthSelect','briefCur'].forEach(id=>{ const el=document.getElementById(id); el.innerHTML=opts; if(months.length) el.value=months[months.length-1]; });
-  ['prevMonthSelect','briefPrev'].forEach(id=>{ const el=document.getElementById(id); el.innerHTML=noOpt+opts; if(months.length>1) el.value=months[months.length-2]; });
-  document.getElementById('curMonthSelect').addEventListener('change',runAll);
-  document.getElementById('prevMonthSelect').addEventListener('change',runAll);
-}
-
-/* ════════ PRESET BUILDER ════════ */
-let knownCats=new Set(['Any']), knownFmts=new Set(['Any']), knownPacks=new Set(['Any']), knownBrands=new Set(['Any']);
-
-function rebuildOptions(){
-  knownCats=new Set(['Any']); knownFmts=new Set(['Any']); knownPacks=new Set(['Any']); knownBrands=new Set(['Any']);
-  Object.values(monthsData).forEach(rows=>rows.forEach(r=>{
-    if(r.subCat) knownCats.add(String(r.subCat).trim());
-    knownFmts.add(detectFormat(r.subSubCat,r.subCat));
-    knownPacks.add(detectPack(r.netContent,r.unitsPerPack));
-    if(r.brand) knownBrands.add(r.brand.trim());
-  }));
-}
-
-function renderPresetRows(){
-  const c = document.getElementById('presetRows');
-  c.innerHTML = presets.map((p,i)=>
-    '<div class="preset-row" data-i="'+i+'">'+
-      '<div style="display:flex;flex-direction:column;gap:3px;">'+
-        '<button class="btn-icon up-btn"'+(i===0?' disabled':'')+'>↑</button>'+
-        '<button class="btn-icon dn-btn"'+(i===presets.length-1?' disabled':'')+'>↓</button>'+
-      '</div>'+
-      '<div style="display:flex;flex-direction:column;gap:4px;">'+
-        '<input type="text" class="nm-in" value="'+ea(p.name)+'" placeholder="Micro-segment name">'+
-        '<input type="text" class="mc-in" value="'+ea(p.macro)+'" placeholder="Macro group" style="opacity:.75;">'+
-      '</div>'+
-      '<select class="cat-sel">'+[...knownCats].map(v=>'<option'+(v===p.category?' selected':'')+'>'+v+'</option>').join('')+'</select>'+
-      '<select class="fmt-sel">'+[...knownFmts].map(v=>'<option'+(v===p.format?' selected':'')+'>'+v+'</option>').join('')+'</select>'+
-      '<select class="pk-sel">'+[...knownPacks].map(v=>'<option'+(v===p.pack?' selected':'')+'>'+v+'</option>').join('')+'</select>'+
-      '<select class="br-sel">'+[...knownBrands].map(v=>'<option'+(v===(p.brand||'Any')?' selected':'')+'>'+v+'</option>').join('')+'</select>'+
-      '<input type="text" class="kw-in" value="'+ea(p.keywords)+'" placeholder="keywords…">'+
-      '<button class="btn-icon del-btn">✕</button>'+
-    '</div>'
-  ).join('');
-
-  c.querySelectorAll('.preset-row').forEach(row=>{
-    const i=+row.dataset.i;
-    row.querySelector('.nm-in').addEventListener('input',e=>presets[i].name=e.target.value);
-    row.querySelector('.mc-in').addEventListener('input',e=>presets[i].macro=e.target.value);
-    row.querySelector('.cat-sel').addEventListener('change',e=>presets[i].category=e.target.value);
-    row.querySelector('.fmt-sel').addEventListener('change',e=>presets[i].format=e.target.value);
-    row.querySelector('.pk-sel').addEventListener('change',e=>presets[i].pack=e.target.value);
-    row.querySelector('.br-sel').addEventListener('change',e=>presets[i].brand=e.target.value==='Any'?'':e.target.value);
-    row.querySelector('.kw-in').addEventListener('input',e=>presets[i].keywords=e.target.value);
-    row.querySelector('.del-btn').addEventListener('click',()=>{ presets.splice(i,1); renderPresetRows(); });
-    row.querySelector('.up-btn').addEventListener('click',()=>{ if(i>0){[presets[i-1],presets[i]]=[presets[i],presets[i-1]]; renderPresetRows();} });
-    row.querySelector('.dn-btn').addEventListener('click',()=>{ if(i<presets.length-1){[presets[i+1],presets[i]]=[presets[i],presets[i+1]]; renderPresetRows();} });
-  });
-}
-
-const MERA_PRESETS = [
-  {name:'Greazy 60+ Infused 3x0.5g',macro:'Infused Pre-Roll 3x0.5g',category:'Infused Pre-Rolls',format:'Any',pack:'3x0.5g',brand:'GREAZY',keywords:'60'},
-  {name:'Diamond Infused 3x0.5g',macro:'Infused Pre-Roll 3x0.5g',category:'Infused Pre-Rolls',format:'Any',pack:'3x0.5g',brand:'',keywords:'diamond'},
-  {name:'Hash Infused 3x0.5g',macro:'Infused Pre-Roll 3x0.5g',category:'Infused Pre-Rolls',format:'Any',pack:'3x0.5g',brand:'',keywords:'hash'},
-  {name:'Infused PR 3x0.5g Other',macro:'Infused Pre-Roll 3x0.5g',category:'Infused Pre-Rolls',format:'Any',pack:'3x0.5g',brand:'',keywords:''},
-  {name:'Greazy 60+ Infused 1x1g',macro:'Infused Pre-Roll 1x1g',category:'Infused Pre-Rolls',format:'Any',pack:'1x1g',brand:'GREAZY',keywords:'60'},
-  {name:'Diamond Infused 1x1g',macro:'Infused Pre-Roll 1x1g',category:'Infused Pre-Rolls',format:'Any',pack:'1x1g',brand:'',keywords:'diamond'},
-  {name:'Infused PR 1x1g Other',macro:'Infused Pre-Roll 1x1g',category:'Infused Pre-Rolls',format:'Any',pack:'1x1g',brand:'',keywords:''},
-  {name:'Infused PR 5x0.5g',macro:'Infused Pre-Roll 5x0.5g',category:'Infused Pre-Rolls',format:'Any',pack:'5x0.5g',brand:'',keywords:''},
-  {name:'Liquid Diamonds AIO 1g',macro:'AIO 1g',category:'Vapes',format:'Disposable Vape Pens',pack:'1g',brand:'',keywords:'liquid diamond'},
-  {name:'Live Resin AIO 1g',macro:'AIO 1g',category:'Vapes',format:'Disposable Vape Pens',pack:'1g',brand:'',keywords:'live resin'},
-  {name:'AIO 1g Other',macro:'AIO 1g',category:'Vapes',format:'Disposable Vape Pens',pack:'1g',brand:'',keywords:''},
-  {name:'Liquid Diamonds 510 1g',macro:'510 Cart 1g',category:'Vapes',format:'510 Thread Vape Cartridges',pack:'1g',brand:'',keywords:'liquid diamond'},
-  {name:'Live Resin 510 1g',macro:'510 Cart 1g',category:'Vapes',format:'510 Thread Vape Cartridges',pack:'1g',brand:'',keywords:'live resin'},
-  {name:'510 Cart 1g Other',macro:'510 Cart 1g',category:'Vapes',format:'510 Thread Vape Cartridges',pack:'1g',brand:'',keywords:''},
-  {name:'Pre-Roll 10x0.5g',macro:'Pre-Roll 10x0.5g',category:'Pre-Rolled',format:'Any',pack:'10x0.5g',brand:'',keywords:''},
-  {name:'Pre-Roll 5x0.5g',macro:'Pre-Roll 5x0.5g',category:'Pre-Rolled',format:'Any',pack:'5x0.5g',brand:'',keywords:''},
-  {name:'Pre-Roll 1x1g',macro:'Pre-Roll 1x1g',category:'Pre-Rolled',format:'Any',pack:'1x1g',brand:'',keywords:''},
-  {name:'Rosin 1g',macro:'Concentrate 1g',category:'Concentrates',format:'Any',pack:'1g',brand:'',keywords:'rosin'},
-  {name:'Shatter 1g',macro:'Concentrate 1g',category:'Concentrates',format:'Any',pack:'1g',brand:'',keywords:'shatter'},
-  {name:'Concentrate 1g Other',macro:'Concentrate 1g',category:'Concentrates',format:'Any',pack:'1g',brand:'',keywords:''},
-  {name:'Dried Flower 3.5g',macro:'Flower 3.5g',category:'Dried Flower',format:'Any',pack:'3.5g',brand:'',keywords:''}
-];
-
-document.getElementById('loadDefaultsBtn').addEventListener('click',()=>{
-  if(presets.length&&!confirm('Replace current presets with Mera defaults?')) return;
-  presets=JSON.parse(JSON.stringify(MERA_PRESETS));
-  rebuildOptions(); renderPresetRows();
-});
-document.getElementById('addPresetBtn').addEventListener('click',()=>{
-  presets.push({name:'',macro:'',category:'Any',format:'Any',pack:'Any',brand:'',keywords:''});
-  renderPresetRows();
-});
-document.getElementById('savePresetsBtn').addEventListener('click',async()=>{
-  await requireAuthAsync(async()=>{ await storagePut('presets.json',{presets}); });
-  const el=document.getElementById('presetSaveMsg');
-  el.textContent='Saved ✓'; setTimeout(()=>el.textContent='',2500);
-});
-/* ════════ PRICING LADDER ════════ */
-let ladderFilter = null;
-
-function renderLadderKpis(curRows, prevRows){
-  const el = document.getElementById('ladderKpis');
-  const marketRev = totalRev(curRows);
-  const meraRev   = totalRev(curRows.filter(r=>isMera(r.brand)));
-  const meraShare = marketRev>0 ? meraRev/marketRev*100 : null;
-  const prevMeraRev = totalRev(prevRows.filter(r=>isMera(r.brand)));
-  const prevMarketRev = totalRev(prevRows);
-  const prevShare = prevMarketRev>0 ? prevMeraRev/prevMarketRev*100 : null;
-  const shareDelta = meraShare!=null&&prevShare!=null ? meraShare-prevShare : null;
-
-  const classified = curRows.filter(r=>classifyRow(r));
-  const meraClassified = classified.filter(r=>isMera(r.brand));
-  const meraRwp = revWtd(curRows.filter(r=>isMera(r.brand)));
-  const prevMeraRwp = revWtd(prevRows.filter(r=>isMera(r.brand)));
-  const rwpDelta = meraRwp!=null&&prevMeraRwp!=null ? meraRwp-prevMeraRwp : null;
-
-  const segs = new Set(curRows.map(r=>{const c=classifyRow(r);return c?c.macro:null;}).filter(Boolean)).size;
-
-  el.innerHTML = '<div class="kpi-strip">'+
-    kpiCard(curRows.length,'Market SKUs',classified.length+' classified')+
-    kpiCard(fmRev(marketRev),'Market Rev',prevRows.length?fmRev(totalRev(prevRows))+' prior':'—')+
-    kpiCard(fmPct(meraShare),'Mera Rev Share',shareDelta!=null?'<span class="delta-badge '+deltaClass(shareDelta,true)+'">'+deltaStr(shareDelta,1)+'pp vs prior</span>':'')+
-    kpiCard(fm(meraRwp),'Mera Rev-Wtd Price',rwpDelta!=null?'<span class="delta-badge '+deltaClass(rwpDelta)+'">'+deltaStr(rwpDelta)+' vs prior</span>':'')+
-    kpiCard(segs,'Segments','in view')+
-  '</div>';
-}
-
-function kpiCard(val,label,sub){
-  return '<div class="kpi"><div class="label">'+label+'</div><div class="value">'+val+'</div><div class="sub">'+sub+'</div></div>';
-}
-
-function renderLadderFilters(curMap){
-  const row = document.getElementById('ladderFilterRow');
-  const macros = Object.keys(curMap).sort();
-  row.innerHTML = '<div class="pill active" data-macro="">All Segments</div>'+
-    macros.map(m=>{
-      const hasMera=Object.values(curMap[m]).flat().some(e=>isMera(e.brand));
-      return '<div class="pill'+(hasMera?' mera-pill':'')+'" data-macro="'+ea(m)+'">'+m+'</div>';
-    }).join('');
-  row.querySelectorAll('.pill').forEach(p=>{
-    p.addEventListener('click',()=>{
-      row.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
-      p.classList.add('active');
-      ladderFilter = p.dataset.macro||null;
-      renderLadder(lastCurMap, lastPrevMap, lastPrevBySku, ladderFilter);
-    });
-  });
-}
-
-let lastCurMap={}, lastPrevMap={}, lastPrevBySku={};
-
-function renderLadder(curMap, prevMap, prevBySku, filter){
-  const out = document.getElementById('ladderOut');
-  const macros = Object.keys(curMap).sort((a,b)=>{
-    const am=Object.values(curMap[a]).flat().some(e=>isMera(e.brand));
-    const bm=Object.values(curMap[b]).flat().some(e=>isMera(e.brand));
-    return (bm-am)||a.localeCompare(b);
-  });
-  const visible = filter ? macros.filter(m=>m===filter) : macros;
-  if(!visible.length){ out.innerHTML='<div class="state-box"><div class="icon">🔍</div><h3>No matches</h3></div>'; return; }
-
-  const marketAllRev = totalRev(Object.values(curMap).flatMap(mm=>Object.values(mm).flat()));
-
-  out.innerHTML = '<div class="ladder-wrap">'+visible.map(macro=>{
-    const microMap = curMap[macro];
-    const allEntries = Object.values(microMap).flat();
-    const segRev = totalRev(allEntries);
-    const segShare = marketAllRev>0 ? segRev/marketAllRev*100 : null;
-    const meraEntries = allEntries.filter(e=>isMera(e.brand));
-    const hasMera = meraEntries.length>0;
-    const meraRwp = revWtd(meraEntries);
-    const prevAllEntries = Object.values(prevMap[macro]||{}).flat();
-    const mktRwp = revWtd(allEntries);
-    const prevMktRwp = revWtd(prevAllEntries);
-    const mktDelta = mktRwp!=null&&prevMktRwp!=null ? mktRwp-prevMktRwp : null;
-    const color = colorFor(macro);
-
-    // Build ranked list sorted by price desc
-    const ranked = allEntries.slice().sort((a,b)=>(b.price||0)-(a.price||0));
-    const maxRev = Math.max(...ranked.map(e=>e.salesDollars||0),1);
-    const segRevMax = segRev||1;
-
-    // Find Mera position(s)
-    const meraIdxs = new Set(ranked.map((e,i)=>isMera(e.brand)?i:-1).filter(i=>i>=0));
-    const meraMinIdx = Math.min(...meraIdxs);
-
-    let rows = '';
-    ranked.forEach((e,i)=>{
-      const prev = prevBySku[e.sku];
-      const priceDelta = prev ? e.price-prev.price : null;
-      const isMeraRow = isMera(e.brand);
-      const revShare = segRevMax>0?(e.salesDollars||0)/segRevMax*100:0;
-      const moveStr = priceDelta!=null
-        ? (Math.abs(priceDelta)<0.005 ? '<span class="move-flat">—</span>' : '<span class="move-'+(priceDelta>0?'up':'down')+'">'+( priceDelta>0?'▲':'▼')+' $'+Math.abs(priceDelta).toFixed(2)+'</span>')
-        : '<span class="move-flat">—</span>';
-
-      // Insert "Mera zone" divider
-      let divider='';
-      if(!filter&&meraIdxs.size>0&&i===meraMinIdx&&!isMeraRow){
-        divider='<div class="ladder-divider"><span>↑ Above Mera</span></div>';
-      }
-
-      rows += divider+'<div class="ladder-row'+(isMeraRow?' mera-row':'')+'">'+
-        '<div class="rank-num'+(isMeraRow?' mera-rank':')'+'">'+((i+1))+'</div>'+
-        '<div class="brand-col">'+
-          '<div class="brand-name-cell'+(isMeraRow?' mera-brand':'')+'">'+
-            (e.brand||'—')+(isMeraRow?' <span style="color:var(--accent);font-size:9px;">MERA</span>':'')+
-          '</div>'+
-          '<div class="item-name-cell" title="'+(e.item||'')+'">'+((e.item||'').length>48?(e.item||'').slice(0,46)+'…':e.item||'—')+'</div>'+
-        '</div>'+
-        '<div class="brand-col"><div class="item-name-cell">'+(e.thcRange||'—')+(parseThcMid(e.thcRange)!=null?' (~'+parseThcMid(e.thcRange).toFixed(0)+'%)':'')+'</div><div class="item-name-cell">'+(detectPack(e.netContent,e.unitsPerPack))+'</div></div>'+
-        '<div class="price-col'+(isMeraRow?' mera-price':'')+'">'+fm(e.price)+'</div>'+
-        '<div class="move-col">'+moveStr+'</div>'+
-        '<div class="units-col">'+(e.salesUnits!=null?e.salesUnits.toLocaleString():'-')+' u</div>'+
-        '<div class="rev-col">'+fmRev(e.salesDollars||0)+'</div>'+
-        '<div class="share-col"><div style="font-size:10px;font-family:var(--mono);color:var(--muted);">'+revShare.toFixed(0)+'%</div><div class="share-bar-track"><div class="share-bar-fill'+(isMeraRow?' mera-bar':'')+'" style="width:'+Math.min(revShare,100).toFixed(0)+'%"></div></div></div>'+
-      '</div>';
-    });
-
-    return '<div class="ladder-card">'+
-      '<div class="ladder-head">'+
-        '<div class="ladder-head-left">'+
-          '<span class="seg-dot" style="background:'+color+'"></span>'+
-          '<div>'+
-            '<div class="ladder-title">'+macro+(hasMera?' <span style="color:var(--success);font-size:11px;font-family:var(--mono);">✓ Mera</span>':'')+'</div>'+
-            '<div class="ladder-sub">'+allEntries.length+' SKUs · '+Object.keys(microMap).length+' micro-segment'+(Object.keys(microMap).length>1?'s':'')+(segShare!=null?' · '+segShare.toFixed(1)+'% of market rev':'')+'</div>'+
-          '</div>'+
-        '</div>'+
-        '<div class="ladder-stats">'+
-          (meraRwp!=null?'<div class="lstat"><div class="lv" style="color:var(--accent)">'+fm(meraRwp)+'</div><div class="ll">Mera RW price</div></div>':'')+
-          '<div class="lstat"><div class="lv">'+fm(mktRwp)+'</div><div class="ll">Market RW avg</div></div>'+
-          (mktDelta!=null?'<div class="lstat"><div class="lv"><span class="delta-badge '+deltaClass(mktDelta)+'">'+deltaStr(mktDelta)+'</span></div><div class="ll">MoM price shift</div></div>':'')+
-          '<div class="lstat"><div class="lv">'+fmRev(segRev)+'</div><div class="ll">Segment rev</div></div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="ladder-header-row">'+
-        '<div class="lh-cell">#</div>'+
-        '<div class="lh-cell">Brand / Product</div>'+
-        '<div class="lh-cell">THC / Pack</div>'+
-        '<div class="lh-cell">Price</div>'+
-        '<div class="lh-cell">MoM Move</div>'+
-        '<div class="lh-cell">Units</div>'+
-        '<div class="lh-cell">Revenue</div>'+
-        '<div class="lh-cell">Rev Share</div>'+
-      '</div>'+
-      '<div class="ladder-body">'+rows+'</div>'+
-    '</div>';
-  }).join('')+'</div>';
-}
-
-/* ════════ MARKET DASHBOARD ════════ */
-function renderDashKpis(curRows, prevRows){
-  document.getElementById('dashKpis').innerHTML = document.getElementById('ladderKpis').innerHTML;
-}
-
-function renderDashFilters(curMap){
-  const row = document.getElementById('dashFilterRow');
-  const macros = Object.keys(curMap).sort();
-  row.innerHTML = '<div class="pill active" data-macro="">All</div>'+
-    macros.map(m=>'<div class="pill" data-macro="'+ea(m)+'">'+m+'</div>').join('');
-  row.querySelectorAll('.pill').forEach(p=>{
-    p.addEventListener('click',()=>{
-      row.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
-      p.classList.add('active');
-      renderDash(lastCurMap, lastPrevMap, lastPrevBySku, p.dataset.macro||null);
-    });
-  });
-}
-
-function renderDash(curMap, prevMap, prevBySku, filter){
-  const out = document.getElementById('dashOut');
-  if(!Object.keys(curMap).length){ out.innerHTML='<div class="state-box"><div class="icon">📂</div><h3>No data — upload a month in Data &amp; Segments</h3></div>'; return; }
-  if(!presets.some(p=>p.name)){ out.innerHTML='<div class="state-box"><div class="icon">⚙️</div><h3>No segment presets — go to Data &amp; Segments</h3></div>'; return; }
-
-  const macros = Object.keys(curMap).sort((a,b)=>{
-    const am=Object.values(curMap[a]).flat().some(e=>isMera(e.brand));
-    const bm=Object.values(curMap[b]).flat().some(e=>isMera(e.brand));
-    return (bm-am)||a.localeCompare(b);
-  });
-  const visible = filter ? macros.filter(m=>m===filter) : macros;
-  const mktRevTotal = totalRev(Object.values(curMap).flatMap(mm=>Object.values(mm).flat()));
-
-  out.innerHTML = '<div class="dash-seg-grid">'+visible.map(macro=>{
-    const mm=curMap[macro], pm=prevMap[macro]||{};
-    const allCur=Object.values(mm).flat(), allPrev=Object.values(pm).flat();
-    const mktRwp=revWtd(allCur), prevMktRwp=revWtd(allPrev);
-    const mktRwpDelta=mktRwp!=null&&prevMktRwp!=null?mktRwp-prevMktRwp:null;
-    const meraRows=allCur.filter(e=>isMera(e.brand));
-    const meraRwp=revWtd(meraRows);
-    const prevMeraRows=allPrev.filter(e=>isMera(e.brand));
-    const prevMeraRwp=revWtd(prevMeraRows);
-    const meraRwpDelta=meraRwp!=null&&prevMeraRwp!=null?meraRwp-prevMeraRwp:null;
-    const segRev=totalRev(allCur);
-    const segShare=mktRevTotal>0?segRev/mktRevTotal*100:null;
-    const hasMera=meraRows.length>0;
-    const color=colorFor(macro);
-    const meraPos=allCur.slice().sort((a,b)=>(b.price||0)-(a.price||0)).findIndex(e=>isMera(e.brand));
-    const mktPos=meraPos>=0?'#'+(meraPos+1)+' of '+allCur.length+' by price':'';
-
-    // Build detailed micro table
-    const microHtml = Object.keys(mm).sort((a,b)=>{
-      const am=mm[a].some(e=>isMera(e.brand));
-      const bm=mm[b].some(e=>isMera(e.brand));
-      return (bm-am)||a.localeCompare(b);
-    }).map(micro=>{
-      const entries=mm[micro], prevEntries=pm[micro]||[];
-      const rwp=revWtd(entries), prevRwp=revWtd(prevEntries);
-      const rwpD=rwp!=null&&prevRwp!=null?rwp-prevRwp:null;
-      const microRev=totalRev(entries);
-      const sorted=entries.slice().sort((a,b)=>(b.price||0)-(a.price||0));
-      return '<div style="margin-bottom:20px;">'+
-        '<div style="font-size:11px;font-family:var(--mono);color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">'+micro+'</div>'+
-        '<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:10px;">'+
-          miniStat(fm(rwp),'Rev-Wtd Avg Price')+
-          miniStat(fmRev(microRev),'Segment Revenue')+
-          miniStat(entries.length+' SKUs','Market Width')+
-          (rwpD!=null?miniStat('<span class="delta-badge '+deltaClass(rwpD)+'">'+deltaStr(rwpD)+'</span>','MoM Price Δ'):'')+ 
-        '</div>'+
-        '<table class="rev-table"><thead><tr><th>Brand</th><th>Product</th><th>Price</th><th>MoM Δ</th><th>THC</th><th>Units</th><th>Revenue</th><th>Rev %</th></tr></thead><tbody>'+
-        sorted.map(e=>{
-          const prev=prevBySku[e.sku];
-          const pd=prev?e.price-prev.price:null;
-          const isMeraR=isMera(e.brand);
-          const rShare=microRev>0?(e.salesDollars||0)/microRev*100:0;
-          return '<tr class="'+(isMeraR?'mera-tr':'')+'">'+
-            '<td style="font-weight:'+(isMeraR?'700':'400')+'">'+( e.brand||'—')+'</td>'+
-            '<td title="'+ea(e.item||'')+'">'+((e.item||'').length>40?(e.item||'').slice(0,38)+'…':e.item||'—')+'</td>'+
-            '<td style="font-weight:700;color:'+(isMeraR?'var(--accent)':'var(--fg)')+'">'+fm(e.price)+'</td>'+
-            '<td>'+(pd!=null?'<span class="delta-badge '+deltaClass(pd)+'">'+deltaStr(pd)+'</span>':'—')+'</td>'+
-            '<td>'+(e.thcRange||'—')+'</td>'+
-            '<td>'+(e.salesUnits!=null?e.salesUnits.toLocaleString():'—')+'</td>'+
-            '<td>'+fmRev(e.salesDollars||0)+'</td>'+
-            '<td>'+rShare.toFixed(1)+'%</td>'+
-          '</tr>';
-        }).join('')+
-        '</tbody></table>'+
-      '</div>';
-    }).join('');
-
-    return '<div class="dash-seg-card">'+
-      '<div class="dash-seg-head" onclick="this.nextElementSibling.classList.toggle('open')">'+
-        '<div style="display:flex;align-items:center;gap:12px;">'+
-          '<span class="seg-dot" style="background:'+color+'"></span>'+
-          '<div>'+
-            '<div style="font-size:15px;font-weight:700;">'+macro+(hasMera?' <span style="color:var(--success);font-size:11px;font-family:var(--mono);">✓ Mera</span>':'')+'</div>'+
-            '<div style="font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:2px;">'+allCur.length+' SKUs'+(segShare!=null?' · '+segShare.toFixed(1)+'% mkt rev':'')+(mktPos?' · '+mktPos:'')+'</div>'+
-          '</div>'+
-        '</div>'+
-        '<div style="display:flex;gap:20px;align-items:center;">'+
-          (meraRwp!=null?'<div class="lstat"><div class="lv" style="font-size:15px;color:var(--accent)">'+fm(meraRwp)+'</div><div class="ll">Mera RW price</div></div>':'')+
-          '<div class="lstat"><div class="lv" style="font-size:15px;">'+fm(mktRwp)+'</div><div class="ll">Market RW avg</div></div>'+
-          (mktRwpDelta!=null?'<div class="lstat"><div class="lv"><span class="delta-badge '+deltaClass(mktRwpDelta)+'">'+deltaStr(mktRwpDelta)+'</span></div><div class="ll">Market Δ</div></div>':'')+
-          (meraRwpDelta!=null?'<div class="lstat"><div class="lv"><span class="delta-badge '+deltaClass(meraRwpDelta)+'">'+deltaStr(meraRwpDelta)+'</span></div><div class="ll">Mera Δ</div></div>':'')+
-        '</div>'+
-      '</div>'+
-      '<div class="dash-seg-body">'+microHtml+'</div>'+
-    '</div>';
-  }).join('')+'</div>';
-}
-
-function miniStat(v,l){ return '<div style="border-left:2px solid var(--accent);padding-left:10px;"><div style="font-size:16px;font-weight:700;font-family:var(--mono);">'+v+'</div><div style="font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:2px;">'+l+'</div></div>'; }
-
-/* ════════ LEADERSHIP BRIEF ════════ */
-document.getElementById('genBriefBtn').addEventListener('click',()=>{
-  const cur=document.getElementById('briefCur').value;
-  const prev=document.getElementById('briefPrev').value;
-  const thr=parseFloat(document.getElementById('briefThr').value);
-  if(!cur||!prev||cur===prev){ alert('Select two different months'); return; }
-  const cMap=buildSegMap(monthsData[cur]||[]).map;
-  const pMap=buildSegMap(monthsData[prev]||[]).map;
-  const flags=genFlags(cMap,pMap,thr);
-  renderBrief(flags,cur,prev,thr);
-  document.getElementById('dlPdfBtn').style.display='';
-  document.getElementById('dlPdfBtn').onclick=()=>downloadPdf(flags,cur,prev,thr);
-});
-
-function genFlags(curMap,prevMap,thr){
-  const flags=[];
-  const allCurRev=totalRev(Object.values(curMap).flatMap(mm=>Object.values(mm).flat()));
-  const allPrevRev=totalRev(Object.values(prevMap).flatMap(mm=>Object.values(mm).flat()));
-  Object.keys(curMap).forEach(macro=>{
-    const mm=curMap[macro], pm=prevMap[macro]||{};
-    const cAll=Object.values(mm).flat(), pAll=Object.values(pm).flat();
-    const cRwp=revWtd(cAll), pRwp=revWtd(pAll);
-    const hasMera=cAll.some(e=>isMera(e.brand));
-    const meraRwp=revWtd(cAll.filter(e=>isMera(e.brand)));
-    const segRev=totalRev(cAll);
-    const revSharePct=allCurRev>0?segRev/allCurRev*100:null;
-    if(cRwp!=null&&pRwp!=null&&pRwp>0){
-      const pct=((cRwp-pRwp)/pRwp)*100;
-      if(Math.abs(pct)>=thr) flags.push({level:'Macro',segment:macro,macro,cRwp,pRwp,pct,n:cAll.length,hasMera,meraRwp,revSharePct,segRev});
-    }
-    Object.keys(mm).forEach(micro=>{
-      const cE=mm[micro], pE=pm[micro]||[];
-      const ca=revWtd(cE), pa=revWtd(pE);
-      const mHasMera=cE.some(e=>isMera(e.brand));
-      if(ca!=null&&pa!=null&&pa>0){
-        const pct=((ca-pa)/pa)*100;
-        if(Math.abs(pct)>=thr) flags.push({level:'Micro',segment:micro,macro,cRwp:ca,pRwp:pa,pct,n:cE.length,hasMera:mHasMera,meraRwp:revWtd(cE.filter(e=>isMera(e.brand))),revSharePct:allCurRev>0?totalRev(cE)/allCurRev*100:null,segRev:totalRev(cE)});
-      }
-    });
-  });
-  return flags.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
-}
-
-function renderBrief(flags,cur,prev,thr){
-  const out=document.getElementById('briefOut');
-  const up=flags.filter(f=>f.pct>0).length, dn=flags.filter(f=>f.pct<0).length;
-  const meraFlags=flags.filter(f=>f.hasMera);
-
-  out.innerHTML=
-    '<div class="brief-card">'+
-      '<h3>📊 Price Movement Summary <span style="font-size:12px;font-weight:400;color:var(--muted);font-family:var(--mono);">'+cur+' vs '+prev+' · ±'+thr+'% threshold</span></h3>'+
-      '<div class="kpi-strip" style="margin-bottom:0;">'+
-        kpiCard(flags.length,'Total Flags','across all segments')+
-        kpiCard(up,'Price Increases',''+dn+' decreases')+
-        kpiCard(meraFlags.length,'Mera-Relevant','segments Mera participates in')+
-      '</div>'+
-    '</div>'+
-    (meraFlags.length?
-      '<div class="brief-card">'+
-        '<h3>🎯 Mera-Relevant Movements</h3>'+
-        renderFlagTable(meraFlags)+
-      '</div>':'')+
-    (flags.length?
-      '<div class="brief-card">'+
-        '<h3>📋 All Flagged Segments</h3>'+
-        renderFlagTable(flags)+
-      '</div>':
-      '<div class="state-box"><div class="icon">✅</div><h3>No segments crossed ±'+thr+'% threshold</h3></div>');
-}
-
-function renderFlagTable(flags){
-  return '<div class="flag-head"><div>Level</div><div>Segment</div><div>Prior RW Avg</div><div>Current RW Avg</div><div>Change</div><div>SKUs</div></div>'+
-    flags.map(f=>'<div class="flag-row'+(f.hasMera?' mera-flag':'')+'">'+
-      '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);">'+f.level+'</div>'+
-      '<div><div style="font-size:12px;font-weight:600;">'+f.segment+(f.hasMera?' <span style="color:var(--accent);font-size:9px;font-family:var(--mono);">MERA</span>':'')+'</div>'+
-        (f.level==='Micro'?'<div style="font-size:10px;font-family:var(--mono);color:var(--muted);">'+f.macro+'</div>':'')+
-      '</div>'+
-      '<div style="font-family:var(--mono);font-size:13px;">'+fm(f.pRwp)+'</div>'+
-      '<div style="font-family:var(--mono);font-size:13px;font-weight:700;">'+fm(f.cRwp)+(f.hasMera&&f.meraRwp!=null?' <span style="font-size:10px;color:var(--accent);">(Mera: '+fm(f.meraRwp)+')</span>':'')+'</div>'+
-      '<div><span class="delta-badge '+deltaClass(f.pct)+'">'+deltaStr(f.pct,1)+'%</span>'+
-        (f.revSharePct!=null?'<div style="font-size:9px;font-family:var(--mono);color:var(--muted);margin-top:3px;">'+f.revSharePct.toFixed(1)+'% of market</div>':'')+
-      '</div>'+
-      '<div style="font-family:var(--mono);font-size:12px;">'+f.n+'</div>'+
-    '</div>').join('');
-}
-
-function downloadPdf(flags,cur,prev,thr){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({unit:'pt',format:'letter'});
-  const pw=doc.internal.pageSize.getWidth(),mx=48;
-  let y=56;
-  doc.setFillColor(15,17,23); doc.rect(0,0,pw,doc.internal.pageSize.getHeight(),'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(240,242,246);
-  doc.text('Mera Cannabis — Price Intelligence Brief',mx,y); y+=18;
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(107,116,148);
-  doc.text(cur+' vs. '+prev+' · ±'+thr+'% threshold · '+new Date().toLocaleDateString(),mx,y); y+=16;
-  doc.setDrawColor(255,122,61); doc.setLineWidth(1.5); doc.line(mx,y,pw-mx,y); y+=20;
-  if(!flags.length){ doc.setTextColor(196,200,212); doc.text('No segments moved beyond threshold.',mx,y); }
-  else{
-    const cx=[mx,mx+70,mx+270,mx+360,mx+430,mx+490];
-    doc.setFontSize(8); doc.setTextColor(107,116,148);
-    ['LEVEL','SEGMENT','PRIOR RW AVG','CURRENT RW AVG','CHANGE','SKUs'].forEach((h,i)=>doc.text(h,cx[i],y)); y+=8;
-    doc.setDrawColor(35,42,62); doc.line(mx,y,pw-mx,y); y+=12;
-    flags.slice(0,20).forEach(f=>{
-      if(y>700){doc.addPage();doc.setFillColor(15,17,23);doc.rect(0,0,pw,doc.internal.pageSize.getHeight(),'F');y=56;}
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(184,189,208);
-      doc.text(f.level,cx[0],y);
-      const sl=(f.level==='Micro'?f.segment+' ('+f.macro+')':f.segment);
-      doc.text(sl.length>38?sl.slice(0,36)+'…':sl,cx[1],y);
-      doc.text(fm(f.pRwp),cx[2],y); doc.text(fm(f.cRwp),cx[3],y);
-      doc.setTextColor(f.pct>0?255:61,f.pct>0?107:220,f.pct>0?92:138);
-      doc.setFont('helvetica','bold');
-      doc.text((f.pct>0?'+':'')+f.pct.toFixed(1)+'%',cx[4],y);
-      doc.setTextColor(184,189,208); doc.setFont('helvetica','normal');
-      doc.text(String(f.n),cx[5],y); y+=14;
-      if(f.hasMera){doc.setFontSize(8);doc.setTextColor(255,122,61);doc.setFont('helvetica','italic');doc.text('↳ Mera has SKUs in this segment'+(f.meraRwp!=null?' · Mera RW avg: '+fm(f.meraRwp):''),cx[1],y);y+=11;}
-    });
+  if(months.length === 0){
+    el.innerHTML = '<span class="note">No months uploaded yet. Drop a .xlsx to get started.</span>';
+    return;
   }
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(107,116,148);
-  doc.text('Revenue-weighted avg price = total revenue ÷ total units. OCS wholesale data.',mx,755);
-  doc.save('Mera_Price_Brief_'+cur+'_vs_'+prev+'.pdf');
+  el.innerHTML = months.map(m =>
+    '<div class="month-chip"><b>'+m+'</b><span class="count">'+monthsData[m].length+' SKUs</span><button onclick="deleteMonth(\'' + m + '\')">✕</button></div>'
+  ).join('');
 }
 
-/* ════════ TAB NAV ════════ */
-document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+/* ================================================================
+   DELETE MONTH
+================================================================ */
+async function deleteMonth(key){
+  if(!confirm('Delete '+key+' permanently from bucket?')) return;
+  await requireAuthAsync(async () => {
+    await storageRemove('month-'+key+'.json');
+    delete monthsData[key];
   });
-});
-
-/* ════════ MAIN RUN ════════ */
-function runAll(){
-  const cur  = document.getElementById('curMonthSelect').value;
-  const prev = document.getElementById('prevMonthSelect').value;
-  if(!cur) return;
-  const curRows  = monthsData[cur]||[];
-  const prevRows = prev?(monthsData[prev]||[]):[];
-  const {map:curMap, unclassed} = buildSegMap(curRows);
-  const {map:prevMap} = buildSegMap(prevRows);
-  const prevBySku={};
-  prevRows.forEach(r=>prevBySku[r.sku]=r);
-  lastCurMap=curMap; lastPrevMap=prevMap; lastPrevBySku=prevBySku;
-
-  renderLadderKpis(curRows,prevRows);
-  renderLadderFilters(curMap);
-  renderLadder(curMap,prevMap,prevBySku,ladderFilter);
-  renderDashKpis(curRows,prevRows);
-  renderDashFilters(curMap);
-  renderDash(curMap,prevMap,prevBySku,null);
-
-  if(unclassed>0) console.log('[seg]',unclassed,'SKUs unclassified');
-}
-
-/* ════════ INIT ════════ */
-async function init(){
-  // Show loading state
-  ['ladderOut','dashOut'].forEach(id=>{
-    document.getElementById(id).innerHTML='<div class="state-loading"><div class="spinner"></div>Loading saved data…</div>';
-  });
-
-  const got = await loadAllData();
-  rebuildOptions();
-  renderPresetRows();
   renderMonthList();
   populateMonthSelects();
-  updateConnectionUI();
-
-  const months=Object.keys(monthsData);
-  if(months.length&&presets.some(p=>p.name)){
-    runAll();
-  } else {
-    const noData = '<div class="state-box"><div class="icon">📂</div><h3>No data uploaded yet</h3><span>Go to <strong>Data &amp; Segments</strong>, drop your monthly OCS .xlsx — it saves permanently to the bucket and loads automatically every visit.</span></div>';
-    document.getElementById('ladderOut').innerHTML=noData;
-    document.getElementById('dashOut').innerHTML=noData;
-  }
+  runAll();
 }
 
-init().catch(e=>console.error('init',e));
+/* ================================================================
+   MONTH SELECTORS UPDATE
+================================================================ */
+function populateCategorySelect(){
+  const allCats = new Set();
+  Object.values(monthsData).forEach(rows => rows.forEach(r => { if(r.category) allCats.add(r.category); }));
+  const sel = document.getElementById('segCategory');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">All Categories</option>' + [...allCats].sort().map(c => '<option value="'+c+'">'+c+'</option>').join('');
+  if(prev) sel.value = prev;
+}
+
+/* ================================================================
+   SEGMENT BUILDER
+================================================================ */
+function addSegment(){
+  const name = document.getElementById('segName').value.trim();
+  if(!name){ toast('Enter a segment name','error'); return; }
+  const seg = {
+    id: Date.now(),
+    name,
+    brand:   document.getElementById('segBrand').value.trim(),
+    keyword: document.getElementById('segKeyword').value.trim(),
+    pack:    document.getElementById('segPack').value.trim(),
+    category:document.getElementById('segCategory').value.trim(),
+  };
+  segments.push(seg);
+  savePresets();
+  renderSegList();
+  runAll();
+  ['segName','segBrand','segKeyword','segPack'].forEach(id => document.getElementById(id).value = '');
+  toast('Segment added: '+name,'success');
+}
+function removeSegment(id){
+  segments = segments.filter(s => s.id !== id);
+  savePresets();
+  renderSegList();
+  runAll();
+}
+function renderSegList(){
+  const el = document.getElementById('segList');
+  if(!segments.length){ el.innerHTML = '<p class="note mt-8">No custom segments yet.</p>'; return; }
+  el.innerHTML = segments.map(s =>
+    '<div class="seg-pill"><span>'+s.name+(s.brand?' · '+s.brand:'')+(s.keyword?' · "'+s.keyword+'"':'')+(s.pack?' · '+s.pack:'')+(s.category?' · ['+s.category+']':'')+'</span><button onclick="removeSegment('+s.id+')">✕</button></div>'
+  ).join('');
+}
+async function savePresets(){
+  try { await storagePut('presets.json',{segments}); } catch(e){ console.warn('savePresets:',e); }
+}
+
+/* ================================================================
+   FILE HANDLING
+================================================================ */
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if(file) processFile(file);
+}
+function handleFileSelect(e){
+  const file = e.target.files[0];
+  if(file) processFile(file);
+  e.target.value = '';
+}
+async function processFile(file){
+  if(!file.name.match(/\.xlsx?$/i)){ toast('Please upload a .xlsx file','error'); return; }
+  setUploadStatus('⏳ Reading '+file.name+'…');
+  try {
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab,{type:'arraybuffer'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws,{defval:''});
+    if(!raw.length){ toast('No data found in file','error'); setUploadStatus(''); return; }
+    const rows = normalizeRows(raw);
+    const key  = detectMonthKey(raw, file.name);
+    setUploadStatus('⏳ Saving '+key+' ('+rows.length+' SKUs) to bucket…');
+    requireAuth(async () => {
+      await storagePut('month-'+key+'.json', rows);
+      monthsData[key] = rows;
+      setUploadStatus('✅ '+key+' saved — '+rows.length+' SKUs');
+      renderMonthList();
+      populateMonthSelects();
+      populateCategorySelect();
+      runAll();
+      toast('Uploaded '+key+' ('+rows.length+' SKUs)','success');
+    });
+  } catch(err){
+    toast('Error reading file: '+err.message,'error');
+    setUploadStatus('');
+  }
+}
+function setUploadStatus(msg){ document.getElementById('uploadStatus').textContent = msg; }
+
+/* ================================================================
+   DATA NORMALIZATION
+================================================================ */
+function normalizeRows(raw){
+  return raw.map(r => {
+    const keys = Object.keys(r);
+    function find(...candidates){
+      for(const c of candidates){
+        const k = keys.find(k => k.toLowerCase().includes(c.toLowerCase()));
+        if(k) return r[k];
+      }
+      return '';
+    }
+    const brand    = String(find('licensee','brand','company','operator') || '').trim();
+    const product  = String(find('product','sku','item','name') || '').trim();
+    const category = String(find('category','type','class') || '').trim();
+    const revenueRaw = find('revenue','sales($)','sales $','total sales','dollar','$');
+    const unitsRaw   = find('units','qty','quantity','sold');
+    const priceRaw   = find('price','avg price','average price','unit price');
+    const revenue = parseFloat(String(revenueRaw).replace(/[$,]/g,'')) || 0;
+    const units   = parseFloat(String(unitsRaw).replace(/,/g,'')) || 0;
+    let   price   = parseFloat(String(priceRaw).replace(/[$,]/g,'')) || 0;
+    if(!price && units > 0) price = revenue / units;
+    return { brand, product, category, revenue, units, price: +price.toFixed(4) };
+  }).filter(r => r.product || r.brand);
+}
+function detectMonthKey(raw, filename){
+  const m = filename.match(/(20\d\d)[_\-. ](0?\d|1[0-2])/);
+  if(m) return m[1]+'-'+(m[2].padStart(2,'0'));
+  return new Date().toISOString().slice(0,7);
+}
+
+/* ================================================================
+   RUN ALL RENDERS
+================================================================ */
+function runAll(){
+  renderLadder();
+  renderMarket();
+  renderBrief();
+}
+
+/* ================================================================
+   SEGMENT MATCHING
+================================================================ */
+function isMera(brand){ return MERA_BRANDS.some(b => brand.toLowerCase().includes(b)); }
+
+function getEffectiveSegments(){
+  const auto = MERA_BRANDS.map(b => ({ id:'auto_'+b, name: titleCase(b), brand:b, keyword:'', pack:'', category:'' }));
+  return [...auto, ...segments];
+}
+function titleCase(s){ return s.replace(/w/g, c => c.toUpperCase()); }
+
+function matchSegment(seg, row){
+  const bMatch = !seg.brand    || row.brand.toLowerCase().includes(seg.brand.toLowerCase());
+  const kMatch = !seg.keyword  || row.product.toLowerCase().includes(seg.keyword.toLowerCase());
+  const pMatch = !seg.pack     || row.product.toLowerCase().includes(seg.pack.toLowerCase());
+  const cMatch = !seg.category || row.category.toLowerCase() === seg.category.toLowerCase();
+  return bMatch && kMatch && pMatch && cMatch;
+}
+
+function getRows(monthKey){ return monthsData[monthKey] || []; }
+
+/* ================================================================
+   STATS HELPERS
+================================================================ */
+function revWeightedAvgPrice(rows){
+  const total = rows.reduce((s,r) => s + r.revenue, 0);
+  if(total === 0) return rows.reduce((s,r) => s + r.price, 0) / (rows.length || 1);
+  return rows.reduce((s,r) => s + r.price * (r.revenue / total), 0);
+}
+function pctChange(curr, prev){ if(!prev || prev === 0) return null; return ((curr-prev)/prev)*100; }
+function fmt$(n){ return n == null ? '—' : '$'+n.toFixed(2); }
+function fmtPct(n){ return n == null ? '—' : (n > 0 ? '+' : '')+n.toFixed(1)+'%'; }
+
+/* ================================================================
+   PRICING LADDER TAB
+================================================================ */
+function renderLadder(){
+  const el = document.getElementById('ladderContent');
+  const rows = getRows(currentMonth);
+  if(!currentMonth || !rows.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data loaded</div><div class="empty-desc">Go to Data &amp; Segments tab to upload your first OCS .xlsx file. Data saves permanently.</div></div>';
+    return;
+  }
+  const prevRows = getRows(compareMonth);
+  const segs = buildEffectiveSegments(rows, prevRows);
+  if(!segs.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No segments matched</div><div class="empty-desc">Check your segment rules in Data &amp; Segments.</div></div>';
+    return;
+  }
+  el.innerHTML = '<div class="ladder-grid">' + segs.map(renderLadderSegment).join('') + '</div>';
+}
+
+function buildEffectiveSegments(rows, prevRows){
+  const segs = getEffectiveSegments();
+  const result = [];
+  for(const seg of segs){
+    const matched = rows.filter(r => matchSegment(seg, r));
+    if(!matched.length) continue;
+    matched.sort((a,b) => a.price - b.price);
+    const totalRev = matched.reduce((s,r) => s + r.revenue, 0);
+    const avgPrice = revWeightedAvgPrice(matched);
+    const items = matched.map(r => {
+      const prevRow = prevRows.find(p => p.product === r.product && p.brand === r.brand);
+      const move = prevRow ? pctChange(r.price, prevRow.price) : null;
+      return { ...r, move, revShare: totalRev > 0 ? r.revenue / totalRev : 0, prevPrice: prevRow ? prevRow.price : null };
+    });
+    result.push({ seg, items, avgPrice, totalRev });
+  }
+  return result;
+}
+
+function renderLadderSegment({ seg, items, avgPrice, totalRev }){
+  const meraItems = items.filter(r => isMera(r.brand));
+  const topMera = meraItems.length ? revWeightedAvgPrice(meraItems) : null;
+  const itemCount = items.length;
+  const meraPos = meraItems.length > 0 ? (items.findIndex(r => isMera(r.brand)) + 1) : null;
+
+  const rows = items.map((r, idx) => {
+    const isMeraRow = isMera(r.brand);
+    const barW = Math.round(r.revShare * 100);
+    let moveHtml = '';
+    if(r.move !== null && r.move !== undefined){
+      const cls = r.move > 0.5 ? 'move-up' : r.move < -0.5 ? 'move-down' : 'move-neutral';
+      const arrow = r.move > 0.5 ? '▲' : r.move < -0.5 ? '▼' : '—';
+      moveHtml = '<div class="sku-move"><span class="move-arrow '+cls+'">'+arrow+'</span><span class="move-pct">'+fmtPct(r.move)+'</span></div>';
+    }
+    return '<div class="ladder-item'+(isMeraRow?' mera-sku':'')+' ladder-rank-'+(idx+1)+'">'
+      +'<span class="rank-num">'+(idx+1)+'</span>'
+      +'<div class="sku-info">'
+        +'<div class="sku-name">'+esc(r.product)+'</div>'
+        +'<div class="sku-brand">'+esc(r.brand)+'</div>'
+        +'<div class="sku-badges">'+(isMeraRow?'<span class="badge badge-mera">MERA</span>':'')+'</div>'
+        +'<div class="rev-bar-wrap"><div class="rev-bar" style="width:'+barW+'%"></div></div>'
+      +'</div>'
+      +'<span class="sku-price">'+fmt$(r.price)+'</span>'
+      +moveHtml
+      +'</div>';
+  }).join('');
+
+  return '<div class="ladder-segment">'
+    +'<div class="ladder-seg-header">'
+      +'<div class="ladder-seg-title">'+esc(seg.name)+'</div>'
+      +'<div class="ladder-seg-meta">'+itemCount+' SKUs · Avg '+fmt$(avgPrice)+(meraPos?' · Mera #'+meraPos:'')+'</div>'
+    +'</div>'
+    +'<div class="ladder-items">'+rows+'</div>'
+    +'</div>';
+}
+
+/* ================================================================
+   MARKET DASHBOARD TAB
+================================================================ */
+function renderMarket(){
+  const el = document.getElementById('marketContent');
+  const rows = getRows(currentMonth);
+  if(!currentMonth || !rows.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No data for selected month</div><div class="empty-desc">Upload data in the Data &amp; Segments tab.</div></div>';
+    return;
+  }
+  const prevRows = getRows(compareMonth);
+  const segs = buildEffectiveSegments(rows, prevRows);
+  if(!segs.length){ el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No matched segments</div></div>'; return; }
+
+  el.innerHTML = '<div class="segments-grid">'
+    + segs.map(s => renderMarketSegCard(s, prevRows)).join('')
+    + '</div>';
+}
+
+function renderMarketSegCard({ seg, items, avgPrice, totalRev }, prevRows){
+  const meraItems = items.filter(r => isMera(r.brand));
+  const meraAvg = meraItems.length ? revWeightedAvgPrice(meraItems) : null;
+  const prevMatched = prevRows.filter(r => matchSegment(seg, r));
+  const prevAvg = prevMatched.length ? revWeightedAvgPrice(prevMatched) : null;
+  const mktDelta = pctChange(avgPrice, prevAvg);
+  const meraDelta = meraAvg && prevMatched.length ? pctChange(meraAvg, revWeightedAvgPrice(prevMatched.filter(r => isMera(r.brand)))) : null;
+
+  const tableRows = items.slice(0,8).map(r => {
+    const move = r.move;
+    const cls = move != null ? (move > 0.5 ? 'seg-delta-pos' : move < -0.5 ? 'seg-delta-neg' : '') : '';
+    return '<tr class="'+(isMera(r.brand)?'mera-row':'')+'">'
+      +'<td>'+esc(r.brand)+'</td>'
+      +'<td>'+esc(r.product.substring(0,40))+'</td>'
+      +'<td class="font-mono">'+fmt$(r.price)+'</td>'
+      +'<td class="font-mono '+cls+'">'+(move!=null?fmtPct(move):'—')+'</td>'
+      +'<td class="font-mono">'+(r.revenue>0?'$'+formatNum(r.revenue):'—')+'</td>'
+      +'</tr>';
+  }).join('');
+
+  const id = 'seg_'+seg.id;
+  return '<div class="seg-card">'
+    +'<div class="seg-card-header" onclick="toggleSeg(\'' + id + '\')">'
+      +'<div class="seg-card-title">'+esc(seg.name)+'<span class="fs-11 text-muted" style="margin-left:8px">'+items.length+' SKUs</span></div>'
+      +'<div class="seg-stats">'
+        +(meraAvg!=null?'<div class="seg-stat"><div class="seg-stat-val seg-mera-val">'+fmt$(meraAvg)+'</div><div class="seg-stat-lbl">Mera Avg</div></div>':'')
+        +'<div class="seg-stat"><div class="seg-stat-val">'+fmt$(avgPrice)+'</div><div class="seg-stat-lbl">Mkt Avg</div></div>'
+        +(mktDelta!=null?'<div class="seg-stat"><div class="seg-stat-val '+(mktDelta>0?'seg-delta-pos':'seg-delta-neg')+'">'+fmtPct(mktDelta)+'</div><div class="seg-stat-lbl">MoM Δ</div></div>':'')
+        +'<span class="seg-toggle" id="arrow_'+id+'">▾</span>'
+      +'</div>'
+    +'</div>'
+    +'<div class="seg-body" id="'+id+'">'
+      +'<table class="mini-table"><thead><tr><th>Brand</th><th>Product</th><th>Price</th><th>MoM Δ</th><th>Revenue</th></tr></thead>'
+      +'<tbody>'+tableRows+'</tbody></table>'
+    +'</div>'
+    +'</div>';
+}
+
+function toggleSeg(id){
+  const body  = document.getElementById(id);
+  const arrow = document.getElementById('arrow_'+id);
+  if(!body) return;
+  const open = body.classList.toggle('open');
+  if(arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+/* ================================================================
+   LEADERSHIP BRIEF TAB
+================================================================ */
+function renderBrief(){
+  const el = document.getElementById('briefContent');
+  const rows = getRows(currentMonth);
+  if(!currentMonth || !rows.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No data for selected month</div></div>';
+    return;
+  }
+  const prevRows = getRows(compareMonth);
+  if(!prevRows.length && compareMonth){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">No comparison month data</div><div class="empty-desc">Select a prior month to see movement flags.</div></div>';
+    return;
+  }
+  const threshold = parseFloat(document.getElementById('threshold').value) || 5;
+  const flags = buildFlags(rows, prevRows, threshold);
+  if(!flags.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No significant movements</div><div class="empty-desc">No price changes exceed '+threshold+'% threshold.</div></div>';
+    return;
+  }
+
+  const meraFlags = flags.filter(f => isMera(f.brand));
+  const mktFlags  = flags.filter(f => !isMera(f.brand));
+
+  let html = '';
+  if(meraFlags.length){
+    html += '<div class="card mt-12"><div class="card-header"><div><div class="card-title text-accent">Mera Portfolio Movements</div></div></div><div class="flag-list">'+meraFlags.map(renderFlag).join('')+'</div></div>';
+  }
+  if(mktFlags.length){
+    html += '<div class="card mt-12"><div class="card-header"><div><div class="card-title">Competitor Movements</div></div></div><div class="flag-list">'+mktFlags.slice(0,30).map(renderFlag).join('')+'</div></div>';
+  }
+  el.innerHTML = html;
+}
+
+function buildFlags(rows, prevRows, threshold){
+  const flags = [];
+  for(const r of rows){
+    const prev = prevRows.find(p => p.product === r.product && p.brand === r.brand);
+    if(!prev) continue;
+    const delta = pctChange(r.price, prev.price);
+    if(delta == null || Math.abs(delta) < threshold) continue;
+    flags.push({ brand:r.brand, product:r.product, price:r.price, prevPrice:prev.price, delta, revenue:r.revenue });
+  }
+  return flags.sort((a,b) => Math.abs(b.delta) - Math.abs(a.delta));
+}
+
+function renderFlag(f){
+  const isUp = f.delta > 0;
+  const cls = isUp ? 'flag-up' : 'flag-down';
+  const icon = isUp ? '📈' : '📉';
+  return '<div class="flag-item '+cls+'">'
+    +'<span class="flag-icon">'+icon+'</span>'
+    +'<div class="flag-text"><span class="flag-brand">'+esc(f.brand)+'</span> — '+esc(f.product.substring(0,60))+'<br><small>'+fmt$(f.prevPrice)+' → '+fmt$(f.price)+'</small></div>'
+    +'<div class="flag-delta '+(isUp?'up':'down')+'">'+fmtPct(f.delta)+'</div>'
+    +'</div>';
+}
+
+/* ================================================================
+   EXPORT PDF
+================================================================ */
+async function exportPDF(){
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'pt', format:'a4' });
+    doc.setFontSize(18); doc.text('Mera Price Intelligence Brief', 40, 50);
+    doc.setFontSize(11); doc.setTextColor(120);
+    doc.text('Period: '+(currentMonth||'—')+' vs '+(compareMonth||'—'), 40, 70);
+    doc.setTextColor(0); doc.setFontSize(10);
+    const rows = getRows(currentMonth);
+    const prevRows = getRows(compareMonth);
+    const threshold = parseFloat(document.getElementById('threshold').value)||5;
+    const flags = buildFlags(rows, prevRows, threshold);
+    let y = 100;
+    for(const f of flags.slice(0,40)){
+      const line = (f.delta>0?'▲ ':'▼ ')+f.brand+' · '+f.product.substring(0,60)+' | '+fmt$(f.prevPrice)+' → '+fmt$(f.price)+' ('+fmtPct(f.delta)+')';
+      doc.text(line, 40, y); y += 16;
+      if(y > 780){ doc.addPage(); y = 40; }
+    }
+    doc.save('mera-price-brief-'+(currentMonth||'export')+'.pdf');
+    toast('PDF exported','success');
+  } catch(e){ toast('PDF error: '+e.message,'error'); }
+}
+
+/* ================================================================
+   TAB NAVIGATION
+================================================================ */
+function showTab(tab){
+  ['ladder','market','brief','data'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab?'':'none';
+    document.querySelectorAll('.tab').forEach(el => {
+      if(el.dataset.tab === t) el.classList.toggle('active', t===tab);
+    });
+  });
+  if(tab==='ladder') renderLadder();
+  if(tab==='market') renderMarket();
+  if(tab==='brief')  renderBrief();
+}
+
+/* ================================================================
+   TOAST
+================================================================ */
+function toast(msg, type='info'){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast '+type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+/* ================================================================
+   UTILITIES
+================================================================ */
+function showSpinner(id){ const el=document.getElementById(id); if(el) el.innerHTML='<div class="spinner"><div class="spin"></div>Loading…</div>'; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatNum(n){ return n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':Math.round(n).toString(); }
 </script>
 </body>
 </html>
