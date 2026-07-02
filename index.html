@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Price Intelligence · Mera</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -10,198 +10,187 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
-  --bg:#0f1117;--surface:#161b26;--surface-2:#1c2232;--inset:#0c0f17;
-  --fg:#f0f2f6;--fg-2:#8b8dd0;--muted:#06b7494;--faint:#2a3050;
-  --border:#2323e;--border-soft:#1a2030;
-  --accent:#ff7a3d;--accent-on:#fff;--accent-soft:rgba(255,122,61,.12);
-  --success:#3ddc8a;--success-bg:rgba(61,220,138,.08);
-  --warn:#f0b73d;--warn-bg:rgba(248,183,61,.08);
-  --danger:#f6b5c;--danger-bg:rgba(255,107,92,.08);
-  --violet:#a78bfa;--blue:#5b9bf0;--teal:#29c3d4;
-  --font:'Syne',apple-system,sans-serif;
-  --mono:'DM Mono',ui-monospace,monospace;
-  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:20px;
-  --shadow:0 4px 24px rgba(0,0,0,.4);
-  --shadow-lg:0 8px 48px rgba(0,0,0,.6);
+  --bg:#0f1117;--surface:#161b26;--s2:#1c2232;--inset:#0b0e16;
+  --fg:#eef0f6;--fg2:#8b90b8;--muted:#5a6080;--faint:#232840;
+  --border:#252d45;--bsoft:#1a2235;
+  --accent:#ff7a3d;--asoft:rgba(255,122,61,.12);
+  --success:#3ddc8a;--sbg:rgba(61,220,138,.09);
+  --warn:#f0b73d;--wbg:rgba(240,183,61,.09);
+  --danger:#f66b5c;--dbg:rgba(246,107,92,.09);
+  --blue:#5b9bf0;--violet:#a78bfa;--teal:#29c3d4;
+  --font:'Syne',system-ui,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
+  --r:8px;--rm:12px;--rl:16px;
+  --sh:0 4px 24px rgba(0,0,0,.45);--shl:0 8px 48px rgba(0,0,0,.65);
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;height:100%;}
-.app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
 
-/* Topbar */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--surface);gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:50;}
-.brand{display:flex;align-items:baseline;gap:10px;}
-.brand-name{font-size:17px;font-weight:700;letter-spacing:-.01em;}
-.brand-tag{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;background:var(--inset);border:1px solid var(--border);border-radius:6px;padding:2px 8px;}
-.topbar-right{display:flex;align-items:center;gap:10px;}
-.conn-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:5px 12px;border:1px solid;}
-.conn-badge.offline{color:var(--muted);border-color:var(--border);background:var(--inset);}
-.conn-badge.online{color:var(--success);border-color:rgba(61,220,138,.3);background:var(--success-bg);}
-.conn-badge.connecting{color:var(--warn);border-color:rgba(248,183,61,.3);background:var(--warn-bg);}
-.conn-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
-.conn-badge.connecting .conn-dot{animation:blink 1s ease-in-out infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
-.period-select{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.period-select label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
-select{background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;}
-select:focus{outline:2px solid var(--accent);outline-offset:1px;}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-sm);font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;}
-.btn-ghost{background:transparent;color:var(--muted);border-color:var(--border);}
-.btn-ghost:hover{background:var(--surface-2);color:var(--fg);}
-.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);}
-.btn-accent:hover{filter:brightness(1.1);}
-.btn-sm{padding:5px 10px;font-size:12px;}
+/* ── Topbar ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand-name{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.brand-tag{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;background:var(--inset);border:1px solid var(--border);border-radius:6px;padding:2px 8px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.conn{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 10px;border:1px solid}
+.conn.offline{color:var(--muted);border-color:var(--border);background:var(--inset)}
+.conn.online{color:var(--success);border-color:rgba(61,220,138,.3);background:var(--sbg)}
+.conn.connecting{color:var(--warn);border-color:rgba(240,183,61,.3);background:var(--wbg)}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.conn.connecting .conn-dot{animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.period{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.period label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+select{background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;font:inherit;font-size:12px;cursor:pointer}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--r);font:inherit;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;text-decoration:none}
+.btn-ghost{background:transparent;color:var(--fg2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--s2);color:var(--fg)}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-accent:hover{filter:brightness(1.1)}
 
-/* Tabs */
-.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 28px;gap:0;overflow-x:auto;}
-.tab{display:flex;align-items:center;gap:8px;padding:12px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;letter-spacing:.01em;}
-.tab:hover{color:var(--fg);}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
-.tab-badge{font-size:10px;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;font-weight:700;}
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 24px;overflow-x:auto}
+.tab{padding:11px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;letter-spacing:.01em}
+.tab:hover{color:var(--fg)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 
-/* Main */
-main{padding:24px 28px;overflow-y:auto;}
+/* ── Main ── */
+main{padding:20px 24px;overflow-y:auto}
 
-/* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;}
-.card-title{font-size:14px;font-weight:700;letter-spacing:.02em;}
-.card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+/* ── Segment Panels ── */
+.seg-panels{display:grid;gap:20px}
+.seg-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.seg-panel.has-flag{border-color:rgba(246,107,92,.4)}
+.seg-head{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--bsoft);background:var(--inset);gap:12px}
+.seg-title{font-size:14px;font-weight:700;letter-spacing:.01em}
+.seg-desc{font-size:11px;color:var(--muted);margin-top:3px}
+.seg-kpis{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.kpi{text-align:right}
+.kpi-val{font-size:15px;font-weight:700;font-family:var(--mono)}
+.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.kpi-val.mera{color:var(--accent)}
+.kpi-val.up{color:var(--danger)}
+.kpi-val.down{color:var(--success)}
+.kpi-val.neutral{color:var(--muted)}
+.seg-flag-banner{display:flex;align-items:center;gap:8px;padding:8px 18px;background:var(--dbg);border-bottom:1px solid rgba(246,107,92,.2);font-size:12px;font-weight:600;color:var(--danger)}
 
-/* Pricing Ladder */
-.ladder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
-.ladder-segment{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
-.ladder-seg-header{padding:14px 16px;border-bottom:1px solid var(--border-soft);background:var(--inset);}
-.ladder-seg-title{font-size:13px;font-weight:700;letter-spacing:.02em;}
-.ladder-seg-meta{font-size:11px;color:var(--muted);margin-top:3px;}
-.ladder-items{padding:8px 0;}
-.ladder-item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:7px 16px;border-bottom:1px solid var(--border-soft);transition:background .1s;}
-.ladder-item:last-child{border-bottom:none;}
-.ladder-item:hover{background:var(--surface-2);}
-.ladder-item.mera-sku{background:rgba(255,122,61,.06);border-left:2px solid var(--accent);}
-.sku-info{min-width:0;}
-.sku-name{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sku-brand{font-size:10px;color:var(--muted);margin-top:1px;}
-.sku-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;}
-.badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;}
-.badge-mera{background:var(--accent);color:#fff;}
-.badge-pack{background:var(--surface-2);color:var(--muted);border:1px solid var(--border);}
-.sku-price{font-size:13px;font-weight:700;font-family:var(--mono);text-align:right;white-space:nowrap;}
-.sku-move{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-.move-arrow{font-size:11px;font-weight:700;}
-.move-up{color:var(--danger);}
-.move-down{color:var(--success);}
-.move-neutral{color:var(--muted);}
-.move-pct{font-size:9px;color:var(--muted);font-family:var(--mono);}
-.rev-bar-wrap{height:3px;background:var(--border-soft);border-radius:2px;margin-top:4px;}
-.rev-bar{height:100%;border-radius:2px;background:var(--fg-2);opacity:.5;}
-.mera-sku .rev-bar{background:var(--accent);}
-.rank-num{font-size:10px;font-weight:700;color:var(--muted);font-family:var(--mono);min-width:20px;text-align:center;}
-.ladder-rank-1 .rank-num{color:var(--warn);}
+/* ── Price Ladder Table ── */
+.ladder-table{width:100%;border-collapse:collapse}
+.ladder-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 14px;border-bottom:1px solid var(--bsoft);text-align:left;background:var(--inset)}
+.ladder-table th.r{text-align:right}
+.ladder-table td{font-size:12px;padding:9px 14px;border-bottom:1px solid var(--bsoft);vertical-align:middle}
+.ladder-table tr:last-child td{border-bottom:none}
+.ladder-table tr:hover td{background:rgba(255,255,255,.02)}
+.ladder-table tr.mera-row td{background:rgba(255,122,61,.05)}
+.ladder-table tr.mera-row td:first-child{border-left:3px solid var(--accent)}
+.ladder-table tr.new-entrant td{background:rgba(246,107,92,.06)}
+.rank-cell{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);width:32px}
+.rank-cell.gold{color:var(--warn)}
+.brand-cell .brand-name-text{font-weight:700;font-size:12px}
+.brand-cell .sku-name-text{font-size:11px;color:var(--muted);margin-top:1px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge-row{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+.badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;border:1px solid transparent}
+.badge-mera{background:var(--accent);color:#fff;border-color:var(--accent)}
+.badge-new{background:var(--dbg);color:var(--danger);border-color:rgba(246,107,92,.3)}
+.badge-comp{background:var(--faint);color:var(--fg2);border-color:var(--border)}
+.price-cell{font-family:var(--mono);font-size:13px;font-weight:700;text-align:right;white-space:nowrap}
+.price-cell.mera-price{color:var(--accent)}
+.move-cell{text-align:right;white-space:nowrap}
+.move-up{color:var(--danger);font-weight:700;font-size:12px}
+.move-down{color:var(--success);font-weight:700;font-size:12px}
+.move-neutral{color:var(--muted);font-size:12px}
+.pct-sub{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.rev-cell{text-align:right;font-family:var(--mono);font-size:11px;color:var(--fg2)}
+.rev-bar-cell{width:80px}
+.rev-bar-wrap{height:4px;background:var(--faint);border-radius:2px}
+.rev-bar{height:100%;border-radius:2px;background:var(--fg2);opacity:.6;min-width:2px}
+.mera-row .rev-bar{background:var(--accent);opacity:.8}
+.units-cell{text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.seg-footer{padding:10px 18px;font-size:11px;color:var(--muted);background:var(--inset);border-top:1px solid var(--bsoft)}
 
-/* Empty state */
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:12px;color:var(--muted);}
-.empty-icon{font-size:40px;opacity:.5;}
-.empty-title{font-size:16px;font-weight:700;color:var(--fg);}
-.empty-desc{font-size:13px;max-width:400px;line-height:1.6;}
+/* ── Empty / Spinner ── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 20px;text-align:center;gap:10px;color:var(--muted)}
+.empty-icon{font-size:36px;opacity:.5}
+.empty-title{font-size:15px;font-weight:700;color:var(--fg)}
+.empty-desc{font-size:12px;max-width:440px;line-height:1.7}
+.spinner{display:flex;align-items:center;justify-content:center;gap:8px;padding:44px;color:var(--muted);font-size:13px}
+.spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* Market Dashboard */
-.segments-grid{display:grid;gap:12px;}
-.seg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
-.seg-card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;}
-.seg-card-header:hover{background:var(--surface-2);}
-.seg-card-title{font-size:13px;font-weight:700;}
-.seg-stats{display:flex;gap:16px;align-items:center;}
-.seg-stat{text-align:right;}
-.seg-stat-val{font-size:14px;font-weight:700;font-family:var(--mono);}
-.seg-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
-.seg-mera-val{color:var(--accent);}
-.seg-delta-pos{color:var(--danger);}
-.seg-delta-neg{color:var(--success);}
-.seg-body{padding:0 16px 14px;display:none;}
-.seg-body.open{display:block;}
-.seg-toggle{color:var(--muted);transition:transform .2s;}
-.seg-toggle.open{transform:rotate(180deg);}
-.mini-table{width:100%;border-collapse:collapse;margin-top:8px;}
-.mini-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border-bottom:1px solid var(--border-soft);text-align:left;}
-.mini-table td{font-size:12px;padding:6px 8px;border-bottom:1px solid var(--border-soft);}
-.mini-table tr:last-child td{border-bottom:none;}
-.mini-table tr.mera-row{background:rgba(255,122,61,.06);}
-.mini-table tr.mera-row td{font-weight:600;}
+/* ── Upload / Data tab ── */
+.data-layout{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+@media(max-width:860px){.data-layout{grid-template-columns:1fr}}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--rl);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:var(--asoft)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-icon{font-size:28px;margin-bottom:6px}
+.drop-title{font-size:13px;font-weight:700;margin-bottom:3px}
+.drop-desc{font-size:11px;color:var(--muted);line-height:1.6}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);padding:16px}
+.card-title{font-size:13px;font-weight:700;margin-bottom:12px}
+.month-chips{display:grid;gap:6px;margin-top:12px}
+.month-chip{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r)}
+.month-chip b{font-size:12px}
+.month-chip .chip-meta{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.month-chip .del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px 5px;border-radius:4px;line-height:1}
+.month-chip .del-btn:hover{color:var(--danger);background:var(--dbg)}
+.note{font-size:11px;color:var(--muted);font-style:italic}
+.upload-progress{margin-top:10px;font-size:12px;color:var(--fg2)}
+.upload-log{margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono);max-height:120px;overflow-y:auto;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);padding:8px;display:none}
+.upload-log.show{display:block}
 
-/* Leadership Brief */
-.brief-layout{display:grid;grid-template-columns:1fr;gap:16px;}
-.brief-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-.threshold-row{display:flex;align-items:center;gap:8px;}
-.threshold-row label{font-size:12px;color:var(--muted);}
-.threshold-input{width:70px;background:var(--inset);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--fg);font:inherit;font-size:12px;text-align:center;}
-.flag-list{display:grid;gap:8px;}
-.flag-item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-radius:var(--r-sm);border:1px solid;}
-.flag-item.flag-up{background:rgba(255,107,92,.06);border-color:rgba(255,107,92,.2);}
-.flag-item.flag-down{background:rgba(61,220,138,.06);border-color:rgba(61,220,138,.2);}
-.flag-item.flag-new{background:rgba(91,155,240,.06);border-color:rgba(91,155,240,.2);}
-.flag-icon{font-size:16px;}
-.flag-text{font-size:12px;line-height:1.5;}
-.flag-brand{font-weight:700;}
-.flag-delta{font-size:13px;font-weight:700;font-family:var(--mono);text-align:right;}
-.flag-delta.up{color:#f66b5c;}
-.flag-delta.down{color:var(--success);}
+/* ── Segment Builder ── */
+.seg-builder{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);padding:16px}
+.seg-builder h3{font-size:13px;font-weight:700;margin-bottom:12px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+.field input,.field select{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;font:inherit;font-size:12px}
+.field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg-pills{display:grid;gap:5px;margin-top:10px}
+.seg-pill{display:flex;align-items:flex-start;gap:8px;padding:9px 10px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);font-size:11px}
+.seg-pill-info{flex:1;min-width:0}
+.seg-pill-name{font-weight:700;font-size:12px;margin-bottom:2px}
+.seg-pill-meta{color:var(--muted);font-size:10px;line-height:1.5}
+.seg-pill .del-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:1px 4px;border-radius:3px;font-size:13px;flex-shrink:0}
+.seg-pill .del-btn:hover{color:var(--danger)}
 
-/* Data & Segments Tab */
-.data-layout{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;}
-@media(max-width:900px){.data-layout{grid-template-columns:1fr;}}
-.upload-zone{border:2px dashed var(--border);border-radius:var(--r-md);padding:32px;text-align:center;cursor:pointer;transition:all .2s;}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-soft);}
-.upload-icon{font-size:32px;margin-bottom:8px;}
-.upload-title{font-size:14px;font-weight:700;margin-bottom:4px;}
-.upload-desc{font-size:12px;color:var(--muted);}
-.month-list{display:grid;gap:8px;margin-top:16px;}
-.month-chip{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r-sm);}
-.month-chip b{font-size:13px;}
-.month-chip .count{font-size:11px;color:var(--muted);font-family:var(--mono);}
-.month-chip button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:2px 4px;border-radius:4px;}
-.month-chip button:hover{color:var(--danger);background:rgba(255,107,92,.1);}
-.note{font-size:12px;color:var(--muted);font-style:italic;}
+/* ── Brief ── */
+.brief-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.brief-title{font-size:16px;font-weight:700}
+.brief-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.threshold-row{display:flex;align-items:center;gap:6px}
+.threshold-row label{font-size:12px;color:var(--fg2)}
+.thr-input{width:60px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;color:var(--fg);font:inherit;font-size:12px;text-align:center}
+.brief-sections{display:grid;gap:14px}
+.brief-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);overflow:hidden}
+.brief-section-head{padding:13px 16px;border-bottom:1px solid var(--bsoft);background:var(--inset);display:flex;align-items:center;justify-content:space-between}
+.brief-section-title{font-size:13px;font-weight:700}
+.brief-section-title.danger{color:var(--danger)}
+.brief-section-title.warn{color:var(--warn)}
+.brief-section-title.success{color:var(--success)}
+.flag-items{padding:12px 16px;display:grid;gap:8px}
+.flag-item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:var(--r);border:1px solid}
+.flag-item.up{background:var(--dbg);border-color:rgba(246,107,92,.2)}
+.flag-item.down{background:var(--sbg);border-color:rgba(61,220,138,.2)}
+.flag-item.new{background:var(--wbg);border-color:rgba(240,183,61,.2)}
+.flag-icon{font-size:15px}
+.flag-body{min-width:0}
+.flag-brand{font-weight:700;font-size:12px}
+.flag-seg{font-size:10px;color:var(--muted);margin-top:1px}
+.flag-detail{font-size:11px;color:var(--fg2);margin-top:2px}
+.flag-delta{font-family:var(--mono);font-size:13px;font-weight:700;text-align:right;white-space:nowrap}
+.flag-delta.up{color:var(--danger)}
+.flag-delta.down{color:var(--success)}
 
-/* Segment builder */
-.seg-builder{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;}
-.seg-builder h3{font-size:13px;font-weight:700;margin-bottom:12px;}
-.field-group{margin-bottom:12px;}
-.field-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
-.field-group input,.field-group select{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 10px;font:inherit;font-size:12px;}
-.seg-list{display:grid;gap:6px;margin-top:12px;}
-.seg-pill{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;}
-.seg-pill button{background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;border-radius:3px;}
-.seg-pill button:hover{color:var(--danger);}
-
-/* Spinner */
-.spinner{display:flex;align-items:center;justify-content:center;padding:48px;gap:10px;color:var(--muted);}
-.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-/* Toast */
-.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999;}
-.toast{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:600;box-shadow:var(--shadow);animation:slideIn .2s ease;border:1px solid;}
-.toast.success{background:var(--success-bg);border-color:rgba(61,220,138,.3);color:var(--success);}
-.toast.error{background:var(--danger-bg);border-color:rgba(255,107,92,.3);color:#f66b5c;}
-.toast.info{background:var(--surface);border-color:var(--border);color:var(--fg);}
-@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
-
-/* Auth overlay */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);}
-.overlay.hidden{display:none;}
-.dialog{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;max-width:380px;width:90%;box-shadow:var(--shadow-lg);}
-.dialog h2{font-size:16px;margin-bottom:8px;}
-.dialog p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
-.dialog input{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font:inherit;font-size:14px;margin-bottom:8px;}
-.dialog input:focus{outline:2px solid var(--accent);}
-
-/* Utilities */
-.flex{display:flex;}.gap-8{gap:8px;}.gap-12{gap:12px;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
-.text-muted{color:var(--muted);}.text-accent{color:var(--accent);}.text-success{color:var(--success);}
-.mt-8{margin-top:8px;}.mt-12{margin-top:12px;}.mt-16{margin-top:16px;}
-.fw-700{font-weight:700;}.fs-12{font-size:12px;}.fs-11{font-size:11px;}
-.font-mono{font-family:var(--mono);}
+/* ── Toast ── */
+.toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:999}
+.toast{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r);font-size:12px;font-weight:600;box-shadow:var(--sh);animation:tin .2s ease;border:1px solid}
+.toast.success{background:var(--sbg);border-color:rgba(61,220,138,.3);color:var(--success)}
+.toast.error{background:var(--dbg);border-color:rgba(246,107,92,.3);color:var(--danger)}
+.toast.info{background:var(--surface);border-color:var(--border);color:var(--fg)}
+@keyframes tin{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -212,754 +201,741 @@ main{padding:24px 28px;overflow-y:auto;}
     <span class="brand-name">Price Intelligence</span>
     <span class="brand-tag">Mera Cannabis</span>
   </div>
-  <div class="period-select">
-    <label>Current</label>
-    <select id="selCurrent"><option value="">— pick month —</option></select>
-    <span style="color:var(--muted);font-size:12px">vs.</span>
+  <div class="period">
+    <label>Period</label>
+    <select id="selCurrent"><option value="">— select month —</option></select>
+    <label>vs</label>
     <select id="selCompare"><option value="">(none)</option></select>
   </div>
   <div class="topbar-right">
-    <span class="conn-badge connecting" id="connBadge"><span class="conn-dot"></span><span id="connText">Connecting…</span></span>
-
+    <span class="conn connecting" id="connBadge"><span class="conn-dot"></span><span id="connText">Connecting…</span></span>
   </div>
 </div>
 
 <!-- Tabs -->
 <div class="tabs">
   <div class="tab active" data-tab="ladder" onclick="showTab('ladder')">Pricing Ladder</div>
-  <div class="tab" data-tab="market" onclick="showTab('market')">Market Dashboard</div>
   <div class="tab" data-tab="brief" onclick="showTab('brief')">Leadership Brief</div>
   <div class="tab" data-tab="data" onclick="showTab('data')">Data &amp; Segments</div>
 </div>
 
 <!-- Main -->
 <main>
-  <!-- Pricing Ladder -->
-  <div id="tab-ladder">
-    <div id="ladderContent"><div class="spinner"><div class="spin"></div>Loading…</div></div>
-  </div>
 
-  <!-- Market Dashboard -->
-  <div id="tab-market" style="display:none">
-    <div id="marketContent"><div class="spinner"><div class="spin"></div>Loading…</div></div>
-  </div>
-
-  <!-- Leadership Brief -->
-  <div id="tab-brief" style="display:none">
-    <div class="brief-header">
-      <div>
-        <div style="font-size:16px;font-weight:700">Leadership Brief</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:3px">Notable price movements &amp; competitor flags</div>
-      </div>
-      <div class="flex gap-8 items-center">
-        <div class="threshold-row">
-          <label>Flag threshold ±</label>
-          <input type="number" class="threshold-input" id="threshold" value="5" min="1" max="50" onchange="renderBrief()">
-          <label>%</label>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="exportPDF()">⬇ PDF</button>
-      </div>
-    </div>
-    <div id="briefContent" class="mt-16"><div class="spinner"><div class="spin"></div>Loading…</div></div>
-  </div>
-
-  <!-- Data & Segments -->
-  <div id="tab-data" style="display:none">
-    <div class="data-layout">
-      <div>
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">Upload Market Data</div><div class="card-sub">Drop OCS .xlsx files — saved permanently to PRICE INT bucket</div></div>
-          </div>
-          <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
-            <div class="upload-icon">📊</div>
-            <div class="upload-title">Drop .xlsx file here or click to browse</div>
-            <div class="upload-desc">OCS licensee sales data — columns: Licensee Name, Product Name, Category, Total Sales ($), Units Sold</div>
-          </div>
-          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFileSelect(event)">
-          <div id="uploadStatus" class="mt-8"></div>
-          <div class="month-list" id="monthList"></div>
-        </div>
-      </div>
-      <div>
-        <div class="seg-builder">
-          <h3>Segment Rules</h3>
-          <div class="field-group">
-            <label>Segment Name</label>
-            <input type="text" id="segName" placeholder="e.g. Greazy 60+ Infused Pre-Rolls">
-          </div>
-          <div class="field-group">
-            <label>Brand Keyword (optional)</label>
-            <input type="text" id="segBrand" placeholder="e.g. GREAZY">
-          </div>
-          <div class="field-group">
-            <label>Name Keyword (optional)</label>
-            <input type="text" id="segKeyword" placeholder="e.g. 60+">
-          </div>
-          <div class="field-group">
-            <label>Pack / Size Keyword (optional)</label>
-            <input type="text" id="segPack" placeholder="e.g. 3x0.5g">
-          </div>
-          <div class="field-group">
-            <label>Category (optional)</label>
-            <select id="segCategory"><option value="">All Categories</option></select>
-          </div>
-          <button class="btn btn-accent" style="width:100%" onclick="addSegment()">+ Add Segment</button>
-          <div class="seg-list" id="segList"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</main>
+<!-- ── PRICING LADDER ── -->
+<div id="tab-ladder">
+  <div id="ladderContent"></div>
 </div>
 
-<!-- Auth Overlay removed: public upload enabled -->
+<!-- ── LEADERSHIP BRIEF ── -->
+<div id="tab-brief" style="display:none">
+  <div class="brief-controls">
+    <div>
+      <div class="brief-title">Leadership Brief</div>
+      <div class="brief-sub">Competitor price movements &amp; market position flags</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="threshold-row">
+        <label>Flag at ±</label>
+        <input type="number" class="thr-input" id="threshold" value="5" min="1" max="50" oninput="renderBrief()">
+        <label>%</label>
+      </div>
+      <button class="btn btn-ghost" onclick="exportPDF()">⬇ Export PDF</button>
+    </div>
+  </div>
+  <div id="briefContent"></div>
+</div>
 
-<!-- Toast container -->
-<div class="toast-wrap" id="toastWrap"></div>
+<!-- ── DATA & SEGMENTS ── -->
+<div id="tab-data" style="display:none">
+  <div class="data-layout">
+    <div>
+      <div class="card">
+        <div class="card-title">Upload Market Data</div>
+        <div class="drop-zone" id="dropZone"
+          ondrop="handleDrop(event)"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')">
+          <input type="file" id="fileInput" accept=".xlsx,.xls" multiple onchange="handleFileSelect(event)">
+          <div class="drop-icon">📊</div>
+          <div class="drop-title">Drop one or more .xlsx files here</div>
+          <div class="drop-desc">Each file = one month of OCS data. Files are named by detected month and saved permanently to the PRICE INT bucket. Drop multiple months at once.</div>
+        </div>
+        <div class="upload-progress" id="uploadProgress"></div>
+        <div class="upload-log" id="uploadLog"></div>
+        <div class="month-chips" id="monthChips"></div>
+      </div>
+    </div>
+    <div>
+      <div class="seg-builder">
+        <h3>Define a Segment</h3>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">A segment anchors on Mera SKUs matching your filters, then shows ALL other brands in the same category/subcategory as competitors.</p>
+        <div class="field">
+          <label>Segment Name</label>
+          <input type="text" id="segName" placeholder="e.g. Liquid Diamond Vapes All-in-One">
+        </div>
+        <div class="field">
+          <label>Mera SKU Keyword (in product name)</label>
+          <input type="text" id="segKeyword" placeholder="e.g. liquid diamond">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Category</label>
+            <input type="text" id="segCat" placeholder="e.g. vapes">
+          </div>
+          <div class="field">
+            <label>Subcategory / Type</label>
+            <input type="text" id="segSub" placeholder="e.g. all-in-one">
+          </div>
+        </div>
+        <div class="field">
+          <label>Additional Brand Filter (optional)</label>
+          <input type="text" id="segBrand" placeholder="leave blank = all competitors">
+        </div>
+        <button class="btn btn-accent" style="width:100%;margin-top:4px" onclick="addSegment()">+ Add Segment</button>
+        <div class="seg-pills" id="segPills"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+<div class="toasts" id="toastWrap"></div>
 
 <script>
-/* ================================================================
+/* ═══════════════════════════════════════════
    CONFIG
-================================================================ */
+═══════════════════════════════════════════ */
 const SB_URL  = 'https://sxkaswnhqgatbpoeapsz.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4a2Fzd25ocWdhdGJwb2VhcHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Mzg3ODIsImV4cCI6MjA5NTUxNDc4Mn0.qKwK123yYWA-MRwfFR-s7q_ZAlrNWunLDrnJHa1eupA';
 
-const MERA_BRANDS = ['buddy blooms','litti','litti.','greazy','shatterizer','ellevia','countryside cannabis','countryside cannabis harvest reserve','cchr'];
+const MERA = ['buddy blooms','litti','litti.','greazy','shatterizer','ellevia','countryside cannabis','countryside cannabis harvest reserve','cchr'];
+function isMera(brand){ return MERA.some(m => String(brand).toLowerCase().includes(m)); }
 
-/* ================================================================
-   SUPABASE CLIENT
-================================================================ */
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
 let sb = null;
-function sbClient(){
+let monthsData = {};   // { 'YYYY-MM': [{brand,product,category,subcategory,revenue,units,price}] }
+let segments   = [];   // user segment definitions
+let curMonth   = '';
+let cmpMonth   = '';
+
+/* ═══════════════════════════════════════════
+   SUPABASE CLIENT
+═══════════════════════════════════════════ */
+function getSb(){
   if(!sb){
-    const lib = window.supabase || window.Supabase || window.supabaseJs;
-    const fn = lib?.createClient || window.createClient;
+    const lib = window.supabase || window.Supabase;
+    const fn  = lib?.createClient || window.createClient;
     if(fn) sb = fn(SB_URL, SB_ANON);
   }
   return sb;
 }
-// Eagerly init after scripts load
-function initSb(){
-  const lib = window.supabase || window.Supabase || window.supabaseJs;
-  const fn = lib?.createClient || window.createClient;
-  if(fn && !sb){ sb = fn(SB_URL, SB_ANON); }
+
+/* ═══════════════════════════════════════════
+   STORAGE HELPERS
+═══════════════════════════════════════════ */
+async function stGet(file){
+  const c=getSb(); if(!c) return null;
+  const {data,error}=await c.storage.from('PRICE INT').download(file);
+  if(error||!data) return null;
+  try{ return JSON.parse(await data.text()); }catch(e){ return null; }
+}
+async function stList(){
+  const c=getSb(); if(!c) return [];
+  const {data,error}=await c.storage.from('PRICE INT').list('',{limit:300});
+  return error?[]:(data||[]);
+}
+async function stPut(file,obj){
+  const c=getSb(); if(!c) throw new Error('No Supabase client');
+  const blob=new Blob([JSON.stringify(obj)],{type:'application/json'});
+  const {error}=await c.storage.from('PRICE INT').upload(file,blob,{upsert:true,contentType:'application/json'});
+  if(error) throw error;
+}
+async function stDel(file){
+  const c=getSb(); if(!c) throw new Error('No Supabase client');
+  const {error}=await c.storage.from('PRICE INT').remove([file]);
+  if(error) throw error;
 }
 
-/* ================================================================
-   STATE
-================================================================ */
-let monthsData   = {};   // { 'YYYY-MM': [ rowObjects ] }
-let segments     = [];   // user-defined segment rules
-let currentMonth = '';
-let compareMonth = '';
-let currentUser  = null;
-let pendingAfterAuth = null;
-
-/* ================================================================
+/* ═══════════════════════════════════════════
    INIT
-================================================================ */
-window.addEventListener('DOMContentLoaded', async () => {
-  initSb();
+═══════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async ()=>{
   initConn();
-  await loadFromBucket();
-  populateMonthSelects();
-  renderMonthList();
-  renderSegList();
+  showSpinner('ladderContent');
+  await loadAll();
+  populatePeriodSelects();
+  renderMonthChips();
+  renderSegPills();
   runAll();
-  populateCategorySelect();
 });
 
-/* ================================================================
-   CONNECTION STATUS
-================================================================ */
 function initConn(){
-  const badge  = document.getElementById('connBadge');
-  const text   = document.getElementById('connText');
-  const client = sbClient();
-  if(!client){
-    badge.className = 'conn-badge offline';
-    text.textContent = 'Offline (add key)';
-    return;
+  const badge=document.getElementById('connBadge');
+  const txt=document.getElementById('connText');
+  const c=getSb();
+  if(!c){ badge.className='conn offline'; txt.textContent='Offline'; return; }
+  c.auth.getUser().then(()=>{ badge.className='conn online'; txt.textContent='Connected'; })
+    .catch(()=>{ badge.className='conn offline'; txt.textContent='Offline'; });
+}
+
+async function loadAll(){
+  const files=await stList();
+  const mFiles=files.filter(f=>f.name?.startsWith('month-')&&f.name.endsWith('.json'));
+  monthsData={};
+  for(const f of mFiles){
+    const key=f.name.replace('month-','').replace('.json','');
+    const rows=await stGet(f.name);
+    if(Array.isArray(rows)) monthsData[key]=rows;
   }
-  badge.className = 'conn-badge connecting';
-  text.textContent = 'Connecting…';
-
-  client.auth.getUser().then(({data,error}) => {
-    if(error && error.message && error.message.includes('Invalid API key')){
-      badge.className = 'conn-badge offline';
-      text.textContent = 'Invalid API key';
-    } else {
-      badge.className = 'conn-badge online';
-      text.textContent = 'Connected';
-      if(data && data.user){
-        currentUser = data.user;
-        document.getElementById('authBtn').textContent = 'Sign out';
-      }
-    }
-  }).catch(() => {
-    badge.className = 'conn-badge offline';
-    text.textContent = 'Offline';
-  });
-
-  client.auth.onAuthStateChange((event, session) => {
-    currentUser = session ? session.user : null;
-    if(currentUser){
-      badge.className = 'conn-badge online';
-      text.textContent = 'Connected · ' + (currentUser.email || '').split('@')[0];
-      document.getElementById('authBtn').textContent = 'Sign out';
-      if(pendingAfterAuth){ pendingAfterAuth(); pendingAfterAuth = null; }
-    } else {
-      document.getElementById('authBtn').textContent = 'Sign in';
-    }
-  });
+  const presets=await stGet('presets.json');
+  if(presets?.segments) segments=presets.segments;
 }
 
-/* ================================================================
-   AUTH
-================================================================ */
-function handleAuth(){
-  if(currentUser){ sbClient().auth.signOut(); return; }
-  showOverlay();
-}
-function showOverlay(){ document.getElementById('authOverlay').classList.remove('hidden'); }
-function closeOverlay(){ document.getElementById('authOverlay').classList.add('hidden'); }
-async function submitAuth(){
-  const email = document.getElementById('authEmail').value.trim();
-  if(!email){ toast('Enter your email address','error'); return; }
-  const c = sbClient();
-  if(!c){ toast('Supabase not connected','error'); return; }
-  const {error} = await c.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href } });
-  if(error){ toast(error.message,'error'); } else { toast('Magic link sent! Check your email.','success'); closeOverlay(); }
-}
-function requireAuth(fn){
-  if(currentUser){ fn(); return; }
-  pendingAfterAuth = fn;
-  showOverlay();
-}
-async function requireAuthAsync(fn){
-  if(currentUser){ await fn(); return; }
-  pendingAfterAuth = fn;
-  showOverlay();
-}
-
-/* ================================================================
-   STORAGE HELPERS (PRICE INT bucket)
-================================================================ */
-async function storageGet(filename){
-  const c = sbClient(); if(!c) return null;
-  const {data,error} = await c.storage.from('PRICE INT').download(filename);
-  if(error) return null;
-  const text = await data.text();
-  try { return JSON.parse(text); } catch(e){ return null; }
-}
-async function storageList(){
-  const c = sbClient(); if(!c) return [];
-  const {data,error} = await c.storage.from('PRICE INT').list('',{limit:200});
-  return error ? [] : (data || []);
-}
-async function storagePut(filename, obj){
-  const c = sbClient(); if(!c) throw new Error('No Supabase client');
-  const blob = new Blob([JSON.stringify(obj)],{type:'application/json'});
-  const {error} = await c.storage.from('PRICE INT').upload(filename, blob, {upsert:true, contentType:'application/json'});
-  if(error) throw error;
-}
-async function storageRemove(filename){
-  const c = sbClient(); if(!c) throw new Error('No Supabase client');
-  const {error} = await c.storage.from('PRICE INT').remove([filename]);
-  if(error) throw error;
-}
-
-/* ================================================================
-   LOAD ALL DATA FROM BUCKET
-================================================================ */
-async function loadFromBucket(){
-  showSpinner('ladderContent');
-  const files = await storageList();
-  const monthFiles = files.filter(f => f.name && f.name.startsWith('month-') && f.name.endsWith('.json'));
-  const presetsFile = files.find(f => f.name === 'presets.json');
-
-  monthsData = {};
-  for(const f of monthFiles){
-    const key = f.name.replace('month-','').replace('.json','');
-    const rows = await storageGet(f.name);
-    if(Array.isArray(rows)) monthsData[key] = rows;
-  }
-
-  if(presetsFile){
-    const p = await storageGet('presets.json');
-    if(p && Array.isArray(p.segments)) segments = p.segments;
-  }
-}
-
-/* ================================================================
-   MONTH SELECTS
-================================================================ */
-function populateMonthSelects(){
-  const months = Object.keys(monthsData).sort().reverse();
-  const selC = document.getElementById('selCurrent');
-  const selP = document.getElementById('selCompare');
-  const prevC = selC.value;
-  const prevP = selP.value;
-  selC.innerHTML = '<option value="">— pick month —</option>' + months.map(m => '<option value="'+m+'">'+m+'</option>').join('');
-  selP.innerHTML = '<option value="">(none)</option>' + months.map(m => '<option value="'+m+'">'+m+'</option>').join('');
-  selC.value = months.includes(prevC) ? prevC : (months[0] || '');
-  selP.value = months.includes(prevP) ? prevP : (months[1] || '');
-  currentMonth = selC.value;
-  compareMonth = selP.value;
-  selC.onchange = () => { currentMonth = selC.value; runAll(); };
-  selP.onchange = () => { compareMonth = selP.value; runAll(); };
-}
-
-/* ================================================================
-   RENDER MONTH LIST (Data tab)
-================================================================ */
-function renderMonthList(){
-  const el = document.getElementById('monthList');
-  const months = Object.keys(monthsData).sort();
-  if(months.length === 0){
-    el.innerHTML = '<span class="note">No months uploaded yet. Drop a .xlsx to get started.</span>';
-    return;
-  }
-  el.innerHTML = months.map(m =>
-    '<div class="month-chip"><b>'+m+'</b><span class="count">'+monthsData[m].length+' SKUs</span><button onclick="deleteMonth(\'' + m + '\')">✕</button></div>'
-  ).join('');
-}
-
-/* ================================================================
-   DELETE MONTH
-================================================================ */
-async function deleteMonth(key){
-  if(!confirm('Delete '+key+' permanently from bucket?')) return;
-  await storageRemove('month-'+key+'.json');
-  delete monthsData[key];
-  renderMonthList();
-  populateMonthSelects();
-  runAll();
-}
-
-/* ================================================================
-   MONTH SELECTORS UPDATE
-================================================================ */
-function populateCategorySelect(){
-  const allCats = new Set();
-  Object.values(monthsData).forEach(rows => rows.forEach(r => { if(r.category) allCats.add(r.category); }));
-  const sel = document.getElementById('segCategory');
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">All Categories</option>' + [...allCats].sort().map(c => '<option value="'+c+'">'+c+'</option>').join('');
-  if(prev) sel.value = prev;
-}
-
-/* ================================================================
-   SEGMENT BUILDER
-================================================================ */
-function addSegment(){
-  const name = document.getElementById('segName').value.trim();
-  if(!name){ toast('Enter a segment name','error'); return; }
-  const seg = {
-    id: Date.now(),
-    name,
-    brand:   document.getElementById('segBrand').value.trim(),
-    keyword: document.getElementById('segKeyword').value.trim(),
-    pack:    document.getElementById('segPack').value.trim(),
-    category:document.getElementById('segCategory').value.trim(),
-  };
-  segments.push(seg);
-  savePresets();
-  renderSegList();
-  runAll();
-  ['segName','segBrand','segKeyword','segPack'].forEach(id => document.getElementById(id).value = '');
-  toast('Segment added: '+name,'success');
-}
-function removeSegment(id){
-  segments = segments.filter(s => s.id !== id);
-  savePresets();
-  renderSegList();
-  runAll();
-}
-function renderSegList(){
-  const el = document.getElementById('segList');
-  if(!segments.length){ el.innerHTML = '<p class="note mt-8">No custom segments yet.</p>'; return; }
-  el.innerHTML = segments.map(s =>
-    '<div class="seg-pill"><span>'+s.name+(s.brand?' · '+s.brand:'')+(s.keyword?' · "'+s.keyword+'"':'')+(s.pack?' · '+s.pack:'')+(s.category?' · ['+s.category+']':'')+'</span><button onclick="removeSegment('+s.id+')">✕</button></div>'
-  ).join('');
-}
 async function savePresets(){
-  try { await storagePut('presets.json',{segments}); } catch(e){ console.warn('savePresets:',e); }
+  try{ await stPut('presets.json',{segments}); }catch(e){ console.warn('savePresets',e); }
 }
 
-/* ================================================================
-   FILE HANDLING
-================================================================ */
+/* ═══════════════════════════════════════════
+   PERIOD SELECTS
+═══════════════════════════════════════════ */
+function populatePeriodSelects(){
+  const months=Object.keys(monthsData).sort().reverse();
+  const sc=document.getElementById('selCurrent');
+  const sp=document.getElementById('selCompare');
+  const pc=sc.value, pp=sp.value;
+  sc.innerHTML='<option value="">— select month —</option>'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+  sp.innerHTML='<option value="">(none)</option>'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+  sc.value=months.includes(pc)?pc:(months[0]||'');
+  sp.value=months.includes(pp)?pp:(months[1]||'');
+  curMonth=sc.value; cmpMonth=sp.value;
+  sc.onchange=()=>{ curMonth=sc.value; runAll(); };
+  sp.onchange=()=>{ cmpMonth=sp.value; runAll(); };
+}
+</script>
+<script>
+/* ═══════════════════════════════════════════
+   DATA NORMALIZATION
+═══════════════════════════════════════════ */
+function normalizeRows(raw){
+  return raw.map(r=>{
+    const keys=Object.keys(r);
+    function col(...c){ for(const x of c){ const k=keys.find(k=>k.toLowerCase().replace(/[^a-z0-9]/g,'').includes(x.replace(/[^a-z0-9]/g,''))); if(k) return String(r[k]||''); } return ''; }
+    const brand   =col('licensee','brand','company','operator','licenseename').trim();
+    const product =col('productname','product','sku','itemname','name').trim();
+    const category=col('category','productcategory','type').trim();
+    const subcat  =col('subcategory','subcat','producttype','format','style').trim();
+    const rev     =parseFloat(col('totalsales','revenue','sales','dollar','$','dollarsales').replace(/[$,]/g,''))||0;
+    const units   =parseFloat(col('unitssold','units','qty','quantity','sold').replace(/,/g,''))||0;
+    const priceRaw=parseFloat(col('avgprice','unitprice','averageprice','price').replace(/[$,]/g,''))||0;
+    const price   =priceRaw||(units>0?rev/units:0);
+    if(!product&&!brand) return null;
+    return {brand,product,category,subcategory:subcat,revenue:rev,units,price:+price.toFixed(4)};
+  }).filter(Boolean);
+}
+function detectMonth(raw,filename){
+  const m=filename.match(/(20\d\d)[_\-. ](0?[1-9]|1[0-2])/);
+  if(m) return m[1]+'-'+m[2].padStart(2,'0');
+  const now=new Date();
+  return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+}
+
+/* ═══════════════════════════════════════════
+   MULTI-FILE UPLOAD
+═══════════════════════════════════════════ */
 function handleDrop(e){
   e.preventDefault();
   document.getElementById('dropZone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if(file) processFile(file);
+  processFiles(Array.from(e.dataTransfer.files));
 }
 function handleFileSelect(e){
-  const file = e.target.files[0];
-  if(file) processFile(file);
-  e.target.value = '';
+  processFiles(Array.from(e.target.files));
+  e.target.value='';
 }
-async function processFile(file){
-  if(!file.name.match(/\.xlsx?$/i)){ toast('Please upload a .xlsx file','error'); return; }
-  setUploadStatus('⏳ Reading '+file.name+'…');
-  try {
-    const ab = await file.arrayBuffer();
-    const wb = XLSX.read(ab,{type:'arraybuffer'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const raw = XLSX.utils.sheet_to_json(ws,{defval:''});
-    if(!raw.length){ toast('No data found in file','error'); setUploadStatus(''); return; }
-    const rows = normalizeRows(raw);
-    const key  = detectMonthKey(raw, file.name);
-    setUploadStatus('⏳ Saving '+key+' ('+rows.length+' SKUs) to bucket…');
-    await storagePut('month-'+key+'.json', rows);
-    monthsData[key] = rows;
-    setUploadStatus('✅ '+key+' saved — '+rows.length+' SKUs');
-    renderMonthList();
-    populateMonthSelects();
-    populateCategorySelect();
+
+async function processFiles(files){
+  const xlsFiles=files.filter(f=>f.name.match(/\.xlsx?$/i));
+  if(!xlsFiles.length){ toast('No .xlsx files found','error'); return; }
+  const prog=document.getElementById('uploadProgress');
+  const log=document.getElementById('uploadLog');
+  log.className='upload-log show'; log.textContent='';
+  const addLog=msg=>{ log.textContent+=msg+'\n'; log.scrollTop=log.scrollHeight; };
+
+  let done=0;
+  for(const file of xlsFiles){
+    prog.textContent='Processing '+file.name+'… ('+(done+1)+' of '+xlsFiles.length+')';
+    addLog('▶ '+file.name);
+    try{
+      const ab=await file.arrayBuffer();
+      const wb=XLSX.read(ab,{type:'arraybuffer'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!raw.length){ addLog('  ⚠ Empty sheet, skipped'); continue; }
+      const rows=normalizeRows(raw);
+      const key=detectMonth(raw,file.name);
+      addLog('  '+rows.length+' SKUs → '+key);
+      await stPut('month-'+key+'.json',rows);
+      monthsData[key]=rows;
+      addLog('  ✅ Saved to PRICE INT bucket');
+      done++;
+    }catch(err){
+      addLog('  ❌ Error: '+err.message);
+      toast('Error processing '+file.name+': '+err.message,'error');
+    }
+  }
+  prog.textContent=done+' of '+xlsFiles.length+' files uploaded';
+  if(done>0){
+    populatePeriodSelects();
+    renderMonthChips();
     runAll();
-    toast('Uploaded '+key+' ('+rows.length+' SKUs)','success');
-  } catch(err){
-    toast('Error reading file: '+err.message,'error');
-    setUploadStatus('');
+    toast(done+' month'+(done>1?'s':'')+' uploaded successfully','success');
   }
 }
-function setUploadStatus(msg){ document.getElementById('uploadStatus').textContent = msg; }
 
-/* ================================================================
-   DATA NORMALIZATION
-================================================================ */
-function normalizeRows(raw){
-  return raw.map(r => {
-    const keys = Object.keys(r);
-    function find(...candidates){
-      for(const c of candidates){
-        const k = keys.find(k => k.toLowerCase().includes(c.toLowerCase()));
-        if(k) return r[k];
-      }
-      return '';
-    }
-    const brand    = String(find('licensee','brand','company','operator') || '').trim();
-    const product  = String(find('product','sku','item','name') || '').trim();
-    const category = String(find('category','type','class') || '').trim();
-    const revenueRaw = find('revenue','sales($)','sales $','total sales','dollar','$');
-    const unitsRaw   = find('units','qty','quantity','sold');
-    const priceRaw   = find('price','avg price','average price','unit price');
-    const revenue = parseFloat(String(revenueRaw).replace(/[$,]/g,'')) || 0;
-    const units   = parseFloat(String(unitsRaw).replace(/,/g,'')) || 0;
-    let   price   = parseFloat(String(priceRaw).replace(/[$,]/g,'')) || 0;
-    if(!price && units > 0) price = revenue / units;
-    return { brand, product, category, revenue, units, price: +price.toFixed(4) };
-  }).filter(r => r.product || r.brand);
-}
-function detectMonthKey(raw, filename){
-  const m = filename.match(/(20\d\d)[_\-. ](0?\d|1[0-2])/);
-  if(m) return m[1]+'-'+(m[2].padStart(2,'0'));
-  return new Date().toISOString().slice(0,7);
-}
-
-/* ================================================================
-   RUN ALL RENDERS
-================================================================ */
-function runAll(){
-  renderLadder();
-  renderMarket();
-  renderBrief();
-}
-
-/* ================================================================
-   SEGMENT MATCHING
-================================================================ */
-function isMera(brand){ return MERA_BRANDS.some(b => brand.toLowerCase().includes(b)); }
-
-function getEffectiveSegments(){
-  const auto = MERA_BRANDS.map(b => ({ id:'auto_'+b, name: titleCase(b), brand:b, keyword:'', pack:'', category:'' }));
-  return [...auto, ...segments];
-}
-function titleCase(s){ return s.replace(/w/g, c => c.toUpperCase()); }
-
-function matchSegment(seg, row){
-  const bMatch = !seg.brand    || row.brand.toLowerCase().includes(seg.brand.toLowerCase());
-  const kMatch = !seg.keyword  || row.product.toLowerCase().includes(seg.keyword.toLowerCase());
-  const pMatch = !seg.pack     || row.product.toLowerCase().includes(seg.pack.toLowerCase());
-  const cMatch = !seg.category || row.category.toLowerCase() === seg.category.toLowerCase();
-  return bMatch && kMatch && pMatch && cMatch;
-}
-
-function getRows(monthKey){ return monthsData[monthKey] || []; }
-
-/* ================================================================
-   STATS HELPERS
-================================================================ */
-function revWeightedAvgPrice(rows){
-  const total = rows.reduce((s,r) => s + r.revenue, 0);
-  if(total === 0) return rows.reduce((s,r) => s + r.price, 0) / (rows.length || 1);
-  return rows.reduce((s,r) => s + r.price * (r.revenue / total), 0);
-}
-function pctChange(curr, prev){ if(!prev || prev === 0) return null; return ((curr-prev)/prev)*100; }
-function fmt$(n){ return n == null ? '—' : '$'+n.toFixed(2); }
-function fmtPct(n){ return n == null ? '—' : (n > 0 ? '+' : '')+n.toFixed(1)+'%'; }
-
-/* ================================================================
-   PRICING LADDER TAB
-================================================================ */
-function renderLadder(){
-  const el = document.getElementById('ladderContent');
-  const rows = getRows(currentMonth);
-  if(!currentMonth || !rows.length){
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data loaded</div><div class="empty-desc">Go to Data &amp; Segments tab to upload your first OCS .xlsx file. Data saves permanently.</div></div>';
-    return;
-  }
-  const prevRows = getRows(compareMonth);
-  const segs = buildEffectiveSegments(rows, prevRows);
-  if(!segs.length){
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No segments matched</div><div class="empty-desc">Check your segment rules in Data &amp; Segments.</div></div>';
-    return;
-  }
-  el.innerHTML = '<div class="ladder-grid">' + segs.map(renderLadderSegment).join('') + '</div>';
-}
-
-function buildEffectiveSegments(rows, prevRows){
-  const segs = getEffectiveSegments();
-  const result = [];
-  for(const seg of segs){
-    const matched = rows.filter(r => matchSegment(seg, r));
-    if(!matched.length) continue;
-    matched.sort((a,b) => a.price - b.price);
-    const totalRev = matched.reduce((s,r) => s + r.revenue, 0);
-    const avgPrice = revWeightedAvgPrice(matched);
-    const items = matched.map(r => {
-      const prevRow = prevRows.find(p => p.product === r.product && p.brand === r.brand);
-      const move = prevRow ? pctChange(r.price, prevRow.price) : null;
-      return { ...r, move, revShare: totalRev > 0 ? r.revenue / totalRev : 0, prevPrice: prevRow ? prevRow.price : null };
-    });
-    result.push({ seg, items, avgPrice, totalRev });
-  }
-  return result;
-}
-
-function renderLadderSegment({ seg, items, avgPrice, totalRev }){
-  const meraItems = items.filter(r => isMera(r.brand));
-  const topMera = meraItems.length ? revWeightedAvgPrice(meraItems) : null;
-  const itemCount = items.length;
-  const meraPos = meraItems.length > 0 ? (items.findIndex(r => isMera(r.brand)) + 1) : null;
-
-  const rows = items.map((r, idx) => {
-    const isMeraRow = isMera(r.brand);
-    const barW = Math.round(r.revShare * 100);
-    let moveHtml = '';
-    if(r.move !== null && r.move !== undefined){
-      const cls = r.move > 0.5 ? 'move-up' : r.move < -0.5 ? 'move-down' : 'move-neutral';
-      const arrow = r.move > 0.5 ? '▲' : r.move < -0.5 ? '▼' : '—';
-      moveHtml = '<div class="sku-move"><span class="move-arrow '+cls+'">'+arrow+'</span><span class="move-pct">'+fmtPct(r.move)+'</span></div>';
-    }
-    return '<div class="ladder-item'+(isMeraRow?' mera-sku':'')+' ladder-rank-'+(idx+1)+'">'
-      +'<span class="rank-num">'+(idx+1)+'</span>'
-      +'<div class="sku-info">'
-        +'<div class="sku-name">'+esc(r.product)+'</div>'
-        +'<div class="sku-brand">'+esc(r.brand)+'</div>'
-        +'<div class="sku-badges">'+(isMeraRow?'<span class="badge badge-mera">MERA</span>':'')+'</div>'
-        +'<div class="rev-bar-wrap"><div class="rev-bar" style="width:'+barW+'%"></div></div>'
-      +'</div>'
-      +'<span class="sku-price">'+fmt$(r.price)+'</span>'
-      +moveHtml
-      +'</div>';
+/* ═══════════════════════════════════════════
+   MONTH CHIPS
+═══════════════════════════════════════════ */
+function renderMonthChips(){
+  const el=document.getElementById('monthChips');
+  const months=Object.keys(monthsData).sort().reverse();
+  if(!months.length){ el.innerHTML='<p class="note">No months uploaded yet.</p>'; return; }
+  el.innerHTML=months.map(m=>{
+    const rows=monthsData[m]||[];
+    const brands=new Set(rows.map(r=>r.brand)).size;
+    return '<div class="month-chip"><b>'+m+'</b><span class="chip-meta">'+rows.length+' SKUs · '+brands+' brands</span><button class="del-btn" onclick="deleteMonth(\''+m+'\')">✕</button></div>';
   }).join('');
-
-  return '<div class="ladder-segment">'
-    +'<div class="ladder-seg-header">'
-      +'<div class="ladder-seg-title">'+esc(seg.name)+'</div>'
-      +'<div class="ladder-seg-meta">'+itemCount+' SKUs · Avg '+fmt$(avgPrice)+(meraPos?' · Mera #'+meraPos:'')+'</div>'
-    +'</div>'
-    +'<div class="ladder-items">'+rows+'</div>'
-    +'</div>';
 }
-
-/* ================================================================
-   MARKET DASHBOARD TAB
-================================================================ */
-function renderMarket(){
-  const el = document.getElementById('marketContent');
-  const rows = getRows(currentMonth);
-  if(!currentMonth || !rows.length){
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No data for selected month</div><div class="empty-desc">Upload data in the Data &amp; Segments tab.</div></div>';
-    return;
-  }
-  const prevRows = getRows(compareMonth);
-  const segs = buildEffectiveSegments(rows, prevRows);
-  if(!segs.length){ el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No matched segments</div></div>'; return; }
-
-  el.innerHTML = '<div class="segments-grid">'
-    + segs.map(s => renderMarketSegCard(s, prevRows)).join('')
-    + '</div>';
+async function deleteMonth(key){
+  if(!confirm('Delete '+key+' permanently?')) return;
+  try{
+    await stDel('month-'+key+'.json');
+    delete monthsData[key];
+    renderMonthChips();
+    populatePeriodSelects();
+    runAll();
+    toast('Deleted '+key,'info');
+  }catch(e){ toast('Delete failed: '+e.message,'error'); }
 }
-
-function renderMarketSegCard({ seg, items, avgPrice, totalRev }, prevRows){
-  const meraItems = items.filter(r => isMera(r.brand));
-  const meraAvg = meraItems.length ? revWeightedAvgPrice(meraItems) : null;
-  const prevMatched = prevRows.filter(r => matchSegment(seg, r));
-  const prevAvg = prevMatched.length ? revWeightedAvgPrice(prevMatched) : null;
-  const mktDelta = pctChange(avgPrice, prevAvg);
-  const meraDelta = meraAvg && prevMatched.length ? pctChange(meraAvg, revWeightedAvgPrice(prevMatched.filter(r => isMera(r.brand)))) : null;
-
-  const tableRows = items.slice(0,8).map(r => {
-    const move = r.move;
-    const cls = move != null ? (move > 0.5 ? 'seg-delta-pos' : move < -0.5 ? 'seg-delta-neg' : '') : '';
-    return '<tr class="'+(isMera(r.brand)?'mera-row':'')+'">'
-      +'<td>'+esc(r.brand)+'</td>'
-      +'<td>'+esc(r.product.substring(0,40))+'</td>'
-      +'<td class="font-mono">'+fmt$(r.price)+'</td>'
-      +'<td class="font-mono '+cls+'">'+(move!=null?fmtPct(move):'—')+'</td>'
-      +'<td class="font-mono">'+(r.revenue>0?'$'+formatNum(r.revenue):'—')+'</td>'
-      +'</tr>';
+</script>
+<script>
+/* ═══════════════════════════════════════════
+   SEGMENT BUILDER
+═══════════════════════════════════════════ */
+function addSegment(){
+  const name=document.getElementById('segName').value.trim();
+  if(!name){ toast('Enter a segment name','error'); return; }
+  const seg={
+    id:Date.now(),
+    name,
+    keyword:document.getElementById('segKeyword').value.trim(),
+    category:document.getElementById('segCat').value.trim(),
+    subcategory:document.getElementById('segSub').value.trim(),
+    brandFilter:document.getElementById('segBrand').value.trim(),
+  };
+  segments.push(seg);
+  savePresets();
+  renderSegPills();
+  runAll();
+  ['segName','segKeyword','segCat','segSub','segBrand'].forEach(id=>document.getElementById(id).value='');
+  toast('Segment added: '+name,'success');
+}
+function removeSegment(id){
+  segments=segments.filter(s=>s.id!==id);
+  savePresets();
+  renderSegPills();
+  runAll();
+}
+function renderSegPills(){
+  const el=document.getElementById('segPills');
+  if(!segments.length){ el.innerHTML='<p class="note" style="margin-top:8px">No segments defined yet.</p>'; return; }
+  el.innerHTML=segments.map(s=>{
+    const parts=[];
+    if(s.keyword) parts.push('keyword: "'+s.keyword+'"');
+    if(s.category) parts.push('cat: '+s.category);
+    if(s.subcategory) parts.push('subcat: '+s.subcategory);
+    if(s.brandFilter) parts.push('brand: '+s.brandFilter);
+    return '<div class="seg-pill"><div class="seg-pill-info"><div class="seg-pill-name">'+esc(s.name)+'</div><div class="seg-pill-meta">'+(parts.join(' · ')||'No filters')+'</div></div><button class="del-btn" onclick="removeSegment('+s.id+')">✕</button></div>';
   }).join('');
-
-  const id = 'seg_'+seg.id;
-  return '<div class="seg-card">'
-    +'<div class="seg-card-header" onclick="toggleSeg(\'' + id + '\')">'
-      +'<div class="seg-card-title">'+esc(seg.name)+'<span class="fs-11 text-muted" style="margin-left:8px">'+items.length+' SKUs</span></div>'
-      +'<div class="seg-stats">'
-        +(meraAvg!=null?'<div class="seg-stat"><div class="seg-stat-val seg-mera-val">'+fmt$(meraAvg)+'</div><div class="seg-stat-lbl">Mera Avg</div></div>':'')
-        +'<div class="seg-stat"><div class="seg-stat-val">'+fmt$(avgPrice)+'</div><div class="seg-stat-lbl">Mkt Avg</div></div>'
-        +(mktDelta!=null?'<div class="seg-stat"><div class="seg-stat-val '+(mktDelta>0?'seg-delta-pos':'seg-delta-neg')+'">'+fmtPct(mktDelta)+'</div><div class="seg-stat-lbl">MoM Δ</div></div>':'')
-        +'<span class="seg-toggle" id="arrow_'+id+'">▾</span>'
-      +'</div>'
-    +'</div>'
-    +'<div class="seg-body" id="'+id+'">'
-      +'<table class="mini-table"><thead><tr><th>Brand</th><th>Product</th><th>Price</th><th>MoM Δ</th><th>Revenue</th></tr></thead>'
-      +'<tbody>'+tableRows+'</tbody></table>'
-    +'</div>'
-    +'</div>';
 }
 
-function toggleSeg(id){
-  const body  = document.getElementById(id);
-  const arrow = document.getElementById('arrow_'+id);
-  if(!body) return;
-  const open = body.classList.toggle('open');
-  if(arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
+/* ═══════════════════════════════════════════
+   SEGMENT MATCHING LOGIC
+═══════════════════════════════════════════ */
+/*
+  For each segment:
+  1. Find Mera SKUs that match the segment's keyword/category/subcategory → these are the "anchors"
+  2. Determine the competitive field = ALL SKUs (Mera + competitors) that share the same
+     category AND subcategory as the anchors (or fall within the filters if no subcategory/category specified)
+  3. The panel shows ALL of those SKUs ranked by price, with Mera rows highlighted
+*/
+function getRows(key){ return monthsData[key]||[]; }
+
+function matchesSeg(seg,row){
+  const kw =!seg.keyword   || row.product.toLowerCase().includes(seg.keyword.toLowerCase());
+  const cat=!seg.category  || row.category.toLowerCase().includes(seg.category.toLowerCase());
+  const sub=!seg.subcategory||row.subcategory.toLowerCase().includes(seg.subcategory.toLowerCase());
+  const bf =!seg.brandFilter||row.brand.toLowerCase().includes(seg.brandFilter.toLowerCase());
+  return kw&&cat&&sub&&bf;
 }
 
-/* ================================================================
-   LEADERSHIP BRIEF TAB
-================================================================ */
-function renderBrief(){
-  const el = document.getElementById('briefContent');
-  const rows = getRows(currentMonth);
-  if(!currentMonth || !rows.length){
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No data for selected month</div></div>';
-    return;
-  }
-  const prevRows = getRows(compareMonth);
-  if(!prevRows.length && compareMonth){
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">No comparison month data</div><div class="empty-desc">Select a prior month to see movement flags.</div></div>';
-    return;
-  }
-  const threshold = parseFloat(document.getElementById('threshold').value) || 5;
-  const flags = buildFlags(rows, prevRows, threshold);
-  if(!flags.length){
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No significant movements</div><div class="empty-desc">No price changes exceed '+threshold+'% threshold.</div></div>';
-    return;
-  }
+function buildSegmentData(seg, curRows, cmpRows){
+  // Step 1: find Mera anchor SKUs
+  const meraAnchors=curRows.filter(r=>isMera(r.brand)&&matchesSeg(seg,r));
+  if(!meraAnchors.length) return null;
 
-  const meraFlags = flags.filter(f => isMera(f.brand));
-  const mktFlags  = flags.filter(f => !isMera(f.brand));
+  // Step 2: derive the competitive field category/subcategory from the anchors
+  const cats=new Set(meraAnchors.map(r=>r.category.toLowerCase()).filter(Boolean));
+  const subs=new Set(meraAnchors.map(r=>r.subcategory.toLowerCase()).filter(Boolean));
 
-  let html = '';
-  if(meraFlags.length){
-    html += '<div class="card mt-12"><div class="card-header"><div><div class="card-title text-accent">Mera Portfolio Movements</div></div></div><div class="flag-list">'+meraFlags.map(renderFlag).join('')+'</div></div>';
-  }
-  if(mktFlags.length){
-    html += '<div class="card mt-12"><div class="card-header"><div><div class="card-title">Competitor Movements</div></div></div><div class="flag-list">'+mktFlags.slice(0,30).map(renderFlag).join('')+'</div></div>';
-  }
-  el.innerHTML = html;
-}
-
-function buildFlags(rows, prevRows, threshold){
-  const flags = [];
-  for(const r of rows){
-    const prev = prevRows.find(p => p.product === r.product && p.brand === r.brand);
-    if(!prev) continue;
-    const delta = pctChange(r.price, prev.price);
-    if(delta == null || Math.abs(delta) < threshold) continue;
-    flags.push({ brand:r.brand, product:r.product, price:r.price, prevPrice:prev.price, delta, revenue:r.revenue });
-  }
-  return flags.sort((a,b) => Math.abs(b.delta) - Math.abs(a.delta));
-}
-
-function renderFlag(f){
-  const isUp = f.delta > 0;
-  const cls = isUp ? 'flag-up' : 'flag-down';
-  const icon = isUp ? '📈' : '📉';
-  return '<div class="flag-item '+cls+'">'
-    +'<span class="flag-icon">'+icon+'</span>'
-    +'<div class="flag-text"><span class="flag-brand">'+esc(f.brand)+'</span> — '+esc(f.product.substring(0,60))+'<br><small>'+fmt$(f.prevPrice)+' → '+fmt$(f.price)+'</small></div>'
-    +'<div class="flag-delta '+(isUp?'up':'down')+'">'+fmtPct(f.delta)+'</div>'
-    +'</div>';
-}
-
-/* ================================================================
-   EXPORT PDF
-================================================================ */
-async function exportPDF(){
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit:'pt', format:'a4' });
-    doc.setFontSize(18); doc.text('Mera Price Intelligence Brief', 40, 50);
-    doc.setFontSize(11); doc.setTextColor(120);
-    doc.text('Period: '+(currentMonth||'—')+' vs '+(compareMonth||'—'), 40, 70);
-    doc.setTextColor(0); doc.setFontSize(10);
-    const rows = getRows(currentMonth);
-    const prevRows = getRows(compareMonth);
-    const threshold = parseFloat(document.getElementById('threshold').value)||5;
-    const flags = buildFlags(rows, prevRows, threshold);
-    let y = 100;
-    for(const f of flags.slice(0,40)){
-      const line = (f.delta>0?'▲ ':'▼ ')+f.brand+' · '+f.product.substring(0,60)+' | '+fmt$(f.prevPrice)+' → '+fmt$(f.price)+' ('+fmtPct(f.delta)+')';
-      doc.text(line, 40, y); y += 16;
-      if(y > 780){ doc.addPage(); y = 40; }
+  // Competitive field: all rows matching the same categories/subcategories
+  // If seg has explicit category filter, use that. Otherwise use what Mera anchors cover.
+  function inField(row){
+    if(cats.size>0){
+      const catMatch=[...cats].some(c=>row.category.toLowerCase().includes(c)||c.includes(row.category.toLowerCase()));
+      if(!catMatch) return false;
     }
-    doc.save('mera-price-brief-'+(currentMonth||'export')+'.pdf');
-    toast('PDF exported','success');
-  } catch(e){ toast('PDF error: '+e.message,'error'); }
-}
+    if(subs.size>0){
+      const subMatch=[...subs].some(s=>row.subcategory.toLowerCase().includes(s)||s.includes(row.subcategory.toLowerCase()));
+      if(!subMatch) return false;
+    }
+    return true;
+  }
 
-/* ================================================================
-   TAB NAVIGATION
-================================================================ */
-function showTab(tab){
-  ['ladder','market','brief','data'].forEach(t => {
-    document.getElementById('tab-'+t).style.display = t===tab?'':'none';
-    document.querySelectorAll('.tab').forEach(el => {
-      if(el.dataset.tab === t) el.classList.toggle('active', t===tab);
-    });
-  });
-  if(tab==='ladder') renderLadder();
-  if(tab==='market') renderMarket();
-  if(tab==='brief')  renderBrief();
-}
+  const field=curRows.filter(r=>inField(r));
+  if(!field.length) return null;
 
-/* ================================================================
-   TOAST
-================================================================ */
-function toast(msg, type='info'){
-  const wrap = document.getElementById('toastWrap');
-  const el = document.createElement('div');
-  el.className = 'toast '+type;
-  el.textContent = msg;
-  wrap.appendChild(el);
-  setTimeout(() => el.remove(), 4000);
-}
+  // Step 3: group by brand → compute rev-weighted avg price per brand
+  const brandMap={};
+  for(const r of field){
+    const k=r.brand.toLowerCase();
+    if(!brandMap[k]) brandMap[k]={brand:r.brand,skus:[],revenue:0,units:0};
+    brandMap[k].skus.push(r);
+    brandMap[k].revenue+=r.revenue;
+    brandMap[k].units+=r.units;
+  }
+  const totalFieldRev=field.reduce((s,r)=>s+r.revenue,0);
 
-/* ================================================================
-   UTILITIES
-================================================================ */
+  // Compute rev-weighted avg price for each brand
+  for(const b of Object.values(brandMap)){
+    const totalRev=b.skus.reduce((s,r)=>s+r.revenue,0)||1;
+    b.avgPrice=b.skus.reduce((s,r)=>s+r.price*(r.revenue/totalRev),0);
+    b.revShare=totalFieldRev>0?b.revenue/totalFieldRev:0;
+    b.isMera=isMera(b.brand);
+  }
+
+  // Sort by avgPrice ascending (cheapest first = rank 1 = most competitive on price)
+  const brands=Object.values(brandMap).sort((a,b2)=>a.avgPrice-b2.avgPrice);
+
+  // Step 4: compare to prior month
+  const cmpField=cmpRows.filter(r=>inField(r));
+  const cmpBrandMap={};
+  for(const r of cmpField){
+    const k=r.brand.toLowerCase();
+    if(!cmpBrandMap[k]) cmpBrandMap[k]={brand:r.brand,skus:[],revenue:0};
+    cmpBrandMap[k].skus.push(r);
+    cmpBrandMap[k].revenue+=r.revenue;
+  }
+  for(const b of Object.values(cmpBrandMap)){
+    const totalRev=b.skus.reduce((s,r)=>s+r.revenue,0)||1;
+    b.avgPrice=b.skus.reduce((s,r)=>s+r.price*(r.revenue/totalRev),0);
+  }
+  for(const b of brands){
+    const prev=cmpBrandMap[b.brand.toLowerCase()];
+    b.prevAvgPrice=prev?prev.avgPrice:null;
+    b.isNewEntrant=!prev&&!b.isMera;
+    b.priceDelta=b.prevAvgPrice!=null?((b.avgPrice-b.prevAvgPrice)/b.prevAvgPrice)*100:null;
+  }
+
+  // Step 5: compute Mera composite avg
+  const meraBrands=brands.filter(b=>b.isMera);
+  const meraTotalRev=meraBrands.reduce((s,b)=>s+b.revenue,0)||1;
+  const meraAvgPrice=meraBrands.reduce((s,b)=>s+b.avgPrice*(b.revenue/meraTotalRev),0);
+  const meraRank=brands.findIndex(b=>b.isMera)+1;
+
+  // Step 6: flags — new entrants below Mera avg, or competitors that dropped price below Mera
+  const flags=[];
+  for(const b of brands){
+    if(b.isMera) continue;
+    if(b.isNewEntrant&&b.avgPrice<meraAvgPrice) flags.push({type:'new_below',brand:b.brand,price:b.avgPrice,meraAvg:meraAvgPrice});
+    else if(b.priceDelta!=null&&b.priceDelta<-5&&b.avgPrice<meraAvgPrice) flags.push({type:'dropped_below',brand:b.brand,price:b.avgPrice,prevPrice:b.prevAvgPrice,delta:b.priceDelta,meraAvg:meraAvgPrice});
+  }
+
+  // Market avg (all brands)
+  const mktAvg=totalFieldRev>0?field.reduce((s,r)=>s+r.price*(r.revenue/totalFieldRev),0):0;
+  const cmpMktAvg=cmpField.length>0?(()=>{const t=cmpField.reduce((s,r)=>s+r.revenue,0)||1;return cmpField.reduce((s,r)=>s+r.price*(r.revenue/t),0);})():null;
+
+  return {seg,brands,meraAvgPrice,meraRank,mktAvg,cmpMktAvg,flags,totalBrands:brands.length,totalSkus:field.length,meraAnchors};
+}
+</script>
+<script>
+/* ═══════════════════════════════════════════
+   PRICING LADDER RENDER
+═══════════════════════════════════════════ */
+function runAll(){ renderLadder(); renderBrief(); }
 function showSpinner(id){ const el=document.getElementById(id); if(el) el.innerHTML='<div class="spinner"><div class="spin"></div>Loading…</div>'; }
+
+function renderLadder(){
+  const el=document.getElementById('ladderContent');
+  const curRows=getRows(curMonth);
+  if(!curMonth||!curRows.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No data loaded</div><div class="empty-desc">Go to the Data &amp; Segments tab to upload OCS .xlsx files and define your segments.</div></div>';
+    return;
+  }
+  if(!segments.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🗂</div><div class="empty-title">No segments defined</div><div class="empty-desc">Go to Data &amp; Segments → Define a Segment. Example: name "Liquid Diamond Vapes", keyword "liquid diamond", category "vapes", subcategory "all-in-one".</div></div>';
+    return;
+  }
+  const cmpRows=getRows(cmpMonth);
+  const panels=segments.map(seg=>buildSegmentData(seg,curRows,cmpRows)).filter(Boolean);
+  if(!panels.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No Mera SKUs matched your segments</div><div class="empty-desc">Check your segment keyword and category filters — no Mera products matched in the selected month.</div></div>';
+    return;
+  }
+  el.innerHTML='<div class="seg-panels">'+panels.map(renderPanel).join('')+'</div>';
+}
+
+function renderPanel(d){
+  const {seg,brands,meraAvgPrice,meraRank,mktAvg,cmpMktAvg,flags,totalBrands,totalSkus}=d;
+  const mktDelta=cmpMktAvg?((mktAvg-cmpMktAvg)/cmpMktAvg)*100:null;
+  const hasFlag=flags.length>0;
+
+  // KPIs header
+  const kpis=[
+    kpi(fmt$(meraAvgPrice),'Mera Rev-Wtd Avg','mera'),
+    kpi(fmt$(mktAvg),'Market Avg',null),
+    mktDelta!=null?kpi(fmtPct(mktDelta),'Market MoM',mktDelta>0?'up':mktDelta<0?'down':'neutral'):null,
+    kpi('#'+meraRank+' of '+totalBrands,'Mera Rank',null),
+  ].filter(Boolean).join('');
+
+  // Flag banner
+  let flagBanner='';
+  if(hasFlag){
+    const msgs=flags.map(f=>{
+      if(f.type==='new_below') return '⚠ New entrant '+esc(f.brand)+' entered at '+fmt$(f.price)+' (below Mera avg '+fmt$(f.meraAvg)+')';
+      return '⚠ '+esc(f.brand)+' dropped price to '+fmt$(f.price)+' ('+fmtPct(f.delta)+' MoM, below Mera avg)';
+    });
+    flagBanner='<div class="seg-flag-banner">'+msgs.join(' &nbsp;·&nbsp; ')+'</div>';
+  }
+
+  // Table rows — show individual SKUs grouped by brand, sorted by brand avgPrice
+  const tableRows=[];
+  let rank=0;
+  for(const b of brands){
+    rank++;
+    const rankClass=rank===1?'gold':'';
+    const isMeraB=b.isMera;
+    const moveHtml=moveCellHtml(b.priceDelta);
+    const revBarW=Math.round(b.revShare*100);
+    const isNew=b.isNewEntrant;
+    const rowClass=(isMeraB?'mera-row':'')+(isNew?' new-entrant':'');
+
+    // Brand aggregate row
+    const brandBadges=[
+      isMeraB?'<span class="badge badge-mera">MERA</span>':'<span class="badge badge-comp">COMP</span>',
+      isNew?'<span class="badge badge-new">NEW</span>':'',
+    ].join('');
+
+    tableRows.push(
+      '<tr class="'+rowClass+'">'
+      +'<td class="rank-cell '+rankClass+'">'+(rank)+'</td>'
+      +'<td class="brand-cell">'
+        +'<div class="brand-name-text">'+esc(b.brand)+'</div>'
+        +'<div class="badge-row">'+brandBadges+'</div>'
+      +'</td>'
+      +'<td><span class="pct-sub">'+b.skus.length+' SKU'+(b.skus.length>1?'s':'')+'</span></td>'
+      +'<td class="price-cell'+(isMeraB?' mera-price':'')+'">'+fmt$(b.avgPrice)+'</td>'
+      +'<td class="move-cell">'+moveHtml+'</td>'
+      +'<td class="rev-cell">'+fmtRev(b.revenue)+'</td>'
+      +'<td class="rev-bar-cell"><div class="rev-bar-wrap"><div class="rev-bar" style="width:'+revBarW+'%"></div></div></td>'
+      +'</tr>'
+    );
+
+    // Expand top-3 Mera SKUs inline
+    if(isMeraB&&b.skus.length>0){
+      const skusSorted=b.skus.slice().sort((a,b2)=>b2.revenue-a.revenue).slice(0,5);
+      for(const sku of skusSorted){
+        tableRows.push(
+          '<tr style="background:rgba(255,122,61,.03)">'
+          +'<td></td>'
+          +'<td class="brand-cell" colspan="2" style="padding-left:28px"><div class="sku-name-text">'+esc(sku.product)+'</div></td>'
+          +'<td class="price-cell" style="font-size:11px;color:var(--fg2)">'+fmt$(sku.price)+'</td>'
+          +'<td></td>'
+          +'<td class="rev-cell" style="font-size:10px">'+fmtRev(sku.revenue)+'</td>'
+          +'<td></td>'
+          +'</tr>'
+        );
+      }
+    }
+  }
+
+  const footer=totalSkus+' total SKUs across '+totalBrands+' brands'+(cmpMonth?' · vs '+cmpMonth:'');
+
+  return '<div class="seg-panel'+(hasFlag?' has-flag':'')+'">'
+    +'<div class="seg-head">'
+      +'<div><div class="seg-title">'+esc(seg.name)+'</div><div class="seg-desc">'+describeFilters(seg)+'</div></div>'
+      +'<div class="seg-kpis">'+kpis+'</div>'
+    +'</div>'
+    +flagBanner
+    +'<table class="ladder-table">'
+      +'<thead><tr>'
+        +'<th>#</th><th>Brand</th><th>SKUs</th><th class="r">Rev-Wtd Avg $</th><th class="r">MoM Δ</th><th class="r">Revenue</th><th></th>'
+      +'</tr></thead>'
+      +'<tbody>'+tableRows.join('')+'</tbody>'
+    +'</table>'
+    +'<div class="seg-footer">'+footer+'</div>'
+    +'</div>';
+}
+
+function kpi(val,lbl,cls){
+  return '<div class="kpi"><div class="kpi-val'+(cls?' '+cls:'')+'">'+val+'</div><div class="kpi-lbl">'+lbl+'</div></div>';
+}
+function moveCellHtml(pctDelta){
+  if(pctDelta==null) return '<span class="move-neutral">—</span>';
+  if(pctDelta>0.5) return '<span class="move-up">▲</span><br><span class="pct-sub">'+fmtPct(pctDelta)+'</span>';
+  if(pctDelta<-0.5) return '<span class="move-down">▼</span><br><span class="pct-sub">'+fmtPct(pctDelta)+'</span>';
+  return '<span class="move-neutral">—</span>';
+}
+function describeFilters(seg){
+  const p=[];
+  if(seg.keyword) p.push('keyword "'+seg.keyword+'"');
+  if(seg.category) p.push(seg.category);
+  if(seg.subcategory) p.push(seg.subcategory);
+  if(seg.brandFilter) p.push('brand: '+seg.brandFilter);
+  return p.join(' · ')||'All products';
+}
+</script>
+<script>
+/* ═══════════════════════════════════════════
+   LEADERSHIP BRIEF
+═══════════════════════════════════════════ */
+function renderBrief(){
+  const el=document.getElementById('briefContent');
+  const curRows=getRows(curMonth);
+  if(!curMonth||!curRows.length||!segments.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No data to brief</div><div class="empty-desc">Upload data and define segments first.</div></div>';
+    return;
+  }
+  const cmpRows=getRows(cmpMonth);
+  const thr=parseFloat(document.getElementById('threshold').value)||5;
+
+  const newBelow=[];   // new entrants that entered below Mera avg
+  const droppedBelow=[];  // existing competitor dropped below Mera avg
+  const meraUp=[];    // Mera itself raised price
+  const meraDown=[];  // Mera itself dropped price
+
+  for(const seg of segments){
+    const d=buildSegmentData(seg,curRows,cmpRows);
+    if(!d) continue;
+    for(const f of d.flags){
+      if(f.type==='new_below') newBelow.push({...f,segName:seg.name});
+      if(f.type==='dropped_below') droppedBelow.push({...f,segName:seg.name});
+    }
+    // Check Mera own price movement
+    for(const b of d.brands){
+      if(!b.isMera) continue;
+      if(b.priceDelta==null) continue;
+      if(b.priceDelta>=thr) meraUp.push({brand:b.brand,delta:b.priceDelta,price:b.avgPrice,prev:b.prevAvgPrice,segName:seg.name});
+      if(b.priceDelta<=-thr) meraDown.push({brand:b.brand,delta:b.priceDelta,price:b.avgPrice,prev:b.prevAvgPrice,segName:seg.name});
+    }
+    // Also flag any competitor movement beyond threshold
+    for(const b of d.brands){
+      if(b.isMera||b.isNewEntrant) continue;
+      if(b.priceDelta==null) continue;
+      if(Math.abs(b.priceDelta)>=thr&&b.avgPrice<d.meraAvgPrice){
+        droppedBelow.push({brand:b.brand,delta:b.priceDelta,price:b.avgPrice,prevPrice:b.prevAvgPrice,meraAvg:d.meraAvgPrice,segName:seg.name,type:'dropped_below'});
+      }
+    }
+  }
+
+  // Deduplicate
+  const dedup=(arr)=>[...new Map(arr.map(x=>[x.brand+'|'+x.segName,x])).values()];
+
+  let html='';
+  if(!newBelow.length&&!droppedBelow.length&&!meraUp.length&&!meraDown.length){
+    html='<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">No significant movements</div><div class="empty-desc">No price movements exceeding ±'+thr+'% threshold detected in any segment.</div></div>';
+    el.innerHTML=html; return;
+  }
+
+  const mkSection=(title,items,cls,renderer)=>{
+    if(!items.length) return '';
+    return '<div class="brief-section"><div class="brief-section-head"><span class="brief-section-title '+cls+'">'+title+'</span><span style="font-size:11px;color:var(--muted)">'+items.length+' alert'+(items.length>1?'s':'')+'</span></div><div class="flag-items">'+items.map(renderer).join('')+'</div></div>';
+  };
+
+  html+=mkSection('⚠ New Entrants Below Mera Price',dedup(newBelow),'danger',f=>
+    '<div class="flag-item new"><span class="flag-icon">🆕</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">Entered at '+fmt$(f.price)+' vs Mera avg '+fmt$(f.meraAvg)+'</div></div><div class="flag-delta up">NEW</div></div>'
+  );
+  html+=mkSection('📉 Competitors Dropped Below Mera',dedup(droppedBelow),'danger',f=>
+    '<div class="flag-item up"><span class="flag-icon">📉</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+fmt$(f.prevPrice||0)+' → '+fmt$(f.price)+', now below Mera avg '+fmt$(f.meraAvg)+'</div></div><div class="flag-delta up">'+fmtPct(f.delta)+'</div></div>'
+  );
+  html+=mkSection('↑ Mera Price Increases',dedup(meraUp),'warn',f=>
+    '<div class="flag-item new"><span class="flag-icon">↑</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+fmt$(f.prev||0)+' → '+fmt$(f.price)+'</div></div><div class="flag-delta up">'+fmtPct(f.delta)+'</div></div>'
+  );
+  html+=mkSection('↓ Mera Price Decreases',dedup(meraDown),'success',f=>
+    '<div class="flag-item down"><span class="flag-icon">↓</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+fmt$(f.prev||0)+' → '+fmt$(f.price)+'</div></div><div class="flag-delta down">'+fmtPct(f.delta)+'</div></div>'
+  );
+  el.innerHTML='<div class="brief-sections">'+html+'</div>';
+}
+
+/* ═══════════════════════════════════════════
+   PDF EXPORT
+═══════════════════════════════════════════ */
+async function exportPDF(){
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    doc.setFontSize(18); doc.text('Mera Price Intelligence Brief',40,50);
+    doc.setFontSize(11); doc.setTextColor(120);
+    doc.text('Period: '+(curMonth||'—')+' vs '+(cmpMonth||'—')+' | Threshold: ±'+(document.getElementById('threshold').value||5)+'%',40,70);
+    doc.setTextColor(0); doc.setFontSize(10);
+    let y=95;
+    const curRows=getRows(curMonth);
+    const cmpRows=getRows(cmpMonth);
+    const thr=parseFloat(document.getElementById('threshold').value)||5;
+    for(const seg of segments){
+      const d=buildSegmentData(seg,curRows,cmpRows);
+      if(!d) continue;
+      doc.setFontSize(12); doc.setFont(undefined,'bold');
+      doc.text(seg.name,40,y); y+=18;
+      doc.setFontSize(9); doc.setFont(undefined,'normal');
+      doc.text('Mera Rev-Wtd Avg: '+fmt$(d.meraAvgPrice)+'  Market Avg: '+fmt$(d.mktAvg)+'  Mera Rank: #'+d.meraRank+' of '+d.totalBrands,40,y); y+=14;
+      for(const b of d.brands.slice(0,12)){
+        const line='  '+d.brands.indexOf(b)+1+'. '+b.brand+' — '+fmt$(b.avgPrice)+(b.priceDelta!=null?' ('+fmtPct(b.priceDelta)+' MoM)':'')+(b.isMera?' ◄ MERA':'');
+        doc.text(line,40,y); y+=13;
+        if(y>780){doc.addPage();y=40;}
+      }
+      y+=8;
+      if(y>780){doc.addPage();y=40;}
+    }
+    doc.save('mera-price-brief-'+(curMonth||'export')+'.pdf');
+    toast('PDF exported','success');
+  }catch(e){ toast('PDF error: '+e.message,'error'); }
+}
+
+/* ═══════════════════════════════════════════
+   TAB NAV
+═══════════════════════════════════════════ */
+function showTab(tab){
+  ['ladder','brief','data'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'':'none';
+    document.querySelectorAll('.tab').forEach(el=>{ if(el.dataset.tab===t) el.classList.toggle('active',t===tab); });
+  });
+}
+
+/* ═══════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════ */
+function fmt$(n){ return n==null?'—':'$'+Number(n).toFixed(2); }
+function fmtPct(n){ return n==null?'—':(n>0?'+':'')+Number(n).toFixed(1)+'%'; }
+function fmtRev(n){ if(!n) return '—'; if(n>=1e6) return '$'+(n/1e6).toFixed(1)+'M'; if(n>=1e3) return '$'+(n/1e3).toFixed(0)+'K'; return '$'+Math.round(n); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function formatNum(n){ return n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':Math.round(n).toString(); }
+function toast(msg,type='info'){
+  const w=document.getElementById('toastWrap');
+  const el=document.createElement('div'); el.className='toast '+type; el.textContent=msg;
+  w.appendChild(el); setTimeout(()=>el.remove(),4500);
+}
 </script>
 </body>
 </html>
