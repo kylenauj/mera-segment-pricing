@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Price Intelligence · Mera</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Price Intelligence · Mera / Countryside</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#0f1117;--surface:#161b26;--s2:#1c2232;--inset:#0b0e16;
@@ -17,10 +17,10 @@
   --success:#3ddc8a;--sbg:rgba(61,220,138,.09);
   --warn:#f0b73d;--wbg:rgba(240,183,61,.09);
   --danger:#f66b5c;--dbg:rgba(246,107,92,.09);
-  --blue:#5b9bf0;--violet:#a78bfa;--teal:#29c3d4;
+  --blue:#5b9bf0;
   --font:'Syne',system-ui,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
   --r:8px;--rm:12px;--rl:16px;
-  --sh:0 4px 24px rgba(0,0,0,.45);--shl:0 8px 48px rgba(0,0,0,.65);
+  --sh:0 4px 24px rgba(0,0,0,.45);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh}
@@ -29,7 +29,7 @@ html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-f
 /* ── Topbar ── */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:50}
 .brand{display:flex;align-items:baseline;gap:10px}
-.brand-name{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.brand-name{font-size:16px;font-weight:800;letter-spacing:-.01em}
 .brand-tag{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;background:var(--inset);border:1px solid var(--border);border-radius:6px;padding:2px 8px}
 .topbar-right{display:flex;align-items:center;gap:8px}
 .conn{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 10px;border:1px solid}
@@ -41,120 +41,198 @@ html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-f
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .period{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .period label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-select{background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;font:inherit;font-size:12px;cursor:pointer}
+select{background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;font:inherit;font-size:12px;cursor:pointer;max-width:220px}
 select:focus{outline:2px solid var(--accent);outline-offset:1px}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--r);font:inherit;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;text-decoration:none}
 .btn-ghost{background:transparent;color:var(--fg2);border-color:var(--border)}
 .btn-ghost:hover{background:var(--s2);color:var(--fg)}
 .btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn-accent:hover{filter:brightness(1.1)}
+.btn-sm{padding:3px 10px;font-size:11px}
 
 /* ── Tabs ── */
 .tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 24px;overflow-x:auto}
-.tab{padding:11px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;letter-spacing:.01em}
+.tab{padding:11px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;letter-spacing:.01em;display:flex;align-items:center;gap:6px}
 .tab:hover{color:var(--fg)}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge{font-size:9px;font-weight:700;font-family:var(--mono);background:var(--dbg);color:var(--danger);border:1px solid rgba(246,107,92,.3);border-radius:10px;padding:1px 6px}
 
-/* ── Main ── */
 main{padding:20px 24px;overflow-y:auto}
 
-/* ── Segment Panels ── */
-.seg-panels{display:grid;gap:20px}
-.seg-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
-.seg-panel.has-flag{border-color:rgba(246,107,92,.4)}
-.seg-head{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--bsoft);background:var(--inset);gap:12px}
-.seg-title{font-size:14px;font-weight:700;letter-spacing:.01em}
-.seg-desc{font-size:11px;color:var(--muted);margin-top:3px}
-.seg-kpis{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
-.kpi{text-align:right}
-.kpi-val{font-size:15px;font-weight:700;font-family:var(--mono)}
-.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
-.kpi-val.mera{color:var(--accent)}
-.kpi-val.up{color:var(--danger)}
-.kpi-val.down{color:var(--success)}
-.kpi-val.neutral{color:var(--muted)}
-.seg-flag-banner{display:flex;align-items:center;gap:8px;padding:8px 18px;background:var(--dbg);border-bottom:1px solid rgba(246,107,92,.2);font-size:12px;font-weight:600;color:var(--danger)}
+/* ── Brand panels (collapsible) ── */
+.brand-block{margin-bottom:22px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.brand-block-head{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none;background:var(--inset)}
+.brand-block-head:hover{background:var(--s2)}
+.brand-chev{font-size:11px;color:var(--muted);transition:transform .15s}
+.brand-block.collapsed .brand-chev{transform:rotate(-90deg)}
+.brand-block-title{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.brand-block-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;display:flex;gap:14px;align-items:center}
+.brand-flag-count{color:var(--danger);font-weight:700}
+.brand-block-body{padding:16px 18px;border-top:1px solid var(--bsoft)}
+.brand-block.collapsed .brand-block-body{display:none}
+.subcat-title{font-size:11px;font-weight:700;color:var(--fg2);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 10px;display:flex;align-items:center;gap:8px}
+.subcat-title:first-child{margin-top:0}
+.subcat-title::after{content:'';flex:1;height:1px;background:var(--bsoft)}
+.seg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:14px}
+@media(max-width:560px){.seg-grid{grid-template-columns:1fr}}
 
-/* ── Price Ladder Table ── */
+/* ── Segment cards ── */
+.seg-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rm);overflow:hidden;display:flex;flex-direction:column}
+.seg-card.has-flag{border-color:rgba(246,107,92,.45)}
+.seg-card-head{padding:12px 14px;border-bottom:1px solid var(--bsoft)}
+.seg-card-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.seg-title{font-size:13px;font-weight:700}
+.seg-desc{font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+.pos-pill{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid}
+.pos-pill.over{color:var(--danger);border-color:rgba(246,107,92,.35);background:var(--dbg)}
+.pos-pill.under{color:var(--success);border-color:rgba(61,220,138,.35);background:var(--sbg)}
+.pos-pill.par{color:var(--muted);border-color:var(--border);background:var(--inset)}
+.kpi-strip{display:flex;gap:0;border-bottom:1px solid var(--bsoft)}
+.kpi{flex:1;padding:9px 12px;border-right:1px solid var(--bsoft);text-align:left}
+.kpi:last-child{border-right:none}
+.kpi-val{font-size:14px;font-weight:700;font-family:var(--mono)}
+.kpi-sub{font-size:9px;font-family:var(--mono);margin-top:1px}
+.kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.kpi-val.mera{color:var(--accent)}
+.c-up{color:var(--danger)}.c-down{color:var(--success)}.c-warn{color:var(--warn)}.c-mut{color:var(--muted)}
+.seg-flags{padding:7px 14px;background:var(--dbg);border-bottom:1px solid rgba(246,107,92,.2);font-size:11px;font-weight:600;color:var(--danger);display:flex;flex-direction:column;gap:3px}
+.seg-note{padding:7px 14px;background:var(--wbg);border-bottom:1px solid rgba(240,183,61,.2);font-size:11px;font-weight:600;color:var(--warn)}
+
+/* mini tabs inside card */
+.mini-tabs{display:flex;border-bottom:1px solid var(--bsoft);background:var(--inset)}
+.mini-tab{padding:7px 14px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+.mini-tab:hover{color:var(--fg)}
+.mini-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.chart-wrap{position:relative;height:250px;padding:10px 12px 4px}
+.chart-empty{display:flex;align-items:center;justify-content:center;height:250px;color:var(--muted);font-size:12px;text-align:center;padding:0 24px;line-height:1.7}
+.insights{padding:10px 14px 12px;border-top:1px solid var(--bsoft);display:grid;gap:5px}
+.insight{font-size:11px;color:var(--fg2);line-height:1.55;display:flex;gap:7px;align-items:baseline}
+.insight .dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;position:relative;top:-2px}
+.insight b{color:var(--fg)}
+.insight .mono{font-family:var(--mono)}
+
+/* ── Ladder Table (inside card) ── */
 .ladder-table{width:100%;border-collapse:collapse}
-.ladder-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 14px;border-bottom:1px solid var(--bsoft);text-align:left;background:var(--inset)}
+.ladder-table th{font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:7px 12px;border-bottom:1px solid var(--bsoft);text-align:left;background:var(--inset)}
 .ladder-table th.r{text-align:right}
-.ladder-table td{font-size:12px;padding:9px 14px;border-bottom:1px solid var(--bsoft);vertical-align:middle}
+.ladder-table td{font-size:11px;padding:7px 12px;border-bottom:1px solid var(--bsoft);vertical-align:middle}
 .ladder-table tr:last-child td{border-bottom:none}
 .ladder-table tr:hover td{background:rgba(255,255,255,.02)}
 .ladder-table tr.mera-row td{background:rgba(255,122,61,.05)}
 .ladder-table tr.mera-row td:first-child{border-left:3px solid var(--accent)}
-.ladder-table tr.new-entrant td{background:rgba(246,107,92,.06)}
-.rank-cell{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);width:32px}
-.rank-cell.gold{color:var(--warn)}
-.brand-cell .brand-name-text{font-weight:700;font-size:12px}
-.brand-cell .sku-name-text{font-size:11px;color:var(--muted);margin-top:1px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.badge-row{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
-.badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;border:1px solid transparent}
-.badge-mera{background:var(--accent);color:#fff;border-color:var(--accent)}
-.badge-new{background:var(--dbg);color:var(--danger);border-color:rgba(246,107,92,.3)}
-.badge-comp{background:var(--faint);color:var(--fg2);border-color:var(--border)}
-.price-cell{font-family:var(--mono);font-size:13px;font-weight:700;text-align:right;white-space:nowrap}
+.ladder-table tr.new-row td{background:rgba(240,183,61,.05)}
+.ladder-table tr.mkt-row td{padding:4px 12px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fbbf24;text-align:center;background:rgba(251,191,36,.06);border-top:1px dashed rgba(251,191,36,.4);border-bottom:1px dashed rgba(251,191,36,.4)}
+.share-cell{min-width:90px}
+.share-mini{display:flex;align-items:center;gap:6px}
+.share-mini span{font-size:10px;color:var(--muted);min-width:34px}
+.share-mini-bar{height:5px;border-radius:3px;background:#5b9bf0;min-width:2px;max-width:60px;flex:0 0 auto}
+.share-mini-bar.ours{background:var(--accent)}
+.rank-cell{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);width:26px}
+.sku-cell .sku-brand{font-weight:700;font-size:11px;display:inline}
+.sku-cell .sku-prod{font-size:10px;color:var(--fg2);margin-top:1px;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;border:1px solid transparent;margin-left:5px;vertical-align:1px}
+.badge-mera{background:var(--accent);color:#fff}
+.badge-new{background:var(--wbg);color:var(--warn);border-color:rgba(240,183,61,.35)}
+.badge-active{background:var(--sbg);color:var(--success);border-color:rgba(61,220,138,.35)}
+.badge-inactive{background:var(--faint);color:var(--muted);border-color:var(--border)}
+.price-cell{font-family:var(--mono);font-size:12px;font-weight:700;text-align:right;white-space:nowrap}
 .price-cell.mera-price{color:var(--accent)}
-.move-cell{text-align:right;white-space:nowrap}
-.move-up{color:var(--danger);font-weight:700;font-size:12px}
-.move-down{color:var(--success);font-weight:700;font-size:12px}
-.move-neutral{color:var(--muted);font-size:12px}
-.pct-sub{font-size:10px;color:var(--muted);font-family:var(--mono)}
-.rev-cell{text-align:right;font-family:var(--mono);font-size:11px;color:var(--fg2)}
-.rev-bar-cell{width:80px}
-.rev-bar-wrap{height:4px;background:var(--faint);border-radius:2px}
-.rev-bar{height:100%;border-radius:2px;background:var(--fg2);opacity:.6;min-width:2px}
-.mera-row .rev-bar{background:var(--accent);opacity:.8}
-.units-cell{text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)}
-.seg-footer{padding:10px 18px;font-size:11px;color:var(--muted);background:var(--inset);border-top:1px solid var(--bsoft)}
+.vsmkt-cell{text-align:right;font-family:var(--mono);font-size:10px;white-space:nowrap}
+.move-cell{text-align:right;white-space:nowrap;font-family:var(--mono);font-size:10px}
+.move-up{color:var(--danger);font-weight:700}
+.move-down{color:var(--success);font-weight:700}
+.move-neutral{color:var(--muted)}
+.rev-cell{text-align:right;font-family:var(--mono);font-size:10px;color:var(--fg2)}
+.seg-footer{padding:8px 14px;font-size:10px;color:var(--muted);background:var(--inset);border-top:1px solid var(--bsoft);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:auto}
+.exited-wrap{padding:8px 14px;border-top:1px solid var(--bsoft);background:var(--inset)}
+.exited-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
+.exited-list{font-size:10px;color:var(--fg2);font-family:var(--mono);line-height:1.9;margin-top:6px}
+.trends-layout{display:grid;grid-template-columns:270px 1fr;gap:16px;align-items:start}
+@media(max-width:860px){.trends-layout{grid-template-columns:1fr}}
+.trends-filters .field label{margin-bottom:4px}
+.top-warn{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--wbg);border:1px solid rgba(240,183,61,.3);border-radius:var(--rm);font-size:12px;font-weight:600;color:var(--warn);margin-bottom:18px;flex-wrap:wrap}
 
 /* ── Empty / Spinner ── */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 20px;text-align:center;gap:10px;color:var(--muted)}
 .empty-icon{font-size:36px;opacity:.5}
 .empty-title{font-size:15px;font-weight:700;color:var(--fg)}
-.empty-desc{font-size:12px;max-width:440px;line-height:1.7}
+.empty-desc{font-size:12px;max-width:480px;line-height:1.7}
 .spinner{display:flex;align-items:center;justify-content:center;gap:8px;padding:44px;color:var(--muted);font-size:13px}
 .spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── Upload / Data tab ── */
-.data-layout{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
-@media(max-width:860px){.data-layout{grid-template-columns:1fr}}
-.drop-zone{border:2px dashed var(--border);border-radius:var(--rl);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+/* ── Data tab ── */
+.data-layout{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
+@media(max-width:920px){.data-layout{grid-template-columns:1fr}}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--rl);padding:24px 18px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
 .drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:var(--asoft)}
 .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.drop-icon{font-size:28px;margin-bottom:6px}
+.drop-icon{font-size:26px;margin-bottom:6px}
 .drop-title{font-size:13px;font-weight:700;margin-bottom:3px}
 .drop-desc{font-size:11px;color:var(--muted);line-height:1.6}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);padding:16px}
+.card+.card{margin-top:14px}
 .card-title{font-size:13px;font-weight:700;margin-bottom:12px}
 .month-chips{display:grid;gap:6px;margin-top:12px}
-.month-chip{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r)}
+.month-chip{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);gap:8px}
 .month-chip b{font-size:12px}
 .month-chip .chip-meta{font-size:11px;color:var(--muted);font-family:var(--mono)}
 .month-chip .del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px 5px;border-radius:4px;line-height:1}
 .month-chip .del-btn:hover{color:var(--danger);background:var(--dbg)}
 .note{font-size:11px;color:var(--muted);font-style:italic}
 .upload-progress{margin-top:10px;font-size:12px;color:var(--fg2)}
-.upload-log{margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono);max-height:120px;overflow-y:auto;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);padding:8px;display:none}
+.upload-log{margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono);max-height:140px;overflow-y:auto;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);padding:8px;display:none;white-space:pre-wrap}
 .upload-log.show{display:block}
+textarea{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-family:var(--mono);font-size:11px;line-height:1.7;resize:vertical}
+textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 
 /* ── Segment Builder ── */
 .seg-builder{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);padding:16px}
-.seg-builder h3{font-size:13px;font-weight:700;margin-bottom:12px}
+.seg-builder h3{font-size:13px;font-weight:700;margin-bottom:10px}
 .field{margin-bottom:10px}
 .field label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
-.field input,.field select{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;font:inherit;font-size:12px}
+.field input,.field select{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;font:inherit;font-size:12px;max-width:none}
 .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.seg-pills{display:grid;gap:5px;margin-top:10px}
+.field .hint{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+.seg-pills{display:grid;gap:5px;margin-top:12px}
 .seg-pill{display:flex;align-items:flex-start;gap:8px;padding:9px 10px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);font-size:11px}
 .seg-pill-info{flex:1;min-width:0}
 .seg-pill-name{font-weight:700;font-size:12px;margin-bottom:2px}
-.seg-pill-meta{color:var(--muted);font-size:10px;line-height:1.5}
-.seg-pill .del-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:1px 4px;border-radius:3px;font-size:13px;flex-shrink:0}
+.seg-pill-meta{color:var(--muted);font-size:10px;line-height:1.5;font-family:var(--mono)}
+.seg-pill .del-btn,.seg-pill .edit-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:1px 4px;border-radius:3px;font-size:12px;flex-shrink:0}
 .seg-pill .del-btn:hover{color:var(--danger)}
+.seg-pill .edit-btn:hover{color:var(--accent)}
+
+/* ── Portfolio tab ── */
+.pf-summary{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:16px}
+.cov-wrap{flex:1;min-width:220px}
+.cov-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.cov-label b{font-family:var(--mono)}
+.cov-bar{height:8px;background:var(--faint);border-radius:4px;overflow:hidden}
+.cov-fill{height:100%;border-radius:4px;background:var(--success);transition:width .3s}
+.cov-fill.partial{background:var(--warn)}
+.pf-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pf-controls label{font-size:12px;color:var(--fg2);display:flex;align-items:center;gap:6px;cursor:pointer}
+.pf-brand{margin-bottom:24px}
+.pf-brand-title{font-size:15px;font-weight:800;margin-bottom:2px}
+.pf-brand-bar{height:2px;background:linear-gradient(90deg,var(--accent),transparent);border-radius:2px;margin-bottom:10px}
+.pf-subcat{font-size:10px;font-weight:700;color:var(--fg2);text-transform:uppercase;letter-spacing:.09em;margin:12px 0 6px}
+.pf-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);overflow:hidden}
+.pf-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 12px;border-bottom:1px solid var(--bsoft);text-align:left;background:var(--inset)}
+.pf-table td{font-size:12px;padding:8px 12px;border-bottom:1px solid var(--bsoft);vertical-align:middle}
+.pf-table tr:last-child td{border-bottom:none}
+.pf-table tr.uncovered td{background:rgba(240,183,61,.05)}
+.pf-item-name{font-weight:700;font-size:12px}
+.pf-item-meta{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px}
+.pf-size{font-family:var(--mono);font-size:11px;white-space:nowrap}
+.seg-chip{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--asoft);color:var(--accent);border:1px solid rgba(255,122,61,.3);margin:1px 3px 1px 0}
+.seg-chip.manual{background:var(--sbg);color:var(--success);border-color:rgba(61,220,138,.3)}
+.seg-chip.excluded{background:var(--faint);color:var(--muted);border-color:var(--border);text-decoration:line-through}
+.seg-chip .chip-x{background:none;border:none;cursor:pointer;color:inherit;font-size:9px;margin-left:4px;padding:0 1px;opacity:.7;text-decoration:none;display:inline-block}
+.seg-chip .chip-x:hover{opacity:1}
+.no-seg{font-size:11px;color:var(--warn);font-weight:700}
+.pf-assign select{max-width:200px;font-size:11px;padding:4px 6px}
 
 /* ── Brief ── */
 .brief-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
@@ -162,7 +240,7 @@ main{padding:20px 24px;overflow-y:auto}
 .brief-sub{font-size:12px;color:var(--muted);margin-top:2px}
 .threshold-row{display:flex;align-items:center;gap:6px}
 .threshold-row label{font-size:12px;color:var(--fg2)}
-.thr-input{width:60px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;color:var(--fg);font:inherit;font-size:12px;text-align:center}
+.thr-input{width:56px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;color:var(--fg);font:inherit;font-size:12px;text-align:center}
 .brief-sections{display:grid;gap:14px}
 .brief-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);overflow:hidden}
 .brief-section-head{padding:13px 16px;border-bottom:1px solid var(--bsoft);background:var(--inset);display:flex;align-items:center;justify-content:space-between}
@@ -183,10 +261,18 @@ main{padding:20px 24px;overflow-y:auto}
 .flag-delta{font-family:var(--mono);font-size:13px;font-weight:700;text-align:right;white-space:nowrap}
 .flag-delta.up{color:var(--danger)}
 .flag-delta.down{color:var(--success)}
+.flag-delta.warn{color:var(--warn)}
+.pos-table{width:100%;border-collapse:collapse}
+.pos-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 16px;border-bottom:1px solid var(--bsoft);text-align:left}
+.pos-table th.r,.pos-table td.r{text-align:right}
+.pos-table td{font-size:12px;padding:9px 16px;border-bottom:1px solid var(--bsoft);font-family:var(--mono)}
+.pos-table td.name{font-family:var(--font);font-weight:700}
+.pos-table td.grp{font-family:var(--font);color:var(--fg2);font-size:11px}
+.pos-table tr:last-child td{border-bottom:none}
 
 /* ── Toast ── */
 .toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:999}
-.toast{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r);font-size:12px;font-weight:600;box-shadow:var(--sh);animation:tin .2s ease;border:1px solid}
+.toast{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r);font-size:12px;font-weight:600;box-shadow:var(--sh);animation:tin .2s ease;border:1px solid;max-width:400px}
 .toast.success{background:var(--sbg);border-color:rgba(61,220,138,.3);color:var(--success)}
 .toast.error{background:var(--dbg);border-color:rgba(246,107,92,.3);color:var(--danger)}
 .toast.info{background:var(--surface);border-color:var(--border);color:var(--fg)}
@@ -198,8 +284,8 @@ main{padding:20px 24px;overflow-y:auto}
 <!-- Topbar -->
 <div class="topbar">
   <div class="brand">
-    <span class="brand-name">Price Intelligence</span>
-    <span class="brand-tag">Mera Cannabis</span>
+    <span class="brand-name">Price Intelligence <span style="font-size:9px;color:var(--muted);font-weight:500">v7</span></span>
+    <span class="brand-tag">Mera / Countryside</span>
   </div>
   <div class="period">
     <label>Period</label>
@@ -214,15 +300,16 @@ main{padding:20px 24px;overflow-y:auto}
 
 <!-- Tabs -->
 <div class="tabs">
-  <div class="tab active" data-tab="ladder" onclick="showTab('ladder')">Pricing Ladder</div>
+  <div class="tab active" data-tab="ladder" onclick="showTab('ladder')">Pricing Dashboard</div>
   <div class="tab" data-tab="brief" onclick="showTab('brief')">Leadership Brief</div>
+  <div class="tab" data-tab="trends" onclick="showTab('trends')">Market Trends</div>
+  <div class="tab" data-tab="portfolio" onclick="showTab('portfolio')">Portfolio <span class="tab-badge" id="pfBadge" style="display:none">0</span></div>
   <div class="tab" data-tab="data" onclick="showTab('data')">Data &amp; Segments</div>
 </div>
 
-<!-- Main -->
 <main>
 
-<!-- ── PRICING LADDER ── -->
+<!-- ── PRICING DASHBOARD ── -->
 <div id="tab-ladder">
   <div id="ladderContent"></div>
 </div>
@@ -232,12 +319,17 @@ main{padding:20px 24px;overflow-y:auto}
   <div class="brief-controls">
     <div>
       <div class="brief-title">Leadership Brief</div>
-      <div class="brief-sub">Competitor price movements &amp; market position flags</div>
+      <div class="brief-sub">Positioning summary, competitor movements &amp; new-SKU impact</div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
       <div class="threshold-row">
-        <label>Flag at ±</label>
+        <label>Flag moves ±</label>
         <input type="number" class="thr-input" id="threshold" value="5" min="1" max="50" oninput="renderBrief()">
+        <label>%</label>
+      </div>
+      <div class="threshold-row">
+        <label>Over-market alert ±</label>
+        <input type="number" class="thr-input" id="omThreshold" value="10" min="1" max="50" oninput="renderBrief();renderLadder()">
         <label>%</label>
       </div>
       <button class="btn btn-ghost" onclick="exportPDF()">⬇ Export PDF</button>
@@ -246,53 +338,159 @@ main{padding:20px 24px;overflow-y:auto}
   <div id="briefContent"></div>
 </div>
 
+<!-- ── MARKET TRENDS (v6-style explorer) ── -->
+<div id="tab-trends" style="display:none">
+  <div class="trends-layout">
+    <div class="card trends-filters">
+      <div class="card-title">Filters</div>
+      <div class="field">
+        <label>Subcategory</label>
+        <select id="tSubcat" onchange="onTrendsSubcat()"><option value="">(all)</option></select>
+      </div>
+      <div class="field">
+        <label>Sub-subcategory</label>
+        <select id="tSubsub" onchange="refreshTrendsAll()"><option value="">(all)</option></select>
+      </div>
+      <div class="field">
+        <label>Keyword (name / brand / extraction)</label>
+        <input type="text" id="tKw" placeholder="e.g. diamond" oninput="trendsKwDebounce()">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Net contents</label>
+          <select id="tContents" onchange="refreshTrendsAll()"><option value="">(all)</option></select>
+        </div>
+        <div class="field">
+          <label>Units / pack</label>
+          <select id="tUpp" onchange="refreshTrendsAll()"><option value="">(all)</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>My price $ (drawn on chart)</label>
+        <input type="number" id="tMyPrice" step="0.01" placeholder="—" oninput="trendsKwDebounce()">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;color:var(--fg2);font-weight:500">
+          <input type="checkbox" id="tShowRW" checked onchange="refreshTrendsAll()" style="width:auto"> Rev-wtd avg line
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;color:var(--fg2);font-weight:500;margin-top:6px">
+          <input type="checkbox" id="tShowMed" checked onchange="refreshTrendsAll()" style="width:auto"> Median line
+        </label>
+      </div>
+      <div class="note" id="tStats" style="margin-top:12px"></div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Price Over Time <span style="font-weight:500;color:var(--muted);font-size:11px">· rev-weighted avg per brand</span></div>
+        <div class="chart-wrap" style="height:360px;padding:0"><canvas id="trendsPriceCanvas"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Revenue Share Over Time</div>
+        <div class="chart-wrap" style="height:300px;padding:0"><canvas id="trendsShareCanvas"></canvas></div>
+      </div>
+      <div class="empty" id="trendsEmpty" style="display:none">
+        <div class="empty-icon">📈</div>
+        <div class="empty-title">Need at least 1 uploaded month</div>
+        <div class="empty-desc">Upload monthly market files in Data &amp; Segments — this explorer reads the same saved months.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PORTFOLIO ── -->
+<div id="tab-portfolio" style="display:none">
+  <div id="pfUploadCard" class="card" style="margin-bottom:16px">
+    <div class="card-title">Mera Portfolio Catalogue</div>
+    <div class="drop-zone"
+      ondrop="handlePfDrop(event)"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')">
+      <input type="file" accept=".xlsx,.xls,.csv" onchange="handlePfSelect(event)">
+      <div class="drop-icon">🗂</div>
+      <div class="drop-title">Drop your active SKU catalogue (.xlsx)</div>
+      <div class="drop-desc">The vendor export with Item Number, Item Name, Brand Name, Sub Category, Size and Variant Lifecycle. Re-uploading replaces the saved portfolio; your segment assignments are kept by Item Number.</div>
+    </div>
+    <div class="upload-progress" id="pfProgress"></div>
+  </div>
+  <div id="pfContent"></div>
+</div>
+
 <!-- ── DATA & SEGMENTS ── -->
 <div id="tab-data" style="display:none">
   <div class="data-layout">
     <div>
       <div class="card">
-        <div class="card-title">Upload Market Data</div>
+        <div class="card-title">Upload Monthly Market Data</div>
         <div class="drop-zone" id="dropZone"
           ondrop="handleDrop(event)"
           ondragover="event.preventDefault();this.classList.add('drag')"
           ondragleave="this.classList.remove('drag')">
-          <input type="file" id="fileInput" accept=".xlsx,.xls" multiple onchange="handleFileSelect(event)">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple onchange="handleFileSelect(event)">
           <div class="drop-icon">📊</div>
-          <div class="drop-title">Drop one or more .xlsx files here</div>
-          <div class="drop-desc">Each file = one month of OCS data. Files are named by detected month and saved permanently to the PRICE INT bucket. Drop multiple months at once.</div>
+          <div class="drop-title">Drop one or more monthly files here</div>
+          <div class="drop-desc">Each file = one month of OCS market data (.xlsx or .csv). The month is read from the filename — "jan 2026", "January 2026", "2026-01" and "01-2026" all work. Files are saved permanently to the PRICE INT bucket. Re-uploading a month overwrites it.</div>
         </div>
         <div class="upload-progress" id="uploadProgress"></div>
         <div class="upload-log" id="uploadLog"></div>
         <div class="month-chips" id="monthChips"></div>
       </div>
+      <div class="card">
+        <div class="card-title">Our Brands</div>
+        <p class="note" style="margin-bottom:8px">One brand per line. Any SKU whose brand/licensee contains one of these strings is treated as ours and highlighted in every segment.</p>
+        <textarea id="meraBrandsInput" rows="7"></textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="saveMeraBrands()">Save brand list</button>
+      </div>
     </div>
     <div>
       <div class="seg-builder">
-        <h3>Define a Segment</h3>
-        <p style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">A segment anchors on Mera SKUs matching your filters, then shows ALL other brands in the same category/subcategory as competitors.</p>
+        <h3 id="segBuilderTitle">Define a Segment</h3>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">A segment is a bucket of comparable SKUs. Pick values pulled from your uploaded data — every SKU (ours and competitors) matching the filters is pulled in, ranked on price, and tracked month over month.</p>
         <div class="field">
           <label>Segment Name</label>
-          <input type="text" id="segName" placeholder="e.g. Liquid Diamond Vapes All-in-One">
-        </div>
-        <div class="field">
-          <label>Mera SKU Keyword (in product name)</label>
-          <input type="text" id="segKeyword" placeholder="e.g. liquid diamond">
+          <input type="text" id="segName" placeholder="e.g. Liquid Diamond AIO 1g">
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Category</label>
-            <input type="text" id="segCat" placeholder="e.g. vapes">
+            <label>Display under brand</label>
+            <select id="segBrandGrp"><option value="">Portfolio-wide</option></select>
           </div>
           <div class="field">
-            <label>Subcategory / Type</label>
-            <input type="text" id="segSub" placeholder="e.g. all-in-one">
+            <label>Subcategory</label>
+            <select id="segSubcat" onchange="updateSubsubOptions()"><option value="">(any)</option></select>
           </div>
         </div>
         <div class="field">
-          <label>Additional Brand Filter (optional)</label>
-          <input type="text" id="segBrand" placeholder="leave blank = all competitors">
+          <label>Sub-subcategory</label>
+          <select id="segSubsub"><option value="">(any)</option></select>
+          <div class="hint" id="subsubHint"></div>
         </div>
-        <button class="btn btn-accent" style="width:100%;margin-top:4px" onclick="addSegment()">+ Add Segment</button>
+        <div class="field-row">
+          <div class="field">
+            <label>Retail pack net contents</label>
+            <select id="segContents"><option value="">(any)</option></select>
+          </div>
+          <div class="field">
+            <label>Units per pack</label>
+            <select id="segUnitsPP"><option value="">(any)</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Item Name keywords (comma-separated)</label>
+          <input type="text" id="segInclude" list="kwSuggest" placeholder="e.g. liquid diamond, resin">
+          <datalist id="kwSuggest"></datalist>
+          <div class="hint">A SKU matches if its item name contains ANY of these.</div>
+        </div>
+        <div class="field">
+          <label>Exclude keywords (comma-separated)</label>
+          <input type="text" id="segExclude" placeholder="e.g. 510, infused">
+        </div>
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;color:var(--fg2);font-weight:500">
+            <input type="checkbox" id="segManualOnly" style="width:auto"> Our SKUs join this segment by manual assignment only (no auto-match)
+          </label>
+        </div>
+        <button class="btn btn-accent" style="width:100%;margin-top:4px" id="segAddBtn" onclick="addSegment()">+ Add Segment</button>
+        <button class="btn btn-ghost" style="width:100%;margin-top:6px;display:none" id="segCancelBtn" onclick="cancelEdit()">Cancel edit</button>
         <div class="seg-pills" id="segPills"></div>
       </div>
     </div>
@@ -309,502 +507,1487 @@ main{padding:20px 24px;overflow-y:auto}
 ═══════════════════════════════════════════ */
 const SB_URL  = 'https://sxkaswnhqgatbpoeapsz.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4a2Fzd25ocWdhdGJwb2VhcHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Mzg3ODIsImV4cCI6MjA5NTUxNDc4Mn0.qKwK123yYWA-MRwfFR-s7q_ZAlrNWunLDrnJHa1eupA';
-
-const MERA = ['buddy blooms','litti','litti.','greazy','shatterizer','ellevia','countryside cannabis','countryside cannabis harvest reserve','cchr'];
-function isMera(brand){ return MERA.some(m => String(brand).toLowerCase().includes(m)); }
+const BUCKET  = 'PRICE INT';
+const DEFAULT_MERA = ['buddy blooms','litti','greazy','shatterizer','ellevia','countryside cannabis','cchr','hunny pot'];
 
 /* ═══════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════ */
-let sb = null;
-let monthsData = {};   // { 'YYYY-MM': [{brand,product,category,subcategory,revenue,units,price}] }
-let segments   = [];   // user segment definitions
-let curMonth   = '';
-let cmpMonth   = '';
+let monthsData  = {};
+let segments    = [];
+let portfolio   = [];
+let assignments = {};
+let exclusions  = {};      // { segmentId: [itemNumber,...] } SKUs pulled OUT of a segment
+let meraBrands  = DEFAULT_MERA.slice();
+let curMonth='', cmpMonth='';
+let editingSegId=null;
+let unsavedMonths=new Set();
+let expandedSegs=new Set();
+let exitedOpen=new Set();
+let collapsedBrands=new Set();
+let segView={};              // segId -> 'trend' | 'share' | 'ladder'
+let charts={};               // canvasId -> Chart instance
+let pfActiveOnly=true;
 
-/* ═══════════════════════════════════════════
-   SUPABASE CLIENT
-═══════════════════════════════════════════ */
-function getSb(){
-  if(!sb){
-    const lib = window.supabase || window.Supabase;
-    const fn  = lib?.createClient || window.createClient;
-    if(fn) sb = fn(SB_URL, SB_ANON);
-  }
-  return sb;
+function isMera(brand){
+  const b=String(brand||'').toLowerCase();
+  return meraBrands.some(m=>m&&b.includes(m));
 }
+function norm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
 
 /* ═══════════════════════════════════════════
-   STORAGE HELPERS
+   SUPABASE STORAGE — direct REST (no SDK)
 ═══════════════════════════════════════════ */
+const ST_BASE=SB_URL+'/storage/v1';
+const ST_BUCKET=encodeURIComponent(BUCKET);
+function stHeaders(json){
+  const h={'apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON};
+  if(json) h['Content-Type']='application/json';
+  return h;
+}
+async function stErr(res,action){
+  let msg=res.status+' '+res.statusText;
+  try{ const j=await res.json(); if(j.message||j.error) msg=j.message||j.error; }catch(e){}
+  throw new Error(action+' failed: '+msg);
+}
+function isNetErr(e){ return e instanceof TypeError||/failed to fetch/i.test(e.message||''); }
+function netBlockedMsg(){
+  return 'Network request blocked — the browser never reached Supabase. This happens in sandboxed previews or with ad-blockers. Deploy to GitHub Pages and it will save.';
+}
 async function stGet(file){
-  const c=getSb(); if(!c) return null;
-  const {data,error}=await c.storage.from('PRICE INT').download(file);
-  if(error||!data) return null;
-  try{ return JSON.parse(await data.text()); }catch(e){ return null; }
+  try{
+    const res=await fetch(ST_BASE+'/object/'+ST_BUCKET+'/'+encodeURIComponent(file),{headers:stHeaders(false)});
+    if(!res.ok) return null;
+    return await res.json();
+  }catch(e){ return null; }
 }
 async function stList(){
-  const c=getSb(); if(!c) return [];
-  const {data,error}=await c.storage.from('PRICE INT').list('',{limit:300});
-  return error?[]:(data||[]);
+  try{
+    const res=await fetch(ST_BASE+'/object/list/'+ST_BUCKET,{
+      method:'POST',headers:stHeaders(true),
+      body:JSON.stringify({prefix:'',limit:500,offset:0,sortBy:{column:'name',order:'asc'}})
+    });
+    if(!res.ok) return [];
+    const data=await res.json();
+    return Array.isArray(data)?data:[];
+  }catch(e){ return []; }
 }
 async function stPut(file,obj){
-  const c=getSb(); if(!c) throw new Error('No Supabase client');
-  const blob=new Blob([JSON.stringify(obj)],{type:'application/json'});
-  const {error}=await c.storage.from('PRICE INT').upload(file,blob,{upsert:true,contentType:'application/json'});
-  if(error) throw error;
+  const res=await fetch(ST_BASE+'/object/'+ST_BUCKET+'/'+encodeURIComponent(file),{
+    method:'POST',headers:{...stHeaders(true),'x-upsert':'true'},
+    body:JSON.stringify(obj)
+  });
+  if(!res.ok) await stErr(res,'Upload');
 }
 async function stDel(file){
-  const c=getSb(); if(!c) throw new Error('No Supabase client');
-  const {error}=await c.storage.from('PRICE INT').remove([file]);
-  if(error) throw error;
+  const res=await fetch(ST_BASE+'/object/'+ST_BUCKET,{
+    method:'DELETE',headers:stHeaders(true),
+    body:JSON.stringify({prefixes:[file]})
+  });
+  if(!res.ok) await stErr(res,'Delete');
 }
 
 /* ═══════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════ */
+window.addEventListener('error',e=>{ try{ toast('JS error: '+(e.message||e.error)+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno,'error'); }catch(_){} });
+window.addEventListener('unhandledrejection',e=>{ try{ toast('Async error: '+(e.reason&&e.reason.message||e.reason),'error'); }catch(_){} });
 window.addEventListener('DOMContentLoaded', async ()=>{
+  if(window.Chart){
+    Chart.defaults.color='#8b90b8';
+    Chart.defaults.borderColor='rgba(37,45,69,.6)';
+    Chart.defaults.font.family="'Syne',system-ui,sans-serif";
+    Chart.defaults.font.size=10;
+  }
   initConn();
   showSpinner('ladderContent');
   await loadAll();
+  computeFieldAvail();
   populatePeriodSelects();
+  refreshSegOptions();
   renderMonthChips();
   renderSegPills();
+  renderMeraBrandsInput();
+  renderPortfolio();
   runAll();
 });
 
-function initConn(){
+async function initConn(){
   const badge=document.getElementById('connBadge');
   const txt=document.getElementById('connText');
-  const c=getSb();
-  if(!c){ badge.className='conn offline'; txt.textContent='Offline'; return; }
-  c.auth.getUser().then(()=>{ badge.className='conn online'; txt.textContent='Connected'; })
-    .catch(()=>{ badge.className='conn offline'; txt.textContent='Offline'; });
+  try{
+    const res=await fetch(ST_BASE+'/object/list/'+ST_BUCKET,{
+      method:'POST',headers:stHeaders(true),
+      body:JSON.stringify({prefix:'',limit:1,offset:0})
+    });
+    if(res.ok){ badge.className='conn online'; txt.textContent='Connected'; }
+    else{ badge.className='conn offline'; txt.textContent='Offline'; }
+  }catch(e){ badge.className='conn offline'; txt.textContent='Offline'; }
 }
 
 async function loadAll(){
   const files=await stList();
   const mFiles=files.filter(f=>f.name?.startsWith('month-')&&f.name.endsWith('.json'));
   monthsData={};
-  for(const f of mFiles){
+  await Promise.all(mFiles.map(async f=>{
     const key=f.name.replace('month-','').replace('.json','');
     const rows=await stGet(f.name);
     if(Array.isArray(rows)) monthsData[key]=rows;
-  }
+  }));
   const presets=await stGet('presets.json');
-  if(presets?.segments) segments=presets.segments;
+  if(presets){
+    if(Array.isArray(presets.segments)) segments=presets.segments.map(migrateSegment);
+    if(Array.isArray(presets.meraBrands)&&presets.meraBrands.length) meraBrands=presets.meraBrands;
+    if(presets.assignments&&typeof presets.assignments==='object') assignments=presets.assignments;
+    if(presets.exclusions&&typeof presets.exclusions==='object') exclusions=presets.exclusions;
+  }
+  const pf=await stGet('portfolio.json');
+  if(Array.isArray(pf)) portfolio=pf.map(p=>({...p, pfKey:p.pfKey||(p.itemNumber+'::'+norm(p.size||''))}));
 }
 
+function migrateSegment(s){
+  return {
+    id:s.id||Date.now()+Math.random(),
+    name:s.name||'Untitled',
+    brandGrp:s.brandGrp||'',
+    subcategory:(s.subcategory||'').toLowerCase(),
+    subsub:(s.subsub||'').toLowerCase(),
+    netContents:s.netContents||'',
+    unitsPerPack:s.unitsPerPack||'',
+    include:Array.isArray(s.include)?s.include:(s.keyword?[String(s.keyword).toLowerCase()]:[]),
+    exclude:Array.isArray(s.exclude)?s.exclude:[],
+    manualOnly:!!s.manualOnly,
+  };
+}
 async function savePresets(){
-  try{ await stPut('presets.json',{segments}); }catch(e){ console.warn('savePresets',e); }
+  try{ await stPut('presets.json',{segments,meraBrands,assignments,exclusions}); }
+  catch(e){ console.warn('savePresets',e); toast('Settings not saved: '+(isNetErr(e)?'network blocked':e.message),'error'); }
 }
 
 /* ═══════════════════════════════════════════
    PERIOD SELECTS
 ═══════════════════════════════════════════ */
+const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function monthLabel(key){
+  const m=key.match(/^(\d{4})-(\d{2})$/);
+  if(!m) return key;
+  return MONTH_NAMES[parseInt(m[2],10)-1]+' '+m[1];
+}
+function prevMonthKey(key){
+  const m=key.match(/^(\d{4})-(\d{2})$/);
+  if(!m) return '';
+  let y=+m[1], mo=+m[2]-1;
+  if(mo===0){mo=12;y--;}
+  return y+'-'+String(mo).padStart(2,'0');
+}
 function populatePeriodSelects(){
   const months=Object.keys(monthsData).sort().reverse();
   const sc=document.getElementById('selCurrent');
   const sp=document.getElementById('selCompare');
   const pc=sc.value, pp=sp.value;
-  sc.innerHTML='<option value="">— select month —</option>'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
-  sp.innerHTML='<option value="">(none)</option>'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+  const opts=months.map(m=>'<option value="'+m+'">'+monthLabel(m)+'</option>').join('');
+  sc.innerHTML='<option value="">— select month —</option>'+opts;
+  sp.innerHTML='<option value="">(none)</option>'+opts;
   sc.value=months.includes(pc)?pc:(months[0]||'');
-  sp.value=months.includes(pp)?pp:(months[1]||'');
+  let autoCmp='';
+  if(sc.value){
+    const pk=prevMonthKey(sc.value);
+    autoCmp=months.includes(pk)?pk:(months.find(m=>m<sc.value)||'');
+  }
+  sp.value=months.includes(pp)&&pp!==sc.value?pp:autoCmp;
   curMonth=sc.value; cmpMonth=sp.value;
-  sc.onchange=()=>{ curMonth=sc.value; runAll(); };
+  sc.onchange=()=>{
+    curMonth=sc.value;
+    const pk=prevMonthKey(curMonth);
+    if(Object.keys(monthsData).includes(pk)){ sp.value=pk; cmpMonth=pk; }
+    runAll();
+  };
   sp.onchange=()=>{ cmpMonth=sp.value; runAll(); };
 }
 </script>
 <script>
 /* ═══════════════════════════════════════════
-   DATA NORMALIZATION
+   MARKET DATA NORMALIZATION
 ═══════════════════════════════════════════ */
-function normalizeRows(raw){
-  return raw.map(r=>{
-    const keys=Object.keys(r);
-    function col(...c){ for(const x of c){ const k=keys.find(k=>k.toLowerCase().replace(/[^a-z0-9]/g,'').includes(x.replace(/[^a-z0-9]/g,''))); if(k) return String(r[k]||''); } return ''; }
-    const brand   =col('licensee','brand','company','operator','licenseename').trim();
-    const product =col('productname','product','sku','itemname','name').trim();
-    const category=col('category','productcategory','type').trim();
-    const subcat  =col('subcategory','subcat','producttype','format','style').trim();
-    const rev     =parseFloat(col('totalsales','revenue','sales','dollar','$','dollarsales').replace(/[$,]/g,''))||0;
-    const units   =parseFloat(col('unitssold','units','qty','quantity','sold').replace(/,/g,''))||0;
-    const priceRaw=parseFloat(col('avgprice','unitprice','averageprice','price').replace(/[$,]/g,''))||0;
-    const price   =priceRaw||(units>0?rev/units:0);
-    if(!product&&!brand) return null;
-    return {brand,product,category,subcategory:subcat,revenue:rev,units,price:+price.toFixed(4)};
-  }).filter(Boolean);
+function buildColMap(keys){
+  const idx=keys.map(k=>({k,n:k.toLowerCase().replace(/[^a-z0-9]/g,'')}));
+  function find(cands,excludes){
+    excludes=excludes||[];
+    for(const c of cands){
+      const cn=c.replace(/[^a-z0-9]/g,'');
+      const hit=idx.find(e=>e.n===cn);
+      if(hit) return hit.k;
+    }
+    for(const c of cands){
+      const cn=c.replace(/[^a-z0-9]/g,'');
+      const hit=idx.find(e=>e.n.includes(cn)&&!excludes.some(x=>e.n.includes(x)));
+      if(hit) return hit.k;
+    }
+    return null;
+  }
+  return {
+    sku:      find(['ocsitemnumber','itemnumber','skunumber','articlenumber','gtin','sku']),
+    brand:    find(['brandname','brand','licensee','company','suppliername','vendorname']),
+    product:  find(['itemname','productname','skudescription','product','description','name']),
+    category: find(['category','productcategory'],['sub']),
+    subcategory: find(['subcategory','subcat'],['subsub']),
+    subsub:   find(['subsubcategory','subsubcat','subsub','sub2','segment3']),
+    netContents: find(['retailpacknetcontents','retailpacknetcontent','packnetcontent','netcontents','netcontent','packsize','size']),
+    unitsPerPack: find(['retailunitsperpack','unitsperpack','unitsperpackage','packquantity','packcount','unitcount']),
+    revenue:  find(['totalsales','netsales','dollarsales','salesdollars','revenue','sales'],['price']),
+    units:    find(['salesunits','unitssold','totalunits','qtysold','quantity','units','qty','sold'],['perpack','perpackage','packquantity']),
+    // Prefer the excl-HST price column (same one the v6 pricing tool reads)
+    price:    find(['ocspriceexclhst','priceexclhst','salespriceexclhst','priceexcl','avgretailprice','averageretailprice','averageprice','avgprice','unitprice','retailprice','salesprice','price'],['perpack','incl']),
+    extraction: find(['extractionprocess','extractionmethod','extraction']),
+  };
 }
-function detectMonth(raw,filename){
-  const m=filename.match(/(20\d\d)[_\-. ](0?[1-9]|1[0-2])/);
+function cellStr(r,k){ return k&&r[k]!==undefined&&r[k]!==null?String(r[k]).trim():''; }
+function cellNum(r,k){ if(!k) return 0; return parseFloat(String(r[k]??'').replace(/[$,]/g,''))||0; }
+
+function normalizeRows(raw){
+  if(!raw.length) return [];
+  const cm=buildColMap(Object.keys(raw[0]));
+  const out=[];
+  for(const r of raw){
+    const brand=cellStr(r,cm.brand);
+    const product=cellStr(r,cm.product);
+    if(!brand&&!product) continue;
+    const rev=cellNum(r,cm.revenue);
+    const units=cellNum(r,cm.units);
+    let price=cellNum(r,cm.price);
+    if(!price&&units>0) price=rev/units;
+    if(price<=0) continue;
+    const netContents=cellStr(r,cm.netContents);
+    let upp=cellNum(r,cm.unitsPerPack);
+    if(!upp&&netContents){
+      const m=netContents.toLowerCase().match(/^(\d+(?:\.\d+)?)\s*x/);
+      if(m) upp=+m[1];
+    }
+    out.push({
+      sku:cellStr(r,cm.sku),
+      brand,product,
+      category:cellStr(r,cm.category),
+      subcategory:cellStr(r,cm.subcategory),
+      subsub:cellStr(r,cm.subsub),
+      extraction:cellStr(r,cm.extraction),
+      netContents,
+      unitsPerPack:upp||0,
+      revenue:rev,units,price:+price.toFixed(4),
+    });
+  }
+  // Aggregate duplicate rows (same brand+item+price) exactly like the v6 tool,
+  // so THC-bucket splits etc. merge into one SKU with summed sales.
+  const agg=new Map();
+  for(const r of out){
+    const k=(r.brand+'||'+r.product+'||'+r.price.toFixed(2)).toLowerCase();
+    const ex=agg.get(k);
+    if(ex){ ex.revenue+=r.revenue; ex.units+=r.units; }
+    else agg.set(k,r);
+  }
+  return [...agg.values()];
+}
+function skuKey(r){
+  if(r.sku) return 'id:'+String(r.sku).toLowerCase();
+  return norm(r.brand+' '+r.product+' '+(r.netContents||''));
+}
+function parseGrams(s){
+  s=String(s||'').toLowerCase().replace(/\s+/g,'');
+  const mx=s.match(/(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/);
+  if(mx) return {units:+mx[1],per:+mx[2],total:+mx[1]*+mx[2]};
+  const g=s.match(/(\d+(?:\.\d+)?)/);
+  if(g) return {units:1,per:+g[1],total:+g[1]};
+  return null;
+}
+function contentsMatch(segVal,rowVal){
+  if(!segVal) return true;
+  if(!rowVal) return false;
+  const a=String(segVal).toLowerCase().replace(/\s+/g,'');
+  const b=String(rowVal).toLowerCase().replace(/\s+/g,'');
+  if(a===b) return true;
+  const ga=parseGrams(a), gb=parseGrams(b);
+  return !!(ga&&gb&&Math.abs(ga.total-gb.total)<0.011);
+}
+function uppMatch(segVal,rowVal){
+  if(!segVal) return true;
+  const a=parseFloat(segVal), b=parseFloat(rowVal);
+  if(isNaN(a)) return String(segVal)===String(rowVal);
+  if(isNaN(b)||!b) return false;
+  return Math.abs(a-b)<0.01;
+}
+function loose(a,b){ a=String(a||'').toLowerCase(); b=String(b||'').toLowerCase(); return a===b||a.includes(b)||b.includes(a); }
+
+/* ═══════════════════════════════════════════
+   MONTH DETECTION
+═══════════════════════════════════════════ */
+const MONTH_MAP={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12};
+function detectMonth(filename){
+  const f=filename.toLowerCase();
+  let m;
+  m=f.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s_\-.]*(20\d{2})/);
+  if(m) return m[2]+'-'+String(MONTH_MAP[m[1]]).padStart(2,'0');
+  m=f.match(/(20\d{2})[\s_\-.]*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*/);
+  if(m) return m[1]+'-'+String(MONTH_MAP[m[2]]).padStart(2,'0');
+  m=f.match(/(20\d{2})[\s_\-.]+(0?[1-9]|1[0-2])(?![0-9])/);
   if(m) return m[1]+'-'+m[2].padStart(2,'0');
+  m=f.match(/(?<![0-9])(0?[1-9]|1[0-2])[\s_\-.]+(20\d{2})/);
+  if(m) return m[2]+'-'+m[1].padStart(2,'0');
+  return null;
+}
+function askMonth(filename){
   const now=new Date();
-  return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const def=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const ans=prompt('Could not detect the month from "'+filename+'".\nEnter it as YYYY-MM (e.g. 2026-01):',def);
+  if(ans&&/^\d{4}-(0[1-9]|1[0-2])$/.test(ans.trim())) return ans.trim();
+  return null;
 }
 
 /* ═══════════════════════════════════════════
-   MULTI-FILE UPLOAD
+   MONTHLY FILE UPLOAD
 ═══════════════════════════════════════════ */
 function handleDrop(e){
   e.preventDefault();
   document.getElementById('dropZone').classList.remove('drag');
   processFiles(Array.from(e.dataTransfer.files));
 }
-function handleFileSelect(e){
-  processFiles(Array.from(e.target.files));
-  e.target.value='';
+function handleFileSelect(e){ processFiles(Array.from(e.target.files)); e.target.value=''; }
+async function readSheet(file){
+  const ab=await file.arrayBuffer();
+  const wb=XLSX.read(ab,{type:'arraybuffer'});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws,{defval:''});
 }
-
 async function processFiles(files){
-  const xlsFiles=files.filter(f=>f.name.match(/\.xlsx?$/i));
-  if(!xlsFiles.length){ toast('No .xlsx files found','error'); return; }
+  const okFiles=files.filter(f=>f.name.match(/\.(xlsx?|csv)$/i));
+  if(!okFiles.length){ toast('No .xlsx or .csv files found','error'); return; }
   const prog=document.getElementById('uploadProgress');
   const log=document.getElementById('uploadLog');
   log.className='upload-log show'; log.textContent='';
   const addLog=msg=>{ log.textContent+=msg+'\n'; log.scrollTop=log.scrollHeight; };
-
   let done=0;
-  for(const file of xlsFiles){
-    prog.textContent='Processing '+file.name+'… ('+(done+1)+' of '+xlsFiles.length+')';
+  for(const file of okFiles){
+    prog.textContent='Processing '+file.name+'… ('+(done+1)+' of '+okFiles.length+')';
     addLog('▶ '+file.name);
     try{
-      const ab=await file.arrayBuffer();
-      const wb=XLSX.read(ab,{type:'arraybuffer'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      const raw=await readSheet(file);
       if(!raw.length){ addLog('  ⚠ Empty sheet, skipped'); continue; }
       const rows=normalizeRows(raw);
-      const key=detectMonth(raw,file.name);
-      addLog('  '+rows.length+' SKUs → '+key);
-      await stPut('month-'+key+'.json',rows);
+      if(!rows.length){ addLog('  ⚠ No usable rows found (check column headers), skipped'); continue; }
+      let key=detectMonth(file.name);
+      if(!key) key=askMonth(file.name);
+      if(!key){ addLog('  ⚠ No month provided, skipped'); continue; }
+      const overwriting=!!monthsData[key];
+      addLog('  '+rows.length+' SKUs → '+monthLabel(key)+(overwriting?' (overwriting existing)':''));
+      const nSubsub=rows.filter(r=>r.subsub).length;
+      addLog('  fields: sub-subcategory '+(nSubsub? '✓ ('+nSubsub+' rows)':'✗ not found')+', pack contents '+(rows.some(r=>r.netContents)?'✓':'✗')+', units/pack '+(rows.some(r=>r.unitsPerPack)?'✓':'✗'));
       monthsData[key]=rows;
-      addLog('  ✅ Saved to PRICE INT bucket');
       done++;
+      try{
+        await stPut('month-'+key+'.json',rows);
+        unsavedMonths.delete(key);
+        addLog('  ✅ Saved to '+BUCKET+' bucket');
+      }catch(saveErr){
+        unsavedMonths.add(key);
+        addLog('  ⚠ Not saved to bucket: '+(isNetErr(saveErr)?'network blocked':saveErr.message));
+        addLog('    Data is usable this session only. '+(isNetErr(saveErr)?netBlockedMsg():''));
+        toast(monthLabel(key)+' loaded (session only — save failed)','error');
+      }
     }catch(err){
       addLog('  ❌ Error: '+err.message);
       toast('Error processing '+file.name+': '+err.message,'error');
     }
   }
-  prog.textContent=done+' of '+xlsFiles.length+' files uploaded';
+  prog.textContent=done+' of '+okFiles.length+' files loaded';
   if(done>0){
+    computeFieldAvail();
     populatePeriodSelects();
+    refreshSegOptions();
     renderMonthChips();
+    renderPortfolio();
     runAll();
-    toast(done+' month'+(done>1?'s':'')+' uploaded successfully','success');
+    if(!unsavedMonths.size) toast(done+' month'+(done>1?'s':'')+' uploaded','success');
   }
 }
 
 /* ═══════════════════════════════════════════
-   MONTH CHIPS
+   MONTH CHIPS + BRAND LIST
 ═══════════════════════════════════════════ */
 function renderMonthChips(){
   const el=document.getElementById('monthChips');
   const months=Object.keys(monthsData).sort().reverse();
-  if(!months.length){ el.innerHTML='<p class="note">No months uploaded yet.</p>'; return; }
+  if(!months.length){ el.innerHTML='<p class="note" style="margin-top:10px">No months uploaded yet.</p>'; return; }
   el.innerHTML=months.map(m=>{
     const rows=monthsData[m]||[];
-    const brands=new Set(rows.map(r=>r.brand)).size;
-    return '<div class="month-chip"><b>'+m+'</b><span class="chip-meta">'+rows.length+' SKUs · '+brands+' brands</span><button class="del-btn" onclick="deleteMonth(\''+m+'\')">✕</button></div>';
+    const brands=new Set(rows.map(r=>r.brand.toLowerCase())).size;
+    const ours=rows.filter(r=>isMera(r.brand)).length;
+    const hasFields=rows.some(r=>r.subsub||r.netContents);
+    const unsaved=unsavedMonths.has(m);
+    const warnTag=unsaved?'<span style="color:var(--warn);font-size:10px;font-weight:700"> ⚠ session only</span>'
+      :(!hasFields?'<span style="color:var(--muted);font-size:10px"> · re-upload to enable pack &amp; subsub filters</span>':'');
+    const retryBtn=unsaved?'<button class="del-btn" title="Retry save" style="color:var(--warn)" onclick="retrySave(\''+m+'\')">↻</button>':'';
+    return '<div class="month-chip"><b>'+monthLabel(m)+warnTag+'</b><span class="chip-meta">'+rows.length+' SKUs · '+brands+' brands · '+ours+' ours</span>'+retryBtn+'<button class="del-btn" title="Delete month" onclick="deleteMonth(\''+m+'\')">✕</button></div>';
   }).join('');
 }
-async function deleteMonth(key){
-  if(!confirm('Delete '+key+' permanently?')) return;
+async function retrySave(key){
   try{
-    await stDel('month-'+key+'.json');
+    await stPut('month-'+key+'.json',monthsData[key]);
+    unsavedMonths.delete(key);
+    renderMonthChips();
+    toast(monthLabel(key)+' saved to bucket','success');
+  }catch(e){ toast('Still failing: '+(isNetErr(e)?'network blocked':e.message),'error'); }
+}
+async function deleteMonth(key){
+  if(!confirm('Delete '+monthLabel(key)+' permanently?')) return;
+  try{
+    if(!unsavedMonths.has(key)) await stDel('month-'+key+'.json');
+    unsavedMonths.delete(key);
     delete monthsData[key];
+    computeFieldAvail();
     renderMonthChips();
     populatePeriodSelects();
+    refreshSegOptions();
     runAll();
-    toast('Deleted '+key,'info');
+    toast('Deleted '+monthLabel(key),'info');
   }catch(e){ toast('Delete failed: '+e.message,'error'); }
+}
+function renderMeraBrandsInput(){ document.getElementById('meraBrandsInput').value=meraBrands.join('\n'); }
+function saveMeraBrands(){
+  const lines=document.getElementById('meraBrandsInput').value.split('\n').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  if(!lines.length){ toast('Brand list cannot be empty','error'); return; }
+  meraBrands=lines;
+  savePresets();
+  renderMonthChips();
+  renderPortfolio();
+  runAll();
+  toast('Brand list saved','success');
 }
 </script>
 <script>
 /* ═══════════════════════════════════════════
-   SEGMENT BUILDER
+   PORTFOLIO
 ═══════════════════════════════════════════ */
-function addSegment(){
-  const name=document.getElementById('segName').value.trim();
-  if(!name){ toast('Enter a segment name','error'); return; }
-  const seg={
-    id:Date.now(),
-    name,
-    keyword:document.getElementById('segKeyword').value.trim(),
-    category:document.getElementById('segCat').value.trim(),
-    subcategory:document.getElementById('segSub').value.trim(),
-    brandFilter:document.getElementById('segBrand').value.trim(),
+function handlePfDrop(e){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag');
+  const f=Array.from(e.dataTransfer.files).find(f=>f.name.match(/\.(xlsx?|csv)$/i));
+  if(f) processPortfolio(f); else toast('No .xlsx or .csv file found','error');
+}
+function handlePfSelect(e){
+  const f=e.target.files[0];
+  if(f) processPortfolio(f);
+  e.target.value='';
+}
+async function processPortfolio(file){
+  const prog=document.getElementById('pfProgress');
+  prog.textContent='Processing '+file.name+'…';
+  try{
+    const raw=await readSheet(file);
+    if(!raw.length) throw new Error('Empty sheet');
+    const cm=buildColMap(Object.keys(raw[0]));
+    const keys=Object.keys(raw[0]);
+    const idx=keys.map(k=>({k,n:k.toLowerCase().replace(/[^a-z0-9]/g,'')}));
+    const findP=(...cands)=>{
+      for(const c of cands){const cn=c.replace(/[^a-z0-9]/g,'');const h=idx.find(e=>e.n===cn);if(h)return h.k;}
+      for(const c of cands){const cn=c.replace(/[^a-z0-9]/g,'');const h=idx.find(e=>e.n.includes(cn));if(h)return h.k;}
+      return null;
+    };
+    const kLife=findP('variantlifecycle','lifecycle','status');
+    const kSize=findP('size','netcontents','packsize');
+    const kItemNo=findP('itemnumber','ocsitemnumber','sku');
+    const rows=raw.map(r=>{
+      const itemName=cellStr(r,cm.product);
+      const brand=cellStr(r,cm.brand);
+      if(!itemName&&!brand) return null;
+      const size=cellStr(r,kSize);
+      const g=parseGrams(size);
+      const life=cellStr(r,kLife);
+      const itemNumber=cellStr(r,kItemNo)||norm(brand+' '+itemName+' '+size);
+      return {
+        itemNumber,
+        pfKey:itemNumber+'::'+norm(size),   // unique even when sizes share an item number
+        itemName,brand,
+        subCategory:cellStr(r,cm.subcategory),
+        size,
+        unitsPP:g?g.units:0,
+        totalG:g?g.total:0,
+        perG:g?g.per:0,
+        lifecycle:life,
+        active:/^released/i.test(life),
+      };
+    }).filter(Boolean);
+    if(!rows.length) throw new Error('No usable rows (check column headers)');
+    portfolio=rows;
+    prog.textContent=rows.length+' SKUs loaded ('+rows.filter(p=>p.active).length+' active)';
+    try{
+      await stPut('portfolio.json',portfolio);
+      toast('Portfolio saved: '+rows.length+' SKUs','success');
+    }catch(e){
+      toast('Portfolio loaded (session only — save failed: '+(isNetErr(e)?'network blocked':e.message)+')','error');
+    }
+    refreshSegOptions();
+    renderPortfolio();
+    runAll();
+  }catch(err){
+    prog.textContent='';
+    toast('Error: '+err.message,'error');
+  }
+}
+function segMatchesPortfolioSku(seg,p){
+  const name=p.itemName.toLowerCase();
+  if(seg.include?.length && !seg.include.some(k=>name.includes(k))) return false;
+  if(seg.exclude?.length && seg.exclude.some(k=>name.includes(k))) return false;
+  if(seg.subcategory && !loose(seg.subcategory,p.subCategory)) return false;
+  if(seg.netContents){
+    const sg=parseGrams(seg.netContents);
+    if(!sg) return false;
+    const totalOk=p.totalG&&Math.abs(sg.total-p.totalG)<0.011;
+    const perOk=p.perG&&Math.abs(sg.total-p.perG)<0.011;
+    if(!totalOk&&!perOk) return false;
+  }
+  if(seg.unitsPerPack){
+    const u=parseFloat(seg.unitsPerPack);
+    if(!isNaN(u)&&p.unitsPP&&Math.abs(u-p.unitsPP)>=0.01) return false;
+    if(!isNaN(u)&&!p.unitsPP) return false;
+  }
+  return true;
+}
+function portfolioCoverage(){
+  const list=portfolio.filter(p=>!pfActiveOnly||p.active);
+  return list.map(p=>{
+    const inExcl=s=>{const l=exclusions[s.id]||[];return l.includes(p.pfKey)||l.includes(p.itemNumber);};
+    const excluded=segments.filter(inExcl);
+    const auto=segments.filter(s=>!s.manualOnly
+      &&!inExcl(s)
+      &&segMatchesPortfolioSku(s,p));
+    const manualId=assignments[p.pfKey]!==undefined?assignments[p.pfKey]:assignments[p.itemNumber];
+    const manual=manualId?segments.find(s=>s.id===manualId):null;
+    return {p,auto,manual,excluded,covered:auto.length>0||!!manual};
+  });
+}
+function excludeSku(segId,itemNumber){
+  segId=isNaN(+segId)?segId:+segId;
+  (exclusions[segId]=exclusions[segId]||[]);
+  if(!exclusions[segId].includes(itemNumber)) exclusions[segId].push(itemNumber);
+  savePresets(); renderPortfolio(); runAll();
+  toast('SKU removed from segment','info');
+}
+function includeSku(segId,itemNumber){
+  segId=isNaN(+segId)?segId:+segId;
+  const legacy=String(itemNumber).split('::')[0];
+  if(exclusions[segId]) exclusions[segId]=exclusions[segId].filter(x=>x!==itemNumber&&x!==legacy);
+  savePresets(); renderPortfolio(); runAll();
+  toast('SKU restored to segment','info');
+}
+function renderPortfolio(){
+  const el=document.getElementById('pfContent');
+  const badge=document.getElementById('pfBadge');
+  if(!portfolio.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🗂</div><div class="empty-title">No portfolio loaded</div><div class="empty-desc">Upload your active SKU catalogue above. Every active SKU then needs to land in a segment — either automatically via segment filters, or by manual assignment here.</div></div>';
+    badge.style.display='none';
+    return;
+  }
+  const cov=portfolioCoverage();
+  const activeCov=cov.filter(c=>c.p.active);
+  const uncoveredActive=activeCov.filter(c=>!c.covered).length;
+  badge.style.display=uncoveredActive?'':'none';
+  badge.textContent=uncoveredActive;
+  const total=cov.length, covered=cov.filter(c=>c.covered).length;
+  const pct=total?Math.round(covered/total*100):0;
+  let html='<div class="pf-summary">'
+    +'<div class="cov-wrap"><div class="cov-label"><span>Segment coverage'+(pfActiveOnly?' (active SKUs)':'')+'</span><b>'+covered+' / '+total+' ('+pct+'%)</b></div>'
+    +'<div class="cov-bar"><div class="cov-fill'+(pct<100?' partial':'')+'" style="width:'+pct+'%"></div></div></div>'
+    +'<div class="pf-controls"><label><input type="checkbox" '+(pfActiveOnly?'checked':'')+' onchange="pfActiveOnly=this.checked;renderPortfolio()"> Active (Released) only</label></div>'
+    +'</div>';
+  const byBrand={};
+  for(const c of cov){
+    const b=c.p.brand||'(no brand)';
+    (byBrand[b]=byBrand[b]||{})[c.p.subCategory||'(none)']=(byBrand[b][c.p.subCategory||'(none)']||[]).concat([c]);
+  }
+  const segOpts=segments.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('');
+  for(const b of Object.keys(byBrand).sort()){
+    html+='<div class="pf-brand"><div class="pf-brand-title">'+esc(b)+'</div><div class="pf-brand-bar"></div>';
+    for(const sc of Object.keys(byBrand[b]).sort()){
+      html+='<div class="pf-subcat">'+esc(sc)+'</div>';
+      html+='<table class="pf-table"><thead><tr><th>Item</th><th>Size</th><th>Status</th><th>Segments (auto-matched)</th><th style="width:210px">Manual assign</th></tr></thead><tbody>';
+      for(const c of byBrand[b][sc]){
+        const chips=c.auto.map(sg=>'<span class="seg-chip">'+esc(sg.name)
+            +'<button class="chip-x" title="Remove this SKU from '+escAttr(sg.name)+'" onclick="excludeSku(\''+sg.id+'\',\''+escAttr(c.p.pfKey)+'\')">✕</button></span>').join('')
+          +c.excluded.map(sg=>'<span class="seg-chip excluded">'+esc(sg.name)
+            +'<button class="chip-x" title="Restore to '+escAttr(sg.name)+'" onclick="includeSku(\''+sg.id+'\',\''+escAttr(c.p.pfKey)+'\')">↩</button></span>').join('')
+          +(c.manual?'<span class="seg-chip manual">✎ '+esc(c.manual.name)+'</span>':'');
+        const sel='<select onchange="setAssign(\''+escAttr(c.p.pfKey)+'\',this.value)"><option value="">(auto only)</option>'
+          +segments.map(s=>'<option value="'+s.id+'"'+(c.manual&&c.manual.id===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select>';
+        html+='<tr class="'+(!c.covered?'uncovered':'')+'">'
+          +'<td><div class="pf-item-name">'+esc(c.p.itemName)+'</div><div class="pf-item-meta">'+esc(c.p.itemNumber)+'</div></td>'
+          +'<td class="pf-size">'+esc(c.p.size||'—')+'</td>'
+          +'<td>'+(c.p.active?'<span class="badge badge-active">Active</span>':'<span class="badge badge-inactive">'+esc(c.p.lifecycle||'—')+'</span>')+'</td>'
+          +'<td>'+(chips||'<span class="no-seg">⚠ no segment</span>')+'</td>'
+          +'<td class="pf-assign">'+sel+'</td>'
+          +'</tr>';
+      }
+      html+='</tbody></table>';
+    }
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+function setAssign(itemNumber,segId){
+  const legacy=String(itemNumber).split('::')[0];
+  if(legacy!==itemNumber) delete assignments[legacy];
+  if(segId) assignments[itemNumber]=isNaN(+segId)?segId:+segId;
+  else delete assignments[itemNumber];
+  savePresets();
+  renderPortfolio();
+  runAll();
+}
+</script>
+<script>
+/* ═══════════════════════════════════════════
+   SEGMENT BUILDER — options populated from data
+═══════════════════════════════════════════ */
+/* Standard OCS sub-subcategories, keyed by subcategory.
+   Values found in uploaded data are always merged in on top. */
+const OCS_TAXONOMY={
+  'vapes':['510 Thread Cartridges','Disposable Vape Pens','All-in-One Vape Pens','Pod Systems','Vape Kits & Batteries'],
+  'dried flower':['Whole Flower','Milled Flower','Pre-Milled Flower'],
+  'pre-rolled':['Pre-Rolls','Infused Pre-Rolls','Blunts','Infused Blunts'],
+  'pre-rolls':['Pre-Rolls','Infused Pre-Rolls','Blunts','Infused Blunts'],
+  'infused pre-rolls':['Infused Pre-Rolls','Infused Blunts'],
+  'concentrates':['Hash','Kief','Live Resin','Cured Resin','Rosin','Shatter','Wax & Badder','Diamonds','RSO','Distillate'],
+  'edibles':['Soft Chews & Gummies','Chocolates','Baked Goods','Hard Candy & Lozenges','Mints'],
+  'beverages':['Carbonated Drinks','Iced Teas & Lemonades','Drink Mixes & Drops','Shots'],
+  'extracts':['Oils','Capsules','Sublinguals & Strips'],
+  'topicals':['Creams & Lotions','Bath Products','Transdermals'],
+};
+function subsubOptionsFor(subcat){
+  const set=new Set();
+  const scl=String(subcat||'').toLowerCase();
+  for(const rows of Object.values(monthsData)) for(const r of rows){
+    if(!r.subsub) continue;
+    if(scl&&!loose(scl,r.subcategory)) continue;
+    set.add(r.subsub);
+  }
+  for(const k of Object.keys(OCS_TAXONOMY)){
+    if(scl&&!loose(k,scl)) continue;
+    OCS_TAXONOMY[k].forEach(x=>set.add(x));
+  }
+  return [...set].sort();
+}
+function updateSubsubOptions(){
+  const subcat=document.getElementById('segSubcat').value;
+  fillSelect('segSubsub',subsubOptionsFor(subcat),'no values available');
+  const hint=document.getElementById('subsubHint');
+  hint.textContent=subcat
+    ?'Options for "'+subcat+'" — standard OCS values plus anything found in your uploaded data.'
+    :'Pick a subcategory first to narrow this list. Standard OCS values plus anything found in your uploaded data.';
+}
+
+/* Which optional fields actually exist in each uploaded month.
+   If a month's file lacks a column, filters on that field are
+   SKIPPED for that month (with a warning) instead of silently
+   excluding every competitor SKU. */
+let fieldAvail={};
+function computeFieldAvail(){
+  fieldAvail={};
+  for(const m of Object.keys(monthsData)){
+    const rows=monthsData[m];
+    fieldAvail[m]={
+      subsub:rows.some(r=>r.subsub),
+      net:rows.some(r=>r.netContents),
+      upp:rows.some(r=>r.unitsPerPack),
+    };
+  }
+}
+function segSkippedFilters(seg,monthKey){
+  const a=fieldAvail[monthKey];
+  if(!a) return [];
+  const out=[];
+  if(seg.subsub&&!a.subsub) out.push('sub-subcategory');
+  if(seg.netContents&&!a.net) out.push('pack contents');
+  if(seg.unitsPerPack&&!a.upp) out.push('units/pack');
+  return out;
+}
+
+function collectFieldValues(){
+  const subcats=new Set(),subsubs=new Set(),contents=new Set(),upp=new Set(),brands=new Set();
+  for(const rows of Object.values(monthsData)) for(const r of rows){
+    if(r.subcategory) subcats.add(r.subcategory);
+    if(r.subsub) subsubs.add(r.subsub);
+    if(r.netContents) contents.add(r.netContents);
+    if(r.unitsPerPack) upp.add(String(r.unitsPerPack));
+  }
+  for(const p of portfolio){
+    if(p.subCategory) subcats.add(p.subCategory);
+    if(p.brand) brands.add(p.brand);
+    if(p.size) contents.add(p.size);
+    if(p.unitsPP) upp.add(String(p.unitsPP));
+  }
+  if(!brands.size) meraBrands.forEach(b=>brands.add(b.replace(/\b\w/g,c=>c.toUpperCase())));
+  const numSort=(a,b)=>{const ga=parseGrams(a),gb=parseGrams(b);return (ga?ga.total:1e9)-(gb?gb.total:1e9)||String(a).localeCompare(String(b));};
+  return {
+    brands:[...brands].sort(),
+    subcats:[...subcats].sort(),
+    subsubs:[...subsubs].sort(),
+    contents:[...contents].sort(numSort),
+    upp:[...upp].sort((a,b)=>+a-+b),
   };
-  segments.push(seg);
+}
+function fillSelect(id,values,emptyMsg){
+  const sel=document.getElementById(id);
+  const cur=sel.value;
+  const first=sel.options[0].outerHTML;
+  let opts=values.map(v=>'<option value="'+escAttr(v)+'">'+esc(v)+'</option>').join('');
+  if(!values.length&&emptyMsg) opts='<option value="" disabled>'+esc(emptyMsg)+'</option>';
+  sel.innerHTML=first+opts;
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+function setSelectCI(id,val){
+  const sel=document.getElementById(id);
+  const o=[...sel.options].find(o=>o.value.toLowerCase()===String(val||'').toLowerCase());
+  sel.value=o?o.value:'';
+}
+function refreshSegOptions(){
+  const v=collectFieldValues();
+  fillSelect('segBrandGrp',v.brands);
+  fillSelect('segSubcat',v.subcats,'no values — upload data first');
+  updateSubsubOptions();
+  fillSelect('segContents',v.contents,'no values found in data');
+  fillSelect('segUnitsPP',v.upp,'no values found in data');
+  const kws=new Set(['liquid diamond','live resin','all-in-one','510','bubble hash','infused','rso','hash','distillate','disposable']);
+  document.getElementById('kwSuggest').innerHTML=[...kws].map(k=>'<option value="'+escAttr(k)+'">').join('');
+}
+
+function parseKw(str){ return str.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean); }
+function readSegForm(){
+  const name=document.getElementById('segName').value.trim();
+  if(!name){ toast('Enter a segment name','error'); return null; }
+  return {
+    name,
+    brandGrp:document.getElementById('segBrandGrp').value,
+    subcategory:document.getElementById('segSubcat').value.toLowerCase(),
+    subsub:document.getElementById('segSubsub').value.toLowerCase(),
+    netContents:document.getElementById('segContents').value,
+    unitsPerPack:document.getElementById('segUnitsPP').value,
+    include:parseKw(document.getElementById('segInclude').value),
+    exclude:parseKw(document.getElementById('segExclude').value),
+    manualOnly:document.getElementById('segManualOnly').checked,
+  };
+}
+function clearSegForm(){
+  ['segName','segInclude','segExclude'].forEach(id=>document.getElementById(id).value='');
+  ['segBrandGrp','segSubcat','segSubsub','segContents','segUnitsPP'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('segManualOnly').checked=false;
+}
+function addSegment(){
+  const s=readSegForm();
+  if(!s) return;
+  if(editingSegId!=null){
+    const idx=segments.findIndex(x=>x.id===editingSegId);
+    if(idx>=0) segments[idx]={...s,id:editingSegId};
+    cancelEdit();
+    toast('Segment updated: '+s.name,'success');
+  }else{
+    segments.push({...s,id:Date.now()});
+    toast('Segment added: '+s.name,'success');
+  }
+  clearSegForm();
   savePresets();
   renderSegPills();
+  renderPortfolio();
   runAll();
-  ['segName','segKeyword','segCat','segSub','segBrand'].forEach(id=>document.getElementById(id).value='');
-  toast('Segment added: '+name,'success');
+}
+function editSegment(id){
+  const s=segments.find(x=>x.id===id);
+  if(!s) return;
+  editingSegId=id;
+  document.getElementById('segName').value=s.name;
+  setSelectCI('segBrandGrp',s.brandGrp);
+  setSelectCI('segSubcat',s.subcategory);
+  updateSubsubOptions();
+  setSelectCI('segSubsub',s.subsub);
+  setSelectCI('segContents',s.netContents);
+  setSelectCI('segUnitsPP',s.unitsPerPack);
+  document.getElementById('segInclude').value=(s.include||[]).join(', ');
+  document.getElementById('segExclude').value=(s.exclude||[]).join(', ');
+  document.getElementById('segManualOnly').checked=!!s.manualOnly;
+  document.getElementById('segBuilderTitle').textContent='Edit Segment';
+  document.getElementById('segAddBtn').textContent='✓ Save Changes';
+  document.getElementById('segCancelBtn').style.display='';
+  showTab('data');
+}
+function cancelEdit(){
+  editingSegId=null;
+  clearSegForm();
+  document.getElementById('segBuilderTitle').textContent='Define a Segment';
+  document.getElementById('segAddBtn').textContent='+ Add Segment';
+  document.getElementById('segCancelBtn').style.display='none';
 }
 function removeSegment(id){
-  segments=segments.filter(s=>s.id!==id);
+  const s=segments.find(x=>x.id===id);
+  if(s&&!confirm('Delete segment "'+s.name+'"?')) return;
+  segments=segments.filter(x=>x.id!==id);
+  for(const k of Object.keys(assignments)) if(assignments[k]===id) delete assignments[k];
+  delete exclusions[id];
+  if(editingSegId===id) cancelEdit();
   savePresets();
   renderSegPills();
+  renderPortfolio();
   runAll();
 }
 function renderSegPills(){
   const el=document.getElementById('segPills');
   if(!segments.length){ el.innerHTML='<p class="note" style="margin-top:8px">No segments defined yet.</p>'; return; }
-  el.innerHTML=segments.map(s=>{
-    const parts=[];
-    if(s.keyword) parts.push('keyword: "'+s.keyword+'"');
-    if(s.category) parts.push('cat: '+s.category);
-    if(s.subcategory) parts.push('subcat: '+s.subcategory);
-    if(s.brandFilter) parts.push('brand: '+s.brandFilter);
-    return '<div class="seg-pill"><div class="seg-pill-info"><div class="seg-pill-name">'+esc(s.name)+'</div><div class="seg-pill-meta">'+(parts.join(' · ')||'No filters')+'</div></div><button class="del-btn" onclick="removeSegment('+s.id+')">✕</button></div>';
-  }).join('');
+  el.innerHTML=segments.map(s=>
+    '<div class="seg-pill"><div class="seg-pill-info"><div class="seg-pill-name">'+esc(s.name)+'</div><div class="seg-pill-meta">'+esc(describeFilters(s))+'</div></div>'
+    +'<button class="edit-btn" title="Edit" onclick="editSegment('+s.id+')">✎</button>'
+    +'<button class="del-btn" title="Delete" onclick="removeSegment('+s.id+')">✕</button></div>'
+  ).join('');
+}
+function describeFilters(s){
+  const p=[];
+  if(s.manualOnly) p.push('manual-assign only');
+  if(s.subcategory) p.push(s.subcategory);
+  if(s.subsub) p.push(s.subsub);
+  if(s.netContents) p.push('pack: '+s.netContents);
+  if(s.unitsPerPack) p.push('units/pk: '+s.unitsPerPack);
+  if(s.include?.length) p.push('kw: '+s.include.join('|'));
+  if(s.exclude?.length) p.push('excl: '+s.exclude.join('|'));
+  return p.join(' · ')||'All products';
 }
 
 /* ═══════════════════════════════════════════
-   SEGMENT MATCHING LOGIC
+   SEGMENT MATCHING + ANALYTICS
 ═══════════════════════════════════════════ */
-/*
-  For each segment:
-  1. Find Mera SKUs that match the segment's keyword/category/subcategory → these are the "anchors"
-  2. Determine the competitive field = ALL SKUs (Mera + competitors) that share the same
-     category AND subcategory as the anchors (or fall within the filters if no subcategory/category specified)
-  3. The panel shows ALL of those SKUs ranked by price, with Mera rows highlighted
-*/
 function getRows(key){ return monthsData[key]||[]; }
+function matchesSeg(seg,row,avail){
+  // Keywords search item name + brand + extraction process (v6-tool parity:
+  // "liquid diamond" usually lives in the Extraction Process column, not the name)
+  if(seg.include?.length||seg.exclude?.length){
+    const hay=(row.product+' '+row.brand+' '+(row.extraction||'')).toLowerCase();
+    if(seg.include?.length && !seg.include.some(k=>hay.includes(k))) return false;
+    if(seg.exclude?.length && seg.exclude.some(k=>hay.includes(k))) return false;
+  }
+  if(seg.subcategory && !loose(seg.subcategory,row.subcategory)) return false;
+  // Optional fields: only enforce when the month's file actually has the column
+  if(seg.subsub && (!avail||avail.subsub) && !loose(seg.subsub,row.subsub)) return false;
+  if(seg.netContents && (!avail||avail.net) && !contentsMatch(seg.netContents,row.netContents)) return false;
+  if(seg.unitsPerPack && (!avail||avail.upp) && !uppMatch(seg.unitsPerPack,row.unitsPerPack)) return false;
+  return true;
+}
+function forcedMatchers(seg){
+  const out=[];
+  for(const p of portfolio){
+    const aid=assignments[p.pfKey]!==undefined?assignments[p.pfKey]:assignments[p.itemNumber];
+    if(aid!==seg.id) continue;
+    out.push({name:norm(p.itemName),brand:norm(p.brand)});
+  }
+  return out;
+}
+function nameMatch(matchers,row){
+  const pn=norm(row.product), pb=norm(row.brand);
+  for(const m of matchers){
+    if(m.brand&&pb&&!(pb.includes(m.brand)||m.brand.includes(pb))) continue;
+    if(m.size&&row.netContents&&!contentsMatch(m.size,row.netContents)) continue;
+    if(pn===m.name) return true;
+    const long=pn.length>=m.name.length?pn:m.name;
+    const short=pn.length>=m.name.length?m.name:pn;
+    if(long.includes(short)&&short.length/long.length>=0.7) return true;
+  }
+  return false;
+}
+function isForced(matchers,row){
+  return matchers.length>0&&isMera(row.brand)&&nameMatch(matchers,row);
+}
+function excludedMatchers(seg){
+  const list=exclusions[seg.id]||[];
+  if(!list.length) return [];
+  const out=[];
+  for(const p of portfolio){
+    if(list.includes(p.pfKey)||list.includes(p.itemNumber)) out.push({name:norm(p.itemName),brand:norm(p.brand),size:p.size||''});
+  }
+  return out;
+}
+function wAvg(list){
+  const t=list.reduce((s,r)=>s+r.revenue,0);
+  if(t>0) return list.reduce((s,r)=>s+r.price*(r.revenue/t),0);
+  return list.length?list.reduce((s,r)=>s+r.price,0)/list.length:0;
+}
+function sAvg(list){ return list.length?list.reduce((s,r)=>s+r.price,0)/list.length:0; }
 
-function matchesSeg(seg,row){
-  const kw =!seg.keyword   || row.product.toLowerCase().includes(seg.keyword.toLowerCase());
-  const cat=!seg.category  || row.category.toLowerCase().includes(seg.category.toLowerCase());
-  const sub=!seg.subcategory||row.subcategory.toLowerCase().includes(seg.subcategory.toLowerCase());
-  const bf =!seg.brandFilter||row.brand.toLowerCase().includes(seg.brandFilter.toLowerCase());
-  return kw&&cat&&sub&&bf;
+function segMatchFn(seg,monthKey){
+  const fm=forcedMatchers(seg);
+  const xm=excludedMatchers(seg);
+  const avail=fieldAvail[monthKey];
+  return r=>{
+    const mera=isMera(r.brand);
+    if(mera&&xm.length&&nameMatch(xm,r)) return false;   // explicitly removed from this segment
+    if(isForced(fm,r)) return true;                       // manually assigned in
+    if(seg.manualOnly&&mera) return false;                // our SKUs only join by assignment
+    return matchesSeg(seg,r,avail);
+  };
 }
 
-function buildSegmentData(seg, curRows, cmpRows){
-  // Step 1: find Mera anchor SKUs
-  const meraAnchors=curRows.filter(r=>isMera(r.brand)&&matchesSeg(seg,r));
-  if(!meraAnchors.length) return null;
+function buildSegmentData(seg,curKey,cmpKey){
+  const cur=getRows(curKey).filter(segMatchFn(seg,curKey));
+  if(!cur.length) return null;
+  const prev=cmpKey?getRows(cmpKey).filter(segMatchFn(seg,cmpKey)):[];
+  const prevMap=new Map(prev.map(r=>[skuKey(r),r]));
+  const curKeys=new Set(cur.map(skuKey));
+  const exited=prev.filter(r=>!curKeys.has(skuKey(r)));
+  const hasPrev=prev.length>0;
+  const totRev=cur.reduce((s,r)=>s+r.revenue,0);
+  const skus=cur.map(r=>{
+    const p=prevMap.get(skuKey(r));
+    return {
+      ...r,
+      isMera:isMera(r.brand),
+      prevPrice:p?p.price:null,
+      isNew:hasPrev&&!p,
+      delta:(p&&p.price>0)?((r.price-p.price)/p.price)*100:null,
+      revShare:totRev>0?r.revenue/totRev:0,
+    };
+  }).sort((a,b)=>a.price-b.price);
+  const mktAvg=wAvg(cur);
+  const mktSimple=sAvg(cur);
+  const prevMktAvg=hasPrev?wAvg(prev):null;
+  const mktMoM=prevMktAvg?((mktAvg-prevMktAvg)/prevMktAvg)*100:null;
+  const carriedOver=skus.filter(s=>!s.isNew);
+  const newSkus=skus.filter(s=>s.isNew);
+  const mktAvgExclNew=(hasPrev&&carriedOver.length)?wAvg(carriedOver):null;
+  const newImpact=(mktAvgExclNew!=null&&newSkus.length)?mktAvg-mktAvgExclNew:null;
+  const meraSkus=skus.filter(s=>s.isMera);
+  const meraAvg=meraSkus.length?wAvg(meraSkus):null;
+  const prevMeraRows=prev.filter(r=>isMera(r.brand));
+  const prevMeraAvg=prevMeraRows.length?wAvg(prevMeraRows):null;
+  const meraMoM=(meraAvg!=null&&prevMeraAvg)?((meraAvg-prevMeraAvg)/prevMeraAvg)*100:null;
+  const meraVsMkt=(meraAvg!=null&&mktAvg>0)?((meraAvg-mktAvg)/mktAvg)*100:null;
+  let meraPctile=null;
+  if(meraAvg!=null&&skus.length>1){
+    const below=skus.filter(s=>s.price<meraAvg).length;
+    meraPctile=Math.round((below/skus.length)*100);
+  }
+  const meraRevShare=totRev>0?meraSkus.reduce((s,r)=>s+r.revenue,0)/totRev:0;
+  return {
+    seg,skus,exited,hasPrev,
+    mktAvg,mktSimple,prevMktAvg,mktMoM,mktAvgExclNew,newImpact,
+    newCount:newSkus.length,
+    meraAvg,prevMeraAvg,meraMoM,meraVsMkt,meraPctile,meraRevShare,
+    meraCount:meraSkus.length,totalSkus:skus.length,
+    totalBrands:new Set(cur.map(r=>r.brand.toLowerCase())).size,
+  };
+}
 
-  // Step 2: derive the competitive field category/subcategory from the anchors
-  const cats=new Set(meraAnchors.map(r=>r.category.toLowerCase()).filter(Boolean));
-  const subs=new Set(meraAnchors.map(r=>r.subcategory.toLowerCase()).filter(Boolean));
-
-  // Competitive field: all rows matching the same categories/subcategories
-  // If seg has explicit category filter, use that. Otherwise use what Mera anchors cover.
-  function inField(row){
-    if(cats.size>0){
-      const catMatch=[...cats].some(c=>row.category.toLowerCase().includes(c)||c.includes(row.category.toLowerCase()));
-      if(!catMatch) return false;
+/* Time series across ALL uploaded months, per segment */
+function segTimeSeries(seg){
+  const months=Object.keys(monthsData).sort();
+  const out=[];
+  for(const m of months){
+    const rows=getRows(m).filter(segMatchFn(seg,m));
+    if(!rows.length){ out.push({m,empty:true}); continue; }
+    const byBrand={};
+    for(const r of rows){ (byBrand[r.brand]=byBrand[r.brand]||[]).push(r); }
+    const brands={};
+    for(const b of Object.keys(byBrand)){
+      const list=byBrand[b];
+      brands[b]={avg:wAvg(list),rev:list.reduce((s,r)=>s+r.revenue,0),isMera:isMera(b)};
     }
-    if(subs.size>0){
-      const subMatch=[...subs].some(s=>row.subcategory.toLowerCase().includes(s)||s.includes(row.subcategory.toLowerCase()));
-      if(!subMatch) return false;
+    const prices=rows.map(r=>r.price).sort((a,b)=>a-b);
+    const median=prices[Math.floor(prices.length/2)];
+    const meraRows=rows.filter(r=>isMera(r.brand));
+    out.push({
+      m,brands,median,
+      mkt:wAvg(rows),
+      meraAvg:meraRows.length?wAvg(meraRows):null,
+      totRev:rows.reduce((s,r)=>s+r.revenue,0),
+    });
+  }
+  return out;
+}
+
+function segmentFlags(d,thr,omThr){
+  const flags={newBelow:[],compDrops:[],meraMoves:[],overMarket:[],underMarket:[]};
+  const segName=d.seg.name;
+  if(d.meraAvg!=null&&d.meraVsMkt!=null){
+    if(d.meraVsMkt>=omThr) flags.overMarket.push({segName,meraAvg:d.meraAvg,mktAvg:d.mktAvg,vsMkt:d.meraVsMkt});
+    if(d.meraVsMkt<=-omThr) flags.underMarket.push({segName,meraAvg:d.meraAvg,mktAvg:d.mktAvg,vsMkt:d.meraVsMkt});
+  }
+  for(const s of d.skus){
+    if(s.isMera){
+      if(s.delta!=null&&Math.abs(s.delta)>=thr)
+        flags.meraMoves.push({segName,brand:s.brand,product:s.product,price:s.price,prevPrice:s.prevPrice,delta:s.delta});
+      continue;
     }
-    return true;
+    if(s.isNew&&d.meraAvg!=null&&s.price<d.meraAvg)
+      flags.newBelow.push({segName,brand:s.brand,product:s.product,price:s.price,meraAvg:d.meraAvg});
+    if(s.delta!=null&&s.delta<=-thr&&(d.meraAvg==null||s.price<d.meraAvg))
+      flags.compDrops.push({segName,brand:s.brand,product:s.product,price:s.price,prevPrice:s.prevPrice,delta:s.delta,meraAvg:d.meraAvg});
   }
-
-  const field=curRows.filter(r=>inField(r));
-  if(!field.length) return null;
-
-  // Step 3: group by brand → compute rev-weighted avg price per brand
-  const brandMap={};
-  for(const r of field){
-    const k=r.brand.toLowerCase();
-    if(!brandMap[k]) brandMap[k]={brand:r.brand,skus:[],revenue:0,units:0};
-    brandMap[k].skus.push(r);
-    brandMap[k].revenue+=r.revenue;
-    brandMap[k].units+=r.units;
-  }
-  const totalFieldRev=field.reduce((s,r)=>s+r.revenue,0);
-
-  // Compute rev-weighted avg price for each brand
-  for(const b of Object.values(brandMap)){
-    const totalRev=b.skus.reduce((s,r)=>s+r.revenue,0)||1;
-    b.avgPrice=b.skus.reduce((s,r)=>s+r.price*(r.revenue/totalRev),0);
-    b.revShare=totalFieldRev>0?b.revenue/totalFieldRev:0;
-    b.isMera=isMera(b.brand);
-  }
-
-  // Sort by avgPrice ascending (cheapest first = rank 1 = most competitive on price)
-  const brands=Object.values(brandMap).sort((a,b2)=>a.avgPrice-b2.avgPrice);
-
-  // Step 4: compare to prior month
-  const cmpField=cmpRows.filter(r=>inField(r));
-  const cmpBrandMap={};
-  for(const r of cmpField){
-    const k=r.brand.toLowerCase();
-    if(!cmpBrandMap[k]) cmpBrandMap[k]={brand:r.brand,skus:[],revenue:0};
-    cmpBrandMap[k].skus.push(r);
-    cmpBrandMap[k].revenue+=r.revenue;
-  }
-  for(const b of Object.values(cmpBrandMap)){
-    const totalRev=b.skus.reduce((s,r)=>s+r.revenue,0)||1;
-    b.avgPrice=b.skus.reduce((s,r)=>s+r.price*(r.revenue/totalRev),0);
-  }
-  for(const b of brands){
-    const prev=cmpBrandMap[b.brand.toLowerCase()];
-    b.prevAvgPrice=prev?prev.avgPrice:null;
-    b.isNewEntrant=!prev&&!b.isMera;
-    b.priceDelta=b.prevAvgPrice!=null?((b.avgPrice-b.prevAvgPrice)/b.prevAvgPrice)*100:null;
-  }
-
-  // Step 5: compute Mera composite avg
-  const meraBrands=brands.filter(b=>b.isMera);
-  const meraTotalRev=meraBrands.reduce((s,b)=>s+b.revenue,0)||1;
-  const meraAvgPrice=meraBrands.reduce((s,b)=>s+b.avgPrice*(b.revenue/meraTotalRev),0);
-  const meraRank=brands.findIndex(b=>b.isMera)+1;
-
-  // Step 6: flags — new entrants below Mera avg, or competitors that dropped price below Mera
-  const flags=[];
-  for(const b of brands){
-    if(b.isMera) continue;
-    if(b.isNewEntrant&&b.avgPrice<meraAvgPrice) flags.push({type:'new_below',brand:b.brand,price:b.avgPrice,meraAvg:meraAvgPrice});
-    else if(b.priceDelta!=null&&b.priceDelta<-5&&b.avgPrice<meraAvgPrice) flags.push({type:'dropped_below',brand:b.brand,price:b.avgPrice,prevPrice:b.prevAvgPrice,delta:b.priceDelta,meraAvg:meraAvgPrice});
-  }
-
-  // Market avg (all brands)
-  const mktAvg=totalFieldRev>0?field.reduce((s,r)=>s+r.price*(r.revenue/totalFieldRev),0):0;
-  const cmpMktAvg=cmpField.length>0?(()=>{const t=cmpField.reduce((s,r)=>s+r.revenue,0)||1;return cmpField.reduce((s,r)=>s+r.price*(r.revenue/t),0);})():null;
-
-  return {seg,brands,meraAvgPrice,meraRank,mktAvg,cmpMktAvg,flags,totalBrands:brands.length,totalSkus:field.length,meraAnchors};
+  return flags;
 }
 </script>
 <script>
 /* ═══════════════════════════════════════════
-   PRICING LADDER RENDER
+   PRICING DASHBOARD — Brand panels → Subcat → Segment cards
 ═══════════════════════════════════════════ */
+const LADDER_LIMIT=12;
+const COMP_PALETTE=['#5b9bf0','#a78bfa','#29c3d4','#f0b73d','#f66b5c','#3ddc8a','#e879b9','#94a3ce','#c4a35a','#6ee7b7'];
+const MERA_PALETTE=['#ff7a3d','#ffb38a','#e85d1f','#ffd0b3','#c74d18'];
+
 function runAll(){ renderLadder(); renderBrief(); }
 function showSpinner(id){ const el=document.getElementById(id); if(el) el.innerHTML='<div class="spinner"><div class="spin"></div>Loading…</div>'; }
+function titleCase(s){ return String(s||'').replace(/\b\w/g,c=>c.toUpperCase()); }
+function destroyCharts(prefix){ for(const k of Object.keys(charts)){ if(prefix&&!k.startsWith(prefix)) continue; try{charts[k].destroy();}catch(e){} delete charts[k]; } }
+/* Chart.js refuses to draw on a canvas that still has a live chart attached.
+   Always clear via Chart's own registry before creating, so a single earlier
+   error can never leave a canvas permanently blank. */
+function freshCanvas(id){
+  const cv=document.getElementById(id);
+  if(!cv) return null;
+  try{ const ex=Chart.getChart(cv); if(ex) ex.destroy(); }catch(e){}
+  return cv;
+}
 
 function renderLadder(){
   const el=document.getElementById('ladderContent');
+  destroyCharts('ch-');
   const curRows=getRows(curMonth);
   if(!curMonth||!curRows.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No data loaded</div><div class="empty-desc">Go to the Data &amp; Segments tab to upload OCS .xlsx files and define your segments.</div></div>';
+    el.innerHTML='<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No data loaded</div><div class="empty-desc">Go to Data &amp; Segments to upload monthly OCS files (e.g. "jan 2026.xlsx"), then upload your portfolio catalogue and define segments.</div></div>';
     return;
   }
   if(!segments.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">🗂</div><div class="empty-title">No segments defined</div><div class="empty-desc">Go to Data &amp; Segments → Define a Segment. Example: name "Liquid Diamond Vapes", keyword "liquid diamond", category "vapes", subcategory "all-in-one".</div></div>';
+    el.innerHTML='<div class="empty"><div class="empty-icon">🗂</div><div class="empty-title">No segments defined</div><div class="empty-desc">Go to Data &amp; Segments → Define a Segment. Pick a brand and subcategory, then narrow with sub-subcategory, pack contents, units per pack, or item name keywords.</div></div>';
     return;
   }
-  const cmpRows=getRows(cmpMonth);
-  const panels=segments.map(seg=>buildSegmentData(seg,curRows,cmpRows)).filter(Boolean);
-  if(!panels.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No Mera SKUs matched your segments</div><div class="empty-desc">Check your segment keyword and category filters — no Mera products matched in the selected month.</div></div>';
-    return;
-  }
-  el.innerHTML='<div class="seg-panels">'+panels.map(renderPanel).join('')+'</div>';
-}
+  const thr=parseFloat(document.getElementById('threshold').value)||5;
+  const omThr=parseFloat(document.getElementById('omThreshold').value)||10;
 
-function renderPanel(d){
-  const {seg,brands,meraAvgPrice,meraRank,mktAvg,cmpMktAvg,flags,totalBrands,totalSkus}=d;
-  const mktDelta=cmpMktAvg?((mktAvg-cmpMktAvg)/cmpMktAvg)*100:null;
-  const hasFlag=flags.length>0;
-
-  // KPIs header
-  const kpis=[
-    kpi(fmt$(meraAvgPrice),'Mera Rev-Wtd Avg','mera'),
-    kpi(fmt$(mktAvg),'Market Avg',null),
-    mktDelta!=null?kpi(fmtPct(mktDelta),'Market MoM',mktDelta>0?'up':mktDelta<0?'down':'neutral'):null,
-    kpi('#'+meraRank+' of '+totalBrands,'Mera Rank',null),
-  ].filter(Boolean).join('');
-
-  // Flag banner
-  let flagBanner='';
-  if(hasFlag){
-    const msgs=flags.map(f=>{
-      if(f.type==='new_below') return '⚠ New entrant '+esc(f.brand)+' entered at '+fmt$(f.price)+' (below Mera avg '+fmt$(f.meraAvg)+')';
-      return '⚠ '+esc(f.brand)+' dropped price to '+fmt$(f.price)+' ('+fmtPct(f.delta)+' MoM, below Mera avg)';
-    });
-    flagBanner='<div class="seg-flag-banner">'+msgs.join(' &nbsp;·&nbsp; ')+'</div>';
-  }
-
-  // Table rows — show individual SKUs grouped by brand, sorted by brand avgPrice
-  const tableRows=[];
-  let rank=0;
-  for(const b of brands){
-    rank++;
-    const rankClass=rank===1?'gold':'';
-    const isMeraB=b.isMera;
-    const moveHtml=moveCellHtml(b.priceDelta);
-    const revBarW=Math.round(b.revShare*100);
-    const isNew=b.isNewEntrant;
-    const rowClass=(isMeraB?'mera-row':'')+(isNew?' new-entrant':'');
-
-    // Brand aggregate row
-    const brandBadges=[
-      isMeraB?'<span class="badge badge-mera">MERA</span>':'<span class="badge badge-comp">COMP</span>',
-      isNew?'<span class="badge badge-new">NEW</span>':'',
-    ].join('');
-
-    tableRows.push(
-      '<tr class="'+rowClass+'">'
-      +'<td class="rank-cell '+rankClass+'">'+(rank)+'</td>'
-      +'<td class="brand-cell">'
-        +'<div class="brand-name-text">'+esc(b.brand)+'</div>'
-        +'<div class="badge-row">'+brandBadges+'</div>'
-      +'</td>'
-      +'<td><span class="pct-sub">'+b.skus.length+' SKU'+(b.skus.length>1?'s':'')+'</span></td>'
-      +'<td class="price-cell'+(isMeraB?' mera-price':'')+'">'+fmt$(b.avgPrice)+'</td>'
-      +'<td class="move-cell">'+moveHtml+'</td>'
-      +'<td class="rev-cell">'+fmtRev(b.revenue)+'</td>'
-      +'<td class="rev-bar-cell"><div class="rev-bar-wrap"><div class="rev-bar" style="width:'+revBarW+'%"></div></div></td>'
-      +'</tr>'
-    );
-
-    // Expand top-3 Mera SKUs inline
-    if(isMeraB&&b.skus.length>0){
-      const skusSorted=b.skus.slice().sort((a,b2)=>b2.revenue-a.revenue).slice(0,5);
-      for(const sku of skusSorted){
-        tableRows.push(
-          '<tr style="background:rgba(255,122,61,.03)">'
-          +'<td></td>'
-          +'<td class="brand-cell" colspan="2" style="padding-left:28px"><div class="sku-name-text">'+esc(sku.product)+'</div></td>'
-          +'<td class="price-cell" style="font-size:11px;color:var(--fg2)">'+fmt$(sku.price)+'</td>'
-          +'<td></td>'
-          +'<td class="rev-cell" style="font-size:10px">'+fmtRev(sku.revenue)+'</td>'
-          +'<td></td>'
-          +'</tr>'
-        );
-      }
+  let html='';
+  if(portfolio.length){
+    const uncovered=portfolioCoverage().filter(c=>c.p.active&&!c.covered);
+    if(uncovered.length){
+      html+='<div class="top-warn">⚠ '+uncovered.length+' active portfolio SKU'+(uncovered.length>1?'s are':' is')+' not in any segment.'
+        +'<button class="btn btn-ghost btn-sm" onclick="showTab(\'portfolio\')">Review in Portfolio tab →</button></div>';
     }
   }
 
-  const footer=totalSkus+' total SKUs across '+totalBrands+' brands'+(cmpMonth?' · vs '+cmpMonth:'');
+  const built=segments.map(seg=>{
+    try{ return {seg,d:buildSegmentData(seg,curMonth,cmpMonth)}; }
+    catch(e){ console.error('segment',seg.name,e); return {seg,d:null,err:e}; }
+  });
+  if(!built.some(b=>b.d)){
+    el.innerHTML=html+'<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No SKUs matched your segments</div><div class="empty-desc">Check filters — nothing matched in '+monthLabel(curMonth)+'. If segments use sub-subcategory or pack filters, make sure the months were re-uploaded so those fields exist.</div></div>';
+    return;
+  }
 
-  return '<div class="seg-panel'+(hasFlag?' has-flag':'')+'">'
-    +'<div class="seg-head">'
-      +'<div><div class="seg-title">'+esc(seg.name)+'</div><div class="seg-desc">'+describeFilters(seg)+'</div></div>'
-      +'<div class="seg-kpis">'+kpis+'</div>'
-    +'</div>'
-    +flagBanner
-    +'<table class="ladder-table">'
-      +'<thead><tr>'
-        +'<th>#</th><th>Brand</th><th>SKUs</th><th class="r">Rev-Wtd Avg $</th><th class="r">MoM Δ</th><th class="r">Revenue</th><th></th>'
-      +'</tr></thead>'
-      +'<tbody>'+tableRows.join('')+'</tbody>'
-    +'</table>'
-    +'<div class="seg-footer">'+footer+'</div>'
+  const groups={};
+  for(const b of built){
+    const brand=b.seg.brandGrp||'Portfolio-wide';
+    const sub=titleCase(b.seg.subcategory)||'Other';
+    ((groups[brand]=groups[brand]||{})[sub]=groups[brand][sub]||[]).push(b);
+  }
+  const pendingCharts=[];
+  for(const brand of Object.keys(groups).sort()){
+    const subGroups=groups[brand];
+    const allB=Object.values(subGroups).flat();
+    const nSegs=allB.length;
+    let flagCount=0;
+    for(const b of allB){ if(b.d){ const f=segmentFlags(b.d,thr,omThr); flagCount+=f.newBelow.length+f.compDrops.length+f.overMarket.length; } }
+    const collapsed=collapsedBrands.has(brand);
+    html+='<div class="brand-block'+(collapsed?' collapsed':'')+'" id="bb-'+cssId(brand)+'">'
+      +'<div class="brand-block-head" onclick="toggleBrand(\''+escAttr(brand)+'\')">'
+        +'<span class="brand-chev">▾</span>'
+        +'<span class="brand-block-title">'+esc(brand)+'</span>'
+        +'<span class="brand-block-meta">'+(flagCount?'<span class="brand-flag-count">⚠ '+flagCount+' alert'+(flagCount>1?'s':'')+'</span>':'')+'<span>'+nSegs+' segment'+(nSegs>1?'s':'')+'</span></span>'
+      +'</div><div class="brand-block-body">';
+    for(const sub of Object.keys(subGroups).sort()){
+      html+='<div class="subcat-title">'+esc(sub)+'</div><div class="seg-grid">';
+      for(const b of subGroups[sub]){
+        if(!b.d){
+          html+='<div class="seg-card"><div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(b.seg.name)+'</span><span class="pos-pill par">no matches</span></div><div class="seg-desc">'+esc(describeFilters(b.seg))+'</div></div><div class="chart-empty">No SKUs matched in '+monthLabel(curMonth)+'</div></div>';
+          continue;
+        }
+        try{ html+=renderSegCard(b.d,thr,omThr,pendingCharts); }catch(e){ console.error('card',e); html+='<div class="seg-card"><div class="seg-card-head"><span class="seg-title">'+esc(b.seg.name)+'</span><div class="seg-desc" style="color:var(--danger)">Card failed: '+esc(e.message||e)+'</div></div></div>'; }
+      }
+      html+='</div>';
+    }
+    html+='</div></div>';
+  }
+  el.innerHTML=html;
+  // Instantiate charts after DOM insertion
+  for(const pc of pendingCharts){
+    try{ pc.type==='trend'?makeTrendChart(pc):makeShareChart(pc); }
+    catch(e){
+      console.warn('chart',e);
+      const cv=document.getElementById(pc.canvasId);
+      if(cv&&cv.parentElement) cv.parentElement.innerHTML='<div class="chart-empty">Chart failed to render: '+esc(e.message||e)+'</div>';
+    }
+  }
+}
+
+function cssId(s){ return String(s).replace(/[^a-z0-9]/gi,'_'); }
+function toggleBrand(brand){
+  collapsedBrands.has(brand)?collapsedBrands.delete(brand):collapsedBrands.add(brand);
+  renderLadder();
+}
+function setSegView(segId,view){ segView[segId]=view; renderLadder(); }
+
+function renderSegCard(d,thr,omThr,pendingCharts){
+  const {seg,skus,exited,hasPrev}=d;
+  const fl=segmentFlags(d,thr,omThr);
+  const hasFlag=fl.newBelow.length>0||fl.compDrops.length>0||fl.overMarket.length>0;
+  const nMonths=Object.keys(monthsData).length;
+  const view=segView[seg.id]||(nMonths>=2?'trend':'ladder');
+
+  let posPill='';
+  if(d.meraVsMkt!=null){
+    const cls=d.meraVsMkt>=omThr?'over':d.meraVsMkt<=-omThr?'under':'par';
+    const word=d.meraVsMkt>1?'over mkt':d.meraVsMkt<-1?'under mkt':'at mkt';
+    posPill='<span class="pos-pill '+cls+'">'+fmtPct(d.meraVsMkt)+' '+word+'</span>';
+  }
+
+  const kpis=
+    '<div class="kpi"><div class="kpi-val mera">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</div>'
+      +(d.meraMoM!=null?'<div class="kpi-sub">'+momSub(d.meraMoM)+'</div>':'')
+      +'<div class="kpi-lbl">Our Avg</div></div>'
+    +'<div class="kpi"><div class="kpi-val">'+fmt$(d.mktAvg)+'</div>'
+      +(d.mktMoM!=null?'<div class="kpi-sub">'+momSub(d.mktMoM)+'</div>':'')
+      +'<div class="kpi-lbl">Mkt Rev-Wtd</div></div>'
+    +'<div class="kpi"><div class="kpi-val">'+(d.meraPctile!=null?d.meraPctile+'<span style="font-size:9px">th</span>':'—')+'</div><div class="kpi-lbl">Percentile</div></div>'
+    +'<div class="kpi"><div class="kpi-val">'+fmtPctPlain(d.meraRevShare*100)+'</div><div class="kpi-lbl">Our Rev Shr</div></div>';
+
+  let banners='';
+  if(hasFlag){
+    const msgs=[];
+    for(const f of fl.overMarket) msgs.push('⚠ Our avg '+fmtPct(f.vsMkt)+' above market ('+fmt$(f.meraAvg)+' vs '+fmt$(f.mktAvg)+')');
+    for(const f of fl.newBelow) msgs.push('🆕 '+esc(f.brand)+' entered at '+fmt$(f.price)+' (below our avg)');
+    for(const f of fl.compDrops) msgs.push('📉 '+esc(f.brand)+' → '+fmt$(f.price)+' ('+fmtPct(f.delta)+')');
+    banners+='<div class="seg-flags">'+msgs.slice(0,4).map(m=>'<span>'+m+'</span>').join('')+(msgs.length>4?'<span>… +'+(msgs.length-4)+' more in Brief</span>':'')+'</div>';
+  }
+  if(d.newImpact!=null&&Math.abs(d.newImpact)>=0.01){
+    banners+='<div class="seg-note">'+d.newCount+' new SKU'+(d.newCount>1?'s':'')+' moved mkt avg '+(d.newImpact<0?'−':'+')+fmt$(Math.abs(d.newImpact)).slice(1)+' (would be '+fmt$(d.mktAvgExclNew)+' without)</div>';
+  }
+  const skipped=segSkippedFilters(seg,curMonth);
+  if(skipped.length){
+    banners+='<div class="seg-note">⚠ '+skipped.join(' + ')+' filter'+(skipped.length>1?'s':'')+' ignored — this month\'s file has no such column. All '+d.totalBrands+' brands shown on remaining filters; re-upload the month to enforce.</div>';
+  }
+
+  const tabs='<div class="mini-tabs">'
+    +'<div class="mini-tab'+(view==='trend'?' active':'')+'" onclick="setSegView('+seg.id+',\'trend\')">Price Trend</div>'
+    +'<div class="mini-tab'+(view==='share'?' active':'')+'" onclick="setSegView('+seg.id+',\'share\')">Rev Share</div>'
+    +'<div class="mini-tab'+(view==='ladder'?' active':'')+'" onclick="setSegView('+seg.id+',\'ladder\')">Ladder</div>'
+    +'<div class="mini-tab'+(view==='skus'?' active':'')+'" onclick="setSegView('+seg.id+',\'skus\')">SKUs ('+d.totalSkus+')</div>'
+    +'</div>';
+
+  let body='';
+  if(view==='trend'||view==='share'){
+    if(nMonths<2){
+      body='<div class="chart-empty">Trend charts need at least 2 uploaded months.<br>Only '+nMonths+' month is loaded — the ladder view still works.</div>';
+    }else if(!window.Chart){
+      body='<div class="chart-empty">Chart library failed to load (CDN blocked). Ladder view still works.</div>';
+    }else{
+      const ts=segTimeSeries(seg);
+      const cid='ch-'+seg.id+'-'+view;
+      body='<div class="chart-wrap"><canvas id="'+cid+'"></canvas></div>';
+      pendingCharts.push({type:view==='trend'?'trend':'share',canvasId:cid,ts,seg});
+      if(view==='trend'){
+        const ins=trendInsights(ts,omThr);
+        if(ins.length) body+='<div class="insights">'+ins.map(i=>'<div class="insight"><span class="dot"></span><span>'+i+'</span></div>').join('')+'</div>';
+      }
+    }
+  }else if(view==='ladder'){
+    body=renderBrandLadder(d);
+  }else{
+    body=renderLadderTable(d);
+  }
+
+  let footer='<div class="seg-footer"><span>'+d.totalSkus+' SKUs · '+d.totalBrands+' brands · '+d.meraCount+' ours'
+    +(hasPrev?' · '+d.newCount+' new · '+exited.length+' exited':'')
+    +(cmpMonth?' · vs '+monthLabel(cmpMonth):'')+'</span>';
+  if(view==='ladder'){
+    const nBrands=d.totalBrands;
+    if(nBrands>6){
+      const expanded=expandedSegs.has(seg.id);
+      footer+='<button class="btn btn-ghost btn-sm" onclick="toggleExpand('+seg.id+')">'+(expanded?'Top 5 competitors':'Top 20 brands')+'</button>';
+    }
+  }else if(view==='skus'&&skus.length>LADDER_LIMIT){
+    const expanded=expandedSegs.has(seg.id);
+    footer+='<button class="btn btn-ghost btn-sm" onclick="toggleExpand('+seg.id+')">'+(expanded?'Top '+LADDER_LIMIT:'All '+skus.length)+'</button>';
+  }
+  footer+='</div>';
+
+  let exitedHtml='';
+  if(view==='skus'&&exited.length){
+    const open=exitedOpen.has(seg.id);
+    exitedHtml='<div class="exited-wrap"><div class="exited-title" onclick="toggleExited('+seg.id+')">'+(open?'▾':'▸')+' '+exited.length+' exited since '+monthLabel(cmpMonth)+'</div>'
+      +(open?'<div class="exited-list">'+exited.slice(0,20).map(r=>esc(r.brand)+' — '+esc(r.product)+' ('+fmt$(r.price)+')').join('<br>')+(exited.length>20?'<br>… +'+(exited.length-20)+' more':'')+'</div>':'')
+      +'</div>';
+  }
+
+  return '<div class="seg-card'+(hasFlag?' has-flag':'')+'">'
+    +'<div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(seg.name)+'</span>'+posPill+'</div>'
+    +'<div class="seg-desc">'+esc(describeFilters(seg))+'</div></div>'
+    +'<div class="kpi-strip">'+kpis+'</div>'
+    +banners+tabs+body+exitedHtml+footer
     +'</div>';
 }
 
-function kpi(val,lbl,cls){
-  return '<div class="kpi"><div class="kpi-val'+(cls?' '+cls:'')+'">'+val+'</div><div class="kpi-lbl">'+lbl+'</div></div>';
+/* Brand-level price ladder: our brands vs the top revenue competitors,
+   sorted by price so you can see exactly where we sit. */
+function renderBrandLadder(d){
+  const {seg,skus}=d;
+  const expanded=expandedSegs.has(seg.id);
+
+  // group current-month SKUs by brand
+  const by={};
+  for(const r of skus){
+    if(!by[r.brand]) by[r.brand]={brand:r.brand,isMera:r.isMera,rev:0,wsum:0,pwsum:0,prevRev:0,n:0};
+    const b=by[r.brand];
+    b.rev+=r.revenue; b.wsum+=r.price*r.revenue; b.n++;
+    if(r.prevPrice!=null){ b.pwsum+=r.prevPrice*r.revenue; b.prevRev+=r.revenue; }
+  }
+  const all=Object.values(by).map(b=>({
+    ...b,
+    avg:b.rev>0?b.wsum/b.rev:null,
+    prevAvg:b.prevRev>0?b.pwsum/b.prevRev:null,
+  })).filter(b=>b.avg!=null);
+  if(!all.length) return '<div class="chart-empty">No brands matched this month.</div>';
+
+  const ours=all.filter(b=>b.isMera);
+  const comps=all.filter(b=>!b.isMera).sort((a,b)=>b.rev-a.rev);
+  const compCap=expanded?Math.max(20-ours.length,5):5;
+  const shown=[...ours,...comps.slice(0,compCap)];
+
+  // ladder = sorted by price, highest first
+  shown.sort((a,b)=>b.avg-a.avg);
+
+  const totRev=all.reduce((s,b)=>s+b.rev,0);
+  const maxShare=Math.max(...shown.map(b=>totRev>0?b.rev/totRev:0),0.0001);
+
+  // where does the market rev-wtd avg slot in?
+  let mktIdx=shown.findIndex(b=>b.avg<d.mktAvg);
+  if(mktIdx<0) mktIdx=shown.length;
+
+  let rows='';
+  shown.forEach((b,i)=>{
+    if(i===mktIdx){
+      rows+='<tr class="mkt-row"><td colspan="7">— Market rev-wtd avg '+fmt$(d.mktAvg)+' —</td></tr>';
+    }
+    const vsMkt=d.mktAvg>0?((b.avg-d.mktAvg)/d.mktAvg)*100:null;
+    const vsCls=vsMkt==null?'c-mut':vsMkt>1?'c-up':vsMkt<-1?'c-down':'c-mut';
+    const mom=(b.prevAvg&&b.prevAvg>0)?((b.avg-b.prevAvg)/b.prevAvg)*100:null;
+    const share=totRev>0?b.rev/totRev*100:0;
+    const barW=Math.max(2,share/(maxShare*100)*100);
+    rows+='<tr class="'+(b.isMera?'mera-row':'')+'">'
+      +'<td class="rank-cell">'+(i+1)+'</td>'
+      +'<td class="sku-cell"><span class="sku-brand">'+esc(b.brand)+'</span>'
+        +(b.isMera?'<span class="badge badge-mera">OURS</span>':'')
+        +'<div class="sku-prod">'+b.n+' SKU'+(b.n>1?'s':'')+'</div></td>'
+      +'<td class="price-cell'+(b.isMera?' mera-price':'')+'">'+fmt$(b.avg)+'</td>'
+      +'<td class="vsmkt-cell '+vsCls+'">'+(vsMkt!=null?fmtPct(vsMkt):'—')+'</td>'
+      +'<td class="move-cell">'+(mom==null?'<span class="move-neutral">—</span>':mom>0.5?'<span class="move-up">▲ '+fmtPct(mom)+'</span>':mom<-0.5?'<span class="move-down">▼ '+fmtPct(mom)+'</span>':'<span class="move-neutral">'+fmtPct(mom)+'</span>')+'</td>'
+      +'<td class="rev-cell">'+fmtRev(b.rev)+'</td>'
+      +'<td class="share-cell"><div class="share-mini"><div class="share-mini-bar'+(b.isMera?' ours':'')+'" style="width:'+barW.toFixed(0)+'%"></div><span>'+share.toFixed(1)+'%</span></div></td>'
+      +'</tr>';
+  });
+  if(mktIdx===shown.length){
+    rows+='<tr class="mkt-row"><td colspan="7">— Market rev-wtd avg '+fmt$(d.mktAvg)+' —</td></tr>';
+  }
+
+  const hidden=comps.length-Math.min(comps.length,compCap);
+  return '<table class="ladder-table"><thead><tr><th>#</th><th>Brand</th><th class="r">Avg Price</th><th class="r">vs Mkt</th><th class="r">MoM</th><th class="r">Rev</th><th>Share</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +(hidden>0&&!expanded?'<div class="seg-note">Showing our brands + top 5 competitors by revenue · '+hidden+' more competitor'+(hidden>1?'s':'')+' hidden</div>':'');
 }
-function moveCellHtml(pctDelta){
-  if(pctDelta==null) return '<span class="move-neutral">—</span>';
-  if(pctDelta>0.5) return '<span class="move-up">▲</span><br><span class="pct-sub">'+fmtPct(pctDelta)+'</span>';
-  if(pctDelta<-0.5) return '<span class="move-down">▼</span><br><span class="pct-sub">'+fmtPct(pctDelta)+'</span>';
-  return '<span class="move-neutral">—</span>';
+
+function renderLadderTable(d){
+  const {seg,skus}=d;
+  const expanded=expandedSegs.has(seg.id);
+  const shown=expanded?skus:skus.slice(0,LADDER_LIMIT);
+  const rows=shown.map((s,i)=>{
+    const rowClass=(s.isMera?'mera-row':'')+(s.isNew&&!s.isMera?' new-row':'');
+    const vsMkt=d.mktAvg>0?((s.price-d.mktAvg)/d.mktAvg)*100:null;
+    const vsCls=vsMkt==null?'c-mut':vsMkt>1?'c-up':vsMkt<-1?'c-down':'c-mut';
+    return '<tr class="'+rowClass+'">'
+      +'<td class="rank-cell">'+(i+1)+'</td>'
+      +'<td class="sku-cell"><span class="sku-brand">'+esc(s.brand)+'</span>'
+        +(s.isMera?'<span class="badge badge-mera">OURS</span>':'')
+        +(s.isNew?'<span class="badge badge-new">NEW</span>':'')
+        +'<div class="sku-prod" title="'+escAttr(s.product)+'">'+esc(s.product)+(s.netContents?' · '+esc(s.netContents):'')+'</div></td>'
+      +'<td class="price-cell'+(s.isMera?' mera-price':'')+'">'+fmt$(s.price)+'</td>'
+      +'<td class="vsmkt-cell '+vsCls+'">'+(vsMkt!=null?fmtPct(vsMkt):'—')+'</td>'
+      +'<td class="move-cell">'+moveCellHtml(s)+'</td>'
+      +'<td class="rev-cell">'+fmtRev(s.revenue)+'</td>'
+      +'</tr>';
+  }).join('');
+  return '<table class="ladder-table"><thead><tr><th>#</th><th>SKU</th><th class="r">Price</th><th class="r">vs Mkt</th><th class="r">MoM</th><th class="r">Rev</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
-function describeFilters(seg){
-  const p=[];
-  if(seg.keyword) p.push('keyword "'+seg.keyword+'"');
-  if(seg.category) p.push(seg.category);
-  if(seg.subcategory) p.push(seg.subcategory);
-  if(seg.brandFilter) p.push('brand: '+seg.brandFilter);
-  return p.join(' · ')||'All products';
+function toggleExpand(id){ expandedSegs.has(id)?expandedSegs.delete(id):expandedSegs.add(id); renderLadder(); }
+function toggleExited(id){ exitedOpen.has(id)?exitedOpen.delete(id):exitedOpen.add(id); renderLadder(); }
+function momSub(pct){
+  const cls=pct>0.5?'c-up':pct<-0.5?'c-down':'c-mut';
+  const arrow=pct>0.5?'▲':pct<-0.5?'▼':'—';
+  return '<span class="'+cls+'">'+arrow+' '+fmtPct(pct)+'</span>';
+}
+function moveCellHtml(s){
+  if(s.isNew) return '<span class="c-warn">NEW</span>';
+  if(s.delta==null) return '<span class="move-neutral">—</span>';
+  if(s.delta>0.5) return '<span class="move-up">▲ '+fmtPct(s.delta)+'</span>';
+  if(s.delta<-0.5) return '<span class="move-down">▼ '+fmtPct(s.delta)+'</span>';
+  return '<span class="move-neutral">'+fmtPct(s.delta)+'</span>';
+}
+</script>
+<script>
+/* ═══════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════ */
+function pickChartBrands(ts,limit){
+  // brands ranked by total revenue across ALL loaded months; ours always included
+  const agg={};
+  for(const t of ts){
+    if(t.empty) continue;
+    for(const b of Object.keys(t.brands)){
+      if(!agg[b]) agg[b]={rev:0,isMera:t.brands[b].isMera};
+      agg[b].rev+=t.brands[b].rev;
+      agg[b].isMera=agg[b].isMera||t.brands[b].isMera;
+    }
+  }
+  const entries=Object.entries(agg);
+  const ours=entries.filter(([,v])=>v.isMera).sort((a,b)=>b[1].rev-a[1].rev).map(([b])=>b);
+  const comps=entries.filter(([,v])=>!v.isMera).sort((a,b)=>b[1].rev-a[1].rev).map(([b])=>b);
+  return [...ours,...comps].slice(0,Math.max(limit,ours.length));
+}
+
+function makeTrendChart(pc){
+  const {canvasId,ts}=pc;
+  const cv=freshCanvas(canvasId);
+  if(!cv) return;
+  const labels=ts.map(t=>monthLabel(t.m));
+  const brands=pickChartBrands(ts,16);
+  let mi=0,ci=0;
+  const datasets=brands.map(b=>{
+    const isOurs=ts.some(t=>!t.empty&&t.brands[b]&&t.brands[b].isMera);
+    const color=isOurs?MERA_PALETTE[mi++%MERA_PALETTE.length]:COMP_PALETTE[ci++%COMP_PALETTE.length];
+    return {
+      label:b,
+      data:ts.map(t=>t.empty||!t.brands[b]?null:+t.brands[b].avg.toFixed(2)),
+      borderColor:color,backgroundColor:'transparent',
+      borderWidth:isOurs?2.5:1.5,
+      pointRadius:isOurs?4:2.5,
+      pointStyle:'circle',
+      tension:.3,spanGaps:true,
+      order:isOurs?0:1,
+    };
+  });
+  datasets.push({
+    label:'Rev-Wtd Avg',
+    data:ts.map(t=>t.empty?null:+t.mkt.toFixed(2)),
+    borderColor:'#f87171',backgroundColor:'transparent',
+    borderWidth:2,borderDash:[3,3],pointRadius:0,tension:.3,spanGaps:true,order:2,
+  });
+  datasets.push({
+    label:'Market Median',
+    data:ts.map(t=>t.empty?null:+t.median.toFixed(2)),
+    borderColor:'#fbbf24',backgroundColor:'transparent',
+    borderWidth:2,borderDash:[6,3],pointRadius:0,tension:.3,spanGaps:true,order:3,
+  });
+  charts[canvasId]=new Chart(cv,{
+    type:'line',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'nearest',intersect:false},
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:9,boxHeight:9,padding:8,font:{size:9}}},
+        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $'+(c.parsed.y??0).toFixed(2)}},
+      },
+      scales:{
+        y:{ticks:{callback:v=>'$'+v},grid:{color:'rgba(37,45,69,.5)'}},
+        x:{grid:{display:false}},
+      },
+    },
+  });
+}
+
+function makeShareChart(pc){
+  const {canvasId,ts}=pc;
+  const cv=freshCanvas(canvasId);
+  if(!cv) return;
+  const labels=ts.map(t=>monthLabel(t.m));
+  const brands=pickChartBrands(ts,12);
+  let mi=0,ci=0;
+  const datasets=brands.map(b=>{
+    const isOurs=ts.some(t=>!t.empty&&t.brands[b]&&t.brands[b].isMera);
+    const color=isOurs?MERA_PALETTE[mi++%MERA_PALETTE.length]:COMP_PALETTE[ci++%COMP_PALETTE.length];
+    return {
+      label:b,
+      data:ts.map(t=>t.empty||!t.brands[b]||!t.totRev?0:+(t.brands[b].rev/t.totRev*100).toFixed(1)),
+      backgroundColor:color,
+      stack:'share',
+      order:isOurs?0:1,
+    };
+  });
+  // "Other" = remainder
+  datasets.push({
+    label:'Other',
+    data:ts.map((t,i)=>{
+      if(t.empty||!t.totRev) return 0;
+      const covered=brands.reduce((s,b)=>s+(t.brands[b]?t.brands[b].rev:0),0);
+      return +(Math.max(0,(t.totRev-covered))/t.totRev*100).toFixed(1);
+    }),
+    backgroundColor:'#3a4160',stack:'share',order:5,
+  });
+  charts[canvasId]=new Chart(cv,{
+    type:'bar',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:9,boxHeight:9,padding:8,font:{size:9}}},
+        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.y+'%'}},
+      },
+      scales:{
+        y:{stacked:true,max:100,ticks:{callback:v=>v+'%'},grid:{color:'rgba(37,45,69,.5)'}},
+        x:{stacked:true,grid:{display:false}},
+      },
+    },
+  });
+}
+
+/* Auto-written trend insights under the price chart */
+function trendInsights(ts,omThr){
+  const pts=ts.filter(t=>!t.empty);
+  if(pts.length<2) return [];
+  const f=pts[0], l=pts[pts.length-1];
+  const span=monthLabel(f.m)+' → '+monthLabel(l.m);
+  const out=[];
+  // Market trend
+  const mktChg=f.mkt>0?((l.mkt-f.mkt)/f.mkt)*100:null;
+  if(mktChg!=null){
+    const dir=mktChg>0.5?'up <b class="c-up">':mktChg<-0.5?'down <b class="c-down">':'flat <b class="c-mut">';
+    out.push('Market rev-wtd avg is '+dir+fmtPct(Math.abs(mktChg)).replace('+','')+'</b> over '+pts.length+' months <span class="mono">('+fmt$(f.mkt)+' → '+fmt$(l.mkt)+')</span>, '+span);
+  }
+  // Our position drift
+  if(f.meraAvg!=null&&l.meraAvg!=null&&f.mkt>0&&l.mkt>0){
+    const p0=((f.meraAvg-f.mkt)/f.mkt)*100, p1=((l.meraAvg-l.mkt)/l.mkt)*100;
+    const cls=p1>=omThr?'c-up':p1<=-omThr?'c-down':'c-mut';
+    out.push('Our position moved from <b class="mono">'+fmtPct(p0)+'</b> to <b class="mono '+cls+'">'+fmtPct(p1)+'</b> vs market');
+  }
+  // Biggest competitor mover
+  let best=null;
+  for(const b of Object.keys(l.brands)){
+    if(l.brands[b].isMera) continue;
+    if(!f.brands[b]||f.brands[b].avg<=0) continue;
+    if(l.brands[b].rev<1000) continue;
+    const chg=((l.brands[b].avg-f.brands[b].avg)/f.brands[b].avg)*100;
+    if(!best||Math.abs(chg)>Math.abs(best.chg)) best={b,chg,from:f.brands[b].avg,to:l.brands[b].avg};
+  }
+  if(best&&Math.abs(best.chg)>=2){
+    const cls=best.chg<0?'c-down':'c-up';
+    out.push('Biggest competitor move: <b>'+esc(best.b)+'</b> <b class="mono '+cls+'">'+fmtPct(best.chg)+'</b> <span class="mono">('+fmt$(best.from)+' → '+fmt$(best.to)+')</span>');
+  }
+  // Brand count trend
+  const bc0=Object.keys(f.brands).length, bc1=Object.keys(l.brands).length;
+  if(bc1!==bc0) out.push('Competitive field '+(bc1>bc0?'grew':'shrank')+' from <b class="mono">'+bc0+'</b> to <b class="mono">'+bc1+'</b> brands');
+  return out.slice(0,4);
 }
 </script>
 <script>
@@ -818,64 +2001,53 @@ function renderBrief(){
     el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No data to brief</div><div class="empty-desc">Upload data and define segments first.</div></div>';
     return;
   }
-  const cmpRows=getRows(cmpMonth);
   const thr=parseFloat(document.getElementById('threshold').value)||5;
-
-  const newBelow=[];   // new entrants that entered below Mera avg
-  const droppedBelow=[];  // existing competitor dropped below Mera avg
-  const meraUp=[];    // Mera itself raised price
-  const meraDown=[];  // Mera itself dropped price
-
+  const omThr=parseFloat(document.getElementById('omThreshold').value)||10;
+  const all={newBelow:[],compDrops:[],meraMoves:[],overMarket:[],underMarket:[]};
+  const posRows=[];
   for(const seg of segments){
-    const d=buildSegmentData(seg,curRows,cmpRows);
+    const d=buildSegmentData(seg,curMonth,cmpMonth);
     if(!d) continue;
-    for(const f of d.flags){
-      if(f.type==='new_below') newBelow.push({...f,segName:seg.name});
-      if(f.type==='dropped_below') droppedBelow.push({...f,segName:seg.name});
-    }
-    // Check Mera own price movement
-    for(const b of d.brands){
-      if(!b.isMera) continue;
-      if(b.priceDelta==null) continue;
-      if(b.priceDelta>=thr) meraUp.push({brand:b.brand,delta:b.priceDelta,price:b.avgPrice,prev:b.prevAvgPrice,segName:seg.name});
-      if(b.priceDelta<=-thr) meraDown.push({brand:b.brand,delta:b.priceDelta,price:b.avgPrice,prev:b.prevAvgPrice,segName:seg.name});
-    }
-    // Also flag any competitor movement beyond threshold
-    for(const b of d.brands){
-      if(b.isMera||b.isNewEntrant) continue;
-      if(b.priceDelta==null) continue;
-      if(Math.abs(b.priceDelta)>=thr&&b.avgPrice<d.meraAvgPrice){
-        droppedBelow.push({brand:b.brand,delta:b.priceDelta,price:b.avgPrice,prevPrice:b.prevAvgPrice,meraAvg:d.meraAvgPrice,segName:seg.name,type:'dropped_below'});
-      }
-    }
+    const fl=segmentFlags(d,thr,omThr);
+    for(const k of Object.keys(all)) all[k].push(...fl[k]);
+    posRows.push(d);
   }
-
-  // Deduplicate
-  const dedup=(arr)=>[...new Map(arr.map(x=>[x.brand+'|'+x.segName,x])).values()];
-
+  posRows.sort((a,b)=>(a.seg.brandGrp||'zz').localeCompare(b.seg.brandGrp||'zz')||(a.seg.subcategory||'').localeCompare(b.seg.subcategory||''));
   let html='';
-  if(!newBelow.length&&!droppedBelow.length&&!meraUp.length&&!meraDown.length){
-    html='<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">No significant movements</div><div class="empty-desc">No price movements exceeding ±'+thr+'% threshold detected in any segment.</div></div>';
-    el.innerHTML=html; return;
+  if(posRows.length){
+    html+='<div class="brief-section"><div class="brief-section-head"><span class="brief-section-title">Segment Positioning — '+monthLabel(curMonth)+(cmpMonth?' vs '+monthLabel(cmpMonth):'')+'</span></div>'
+      +'<table class="pos-table"><thead><tr><th>Brand / Subcat</th><th>Segment</th><th class="r">Our Avg</th><th class="r">Mkt Avg</th><th class="r">vs Mkt</th><th class="r">Mkt MoM</th><th class="r">New</th><th class="r">Exited</th><th class="r">Our Rev Share</th></tr></thead><tbody>'
+      +posRows.map(d=>{
+        const vsCls=d.meraVsMkt==null?'c-mut':d.meraVsMkt>=omThr?'c-up':d.meraVsMkt<=-omThr?'c-down':'';
+        const momCls=d.mktMoM==null?'c-mut':d.mktMoM>0.5?'c-up':d.mktMoM<-0.5?'c-down':'c-mut';
+        return '<tr><td class="grp">'+esc(d.seg.brandGrp||'Portfolio-wide')+(d.seg.subcategory?' · '+esc(titleCase(d.seg.subcategory)):'')+'</td>'
+          +'<td class="name">'+esc(d.seg.name)+'</td>'
+          +'<td class="r">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</td>'
+          +'<td class="r">'+fmt$(d.mktAvg)+'</td>'
+          +'<td class="r '+vsCls+'">'+(d.meraVsMkt!=null?fmtPct(d.meraVsMkt):'—')+'</td>'
+          +'<td class="r '+momCls+'">'+(d.mktMoM!=null?fmtPct(d.mktMoM):'—')+'</td>'
+          +'<td class="r">'+(d.hasPrev?d.newCount:'—')+'</td>'
+          +'<td class="r">'+(d.hasPrev?d.exited.length:'—')+'</td>'
+          +'<td class="r">'+fmtPctPlain(d.meraRevShare*100)+'</td></tr>';
+      }).join('')
+      +'</tbody></table></div>';
   }
-
+  const dedup=arr=>[...new Map(arr.map(x=>[(x.brand||'')+'|'+(x.product||'')+'|'+x.segName,x])).values()];
   const mkSection=(title,items,cls,renderer)=>{
     if(!items.length) return '';
     return '<div class="brief-section"><div class="brief-section-head"><span class="brief-section-title '+cls+'">'+title+'</span><span style="font-size:11px;color:var(--muted)">'+items.length+' alert'+(items.length>1?'s':'')+'</span></div><div class="flag-items">'+items.map(renderer).join('')+'</div></div>';
   };
-
-  html+=mkSection('⚠ New Entrants Below Mera Price',dedup(newBelow),'danger',f=>
-    '<div class="flag-item new"><span class="flag-icon">🆕</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">Entered at '+fmt$(f.price)+' vs Mera avg '+fmt$(f.meraAvg)+'</div></div><div class="flag-delta up">NEW</div></div>'
-  );
-  html+=mkSection('📉 Competitors Dropped Below Mera',dedup(droppedBelow),'danger',f=>
-    '<div class="flag-item up"><span class="flag-icon">📉</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+fmt$(f.prevPrice||0)+' → '+fmt$(f.price)+', now below Mera avg '+fmt$(f.meraAvg)+'</div></div><div class="flag-delta up">'+fmtPct(f.delta)+'</div></div>'
-  );
-  html+=mkSection('↑ Mera Price Increases',dedup(meraUp),'warn',f=>
-    '<div class="flag-item new"><span class="flag-icon">↑</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+fmt$(f.prev||0)+' → '+fmt$(f.price)+'</div></div><div class="flag-delta up">'+fmtPct(f.delta)+'</div></div>'
-  );
-  html+=mkSection('↓ Mera Price Decreases',dedup(meraDown),'success',f=>
-    '<div class="flag-item down"><span class="flag-icon">↓</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+fmt$(f.prev||0)+' → '+fmt$(f.price)+'</div></div><div class="flag-delta down">'+fmtPct(f.delta)+'</div></div>'
-  );
+  html+=mkSection('⚠ Segments Where We Are Over Market (+'+omThr+'%)',all.overMarket,'danger',f=>
+    '<div class="flag-item up"><span class="flag-icon">⚠</span><div class="flag-body"><span class="flag-brand">'+esc(f.segName)+'</span><div class="flag-detail">Our rev-wtd avg '+fmt$(f.meraAvg)+' vs market '+fmt$(f.mktAvg)+'</div></div><div class="flag-delta up">'+fmtPct(f.vsMkt)+'</div></div>');
+  html+=mkSection('🆕 New SKUs Priced Below Our Average',dedup(all.newBelow),'warn',f=>
+    '<div class="flag-item new"><span class="flag-icon">🆕</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+esc(f.product)+' — entered at '+fmt$(f.price)+' vs our avg '+fmt$(f.meraAvg)+'</div></div><div class="flag-delta warn">NEW</div></div>');
+  html+=mkSection('📉 Competitor Price Drops (−'+thr+'% or more)',dedup(all.compDrops),'danger',f=>
+    '<div class="flag-item up"><span class="flag-icon">📉</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+esc(f.product)+' — '+fmt$(f.prevPrice)+' → '+fmt$(f.price)+(f.meraAvg!=null?' (our avg '+fmt$(f.meraAvg)+')':'')+'</div></div><div class="flag-delta up">'+fmtPct(f.delta)+'</div></div>');
+  html+=mkSection('◆ Our SKU Price Changes (±'+thr+'%)',dedup(all.meraMoves),'warn',f=>{
+    const up=f.delta>0;
+    return '<div class="flag-item '+(up?'new':'down')+'"><span class="flag-icon">'+(up?'↑':'↓')+'</span><div class="flag-body"><span class="flag-brand">'+esc(f.brand)+'</span><div class="flag-seg">'+esc(f.segName)+'</div><div class="flag-detail">'+esc(f.product)+' — '+fmt$(f.prevPrice)+' → '+fmt$(f.price)+'</div></div><div class="flag-delta '+(up?'up':'down')+'">'+fmtPct(f.delta)+'</div></div>';});
+  html+=mkSection('✓ Segments Where We Are Under Market (−'+omThr+'%)',all.underMarket,'success',f=>
+    '<div class="flag-item down"><span class="flag-icon">✓</span><div class="flag-body"><span class="flag-brand">'+esc(f.segName)+'</span><div class="flag-detail">Our rev-wtd avg '+fmt$(f.meraAvg)+' vs market '+fmt$(f.mktAvg)+'</div></div><div class="flag-delta down">'+fmtPct(f.vsMkt)+'</div></div>');
   el.innerHTML='<div class="brief-sections">'+html+'</div>';
 }
 
@@ -886,56 +2058,271 @@ async function exportPDF(){
   try{
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'pt',format:'a4'});
-    doc.setFontSize(18); doc.text('Mera Price Intelligence Brief',40,50);
-    doc.setFontSize(11); doc.setTextColor(120);
-    doc.text('Period: '+(curMonth||'—')+' vs '+(cmpMonth||'—')+' | Threshold: ±'+(document.getElementById('threshold').value||5)+'%',40,70);
-    doc.setTextColor(0); doc.setFontSize(10);
-    let y=95;
-    const curRows=getRows(curMonth);
-    const cmpRows=getRows(cmpMonth);
     const thr=parseFloat(document.getElementById('threshold').value)||5;
-    for(const seg of segments){
-      const d=buildSegmentData(seg,curRows,cmpRows);
+    const omThr=parseFloat(document.getElementById('omThreshold').value)||10;
+    doc.setFontSize(18); doc.text('Price Intelligence Brief',40,50);
+    doc.setFontSize(10); doc.setTextColor(120);
+    doc.text('Period: '+(curMonth?monthLabel(curMonth):'—')+' vs '+(cmpMonth?monthLabel(cmpMonth):'—')+'  ·  Move threshold ±'+thr+'%  ·  Over-market alert ±'+omThr+'%',40,68);
+    doc.setTextColor(0);
+    let y=95;
+    const nl=(h=13)=>{ y+=h; if(y>790){doc.addPage();y=50;} };
+    const ordered=segments.slice().sort((a,b)=>(a.brandGrp||'zz').localeCompare(b.brandGrp||'zz')||(a.subcategory||'').localeCompare(b.subcategory||''));
+    let lastGrp='';
+    for(const seg of ordered){
+      const d=buildSegmentData(seg,curMonth,cmpMonth);
       if(!d) continue;
-      doc.setFontSize(12); doc.setFont(undefined,'bold');
-      doc.text(seg.name,40,y); y+=18;
-      doc.setFontSize(9); doc.setFont(undefined,'normal');
-      doc.text('Mera Rev-Wtd Avg: '+fmt$(d.meraAvgPrice)+'  Market Avg: '+fmt$(d.mktAvg)+'  Mera Rank: #'+d.meraRank+' of '+d.totalBrands,40,y); y+=14;
-      for(const b of d.brands.slice(0,12)){
-        const line='  '+d.brands.indexOf(b)+1+'. '+b.brand+' — '+fmt$(b.avgPrice)+(b.priceDelta!=null?' ('+fmtPct(b.priceDelta)+' MoM)':'')+(b.isMera?' ◄ MERA':'');
-        doc.text(line,40,y); y+=13;
-        if(y>780){doc.addPage();y=40;}
+      const grp=(seg.brandGrp||'Portfolio-wide')+(seg.subcategory?' — '+titleCase(seg.subcategory):'');
+      if(grp!==lastGrp){
+        doc.setFontSize(13); doc.setFont(undefined,'bold'); doc.setTextColor(200,80,30);
+        doc.text(grp,40,y); doc.setTextColor(0); nl(18);
+        lastGrp=grp;
       }
-      y+=8;
-      if(y>780){doc.addPage();y=40;}
+      doc.setFontSize(11); doc.setFont(undefined,'bold');
+      doc.text(seg.name,48,y); nl(15);
+      doc.setFontSize(9); doc.setFont(undefined,'normal');
+      doc.text('Our avg: '+(d.meraAvg!=null?fmt$(d.meraAvg):'n/a')+'   Market avg: '+fmt$(d.mktAvg)+'   Position: '+(d.meraVsMkt!=null?fmtPct(d.meraVsMkt)+' vs market':'n/a'),48,y); nl();
+      let line2=d.totalSkus+' SKUs, '+d.totalBrands+' brands';
+      if(d.hasPrev) line2+='   New: '+d.newCount+'   Exited: '+d.exited.length+(d.mktMoM!=null?'   Market MoM: '+fmtPct(d.mktMoM):'');
+      doc.text(line2,48,y); nl();
+      if(d.newImpact!=null&&Math.abs(d.newImpact)>=0.01){
+        doc.text('New SKUs moved the market avg by '+(d.newImpact>0?'+':'−')+'$'+Math.abs(d.newImpact).toFixed(2)+' (would be '+fmt$(d.mktAvgExclNew)+' without them)',48,y); nl();
+      }
+      // Trend line summary in text
+      const ts=segTimeSeries(seg).filter(t=>!t.empty);
+      if(ts.length>=2){
+        const f=ts[0],l=ts[ts.length-1];
+        const chg=f.mkt>0?((l.mkt-f.mkt)/f.mkt)*100:0;
+        doc.text('Trend '+monthLabel(f.m)+' → '+monthLabel(l.m)+': market avg '+fmt$(f.mkt)+' → '+fmt$(l.mkt)+' ('+fmtPct(chg)+')'
+          +(f.meraAvg!=null&&l.meraAvg!=null?'; our avg '+fmt$(f.meraAvg)+' → '+fmt$(l.meraAvg):''),48,y); nl();
+      }
+      nl(3);
+      const top=d.skus.slice(0,12);
+      for(let i=0;i<top.length;i++){
+        const s=top[i];
+        let ln='  '+(i+1)+'. '+s.brand+' — '+truncate(s.product,46)+'  '+fmt$(s.price);
+        if(s.isNew) ln+='  [NEW]';
+        else if(s.delta!=null&&Math.abs(s.delta)>=0.5) ln+='  ('+fmtPct(s.delta)+' MoM)';
+        if(s.isMera) ln+='  ◄ OURS';
+        doc.text(ln,48,y); nl(12);
+      }
+      if(d.skus.length>12){ doc.setTextColor(120); doc.text('  … '+(d.skus.length-12)+' more SKUs',48,y); doc.setTextColor(0); nl(); }
+      nl(8);
     }
-    doc.save('mera-price-brief-'+(curMonth||'export')+'.pdf');
+    doc.save('price-brief-'+(curMonth||'export')+'.pdf');
     toast('PDF exported','success');
   }catch(e){ toast('PDF error: '+e.message,'error'); }
 }
 
 /* ═══════════════════════════════════════════
-   TAB NAV
+   TAB NAV + UTILS
 ═══════════════════════════════════════════ */
 function showTab(tab){
-  ['ladder','brief','data'].forEach(t=>{
+  ['ladder','brief','portfolio','data'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===tab?'':'none';
     document.querySelectorAll('.tab').forEach(el=>{ if(el.dataset.tab===t) el.classList.toggle('active',t===tab); });
   });
+  if(tab==='data') refreshSegOptions();
+  if(tab==='trends') refreshTrendsAll();
 }
-
-/* ═══════════════════════════════════════════
-   UTILS
-═══════════════════════════════════════════ */
 function fmt$(n){ return n==null?'—':'$'+Number(n).toFixed(2); }
 function fmtPct(n){ return n==null?'—':(n>0?'+':'')+Number(n).toFixed(1)+'%'; }
+function fmtPctPlain(n){ return n==null?'—':Number(n).toFixed(1)+'%'; }
 function fmtRev(n){ if(!n) return '—'; if(n>=1e6) return '$'+(n/1e6).toFixed(1)+'M'; if(n>=1e3) return '$'+(n/1e3).toFixed(0)+'K'; return '$'+Math.round(n); }
+function fmtUnits(n){ if(!n) return '—'; if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'K'; return String(Math.round(n)); }
+function truncate(s,len){ s=String(s||''); return s.length>len?s.slice(0,len-1)+'…':s; }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return esc(s).replace(/'/g,'&#39;'); }
 function toast(msg,type='info'){
   const w=document.getElementById('toastWrap');
   const el=document.createElement('div'); el.className='toast '+type; el.textContent=msg;
   w.appendChild(el); setTimeout(()=>el.remove(),4500);
 }
 </script>
+
+<script>
+/* ═══════════════════════════════════════════
+   MARKET TRENDS — v6-style free explorer.
+   Reads the same persisted months as everything else.
+═══════════════════════════════════════════ */
+const trends={subcat:'',subsub:'',kw:'',contents:'',upp:''};
+let trendsKwTimer=null;
+
+function trendsKwDebounce(){
+  clearTimeout(trendsKwTimer);
+  trendsKwTimer=setTimeout(refreshTrendsAll,300);
+}
+function onTrendsSubcat(){
+  fillSelect('tSubsub',subsubOptionsFor(document.getElementById('tSubcat').value),'no values available');
+  refreshTrendsAll();
+}
+function readTrendsFilters(){
+  trends.subcat=document.getElementById('tSubcat').value;
+  trends.subsub=document.getElementById('tSubsub').value;
+  trends.kw=document.getElementById('tKw').value.trim().toLowerCase();
+  trends.contents=document.getElementById('tContents').value;
+  trends.upp=document.getElementById('tUpp').value;
+}
+function trendsMatch(r,avail){
+  if(trends.subcat&&!loose(trends.subcat,r.subcategory)) return false;
+  if(trends.subsub&&(!avail||avail.subsub)&&!loose(trends.subsub,r.subsub)) return false;
+  if(trends.kw){
+    const hay=(r.product+' '+r.brand+' '+(r.extraction||'')).toLowerCase();
+    if(!hay.includes(trends.kw)) return false;
+  }
+  if(trends.contents&&(!avail||avail.net)&&!contentsMatch(trends.contents,r.netContents)) return false;
+  if(trends.upp&&(!avail||avail.upp)&&!uppMatch(trends.upp,r.unitsPerPack)) return false;
+  return true;
+}
+
+function refreshTrendsAll(){
+  // populate selects (keeps current selection)
+  const v=collectFieldValues();
+  fillSelect('tSubcat',v.subcats,'no values — upload data first');
+  fillSelect('tSubsub',subsubOptionsFor(document.getElementById('tSubcat').value),'no values available');
+  fillSelect('tContents',v.contents,'no values found in data');
+  fillSelect('tUpp',v.upp,'no values found in data');
+  readTrendsFilters();
+
+  const months=Object.keys(monthsData).sort();
+  const emptyEl=document.getElementById('trendsEmpty');
+  const cards=document.querySelectorAll('#tab-trends .card:not(.trends-filters)');
+  if(!months.length){
+    destroyCharts('trends-');
+    emptyEl.style.display='block';
+    cards.forEach(c=>c.style.display='none');
+    document.getElementById('tStats').textContent='';
+    return;
+  }
+  emptyEl.style.display='none';
+  cards.forEach(c=>c.style.display='');
+
+  const filtered=months.map(m=>getRows(m).filter(r=>trendsMatch(r,fieldAvail[m])));
+  const labels=months.map(monthLabel);
+
+  drawTrendsPrice(months,labels,filtered);
+  drawTrendsShare(months,labels,filtered);
+
+  const last=filtered[filtered.length-1]||[];
+  const lastBrands=new Set(last.map(r=>r.brand));
+  document.getElementById('tStats').innerHTML=
+    months.length+' month'+(months.length>1?'s':'')+' · '
+    +last.length+' SKUs · '+lastBrands.size+' brands in '+esc(monthLabel(months[months.length-1]))
+    +(trends.kw?'<br>Keyword matches item name, brand &amp; extraction process.':'');
+}
+
+function trendsBrandOrder(filtered,cap){
+  const rev={};
+  filtered.forEach(f=>f.forEach(r=>{rev[r.brand]=(rev[r.brand]||0)+r.revenue;}));
+  const mera=Object.keys(rev).filter(isMera).sort((a,b)=>rev[b]-rev[a]);
+  const comp=Object.keys(rev).filter(b=>!isMera(b)).sort((a,b)=>rev[b]-rev[a]);
+  return [...new Set([...mera,...comp])].slice(0,cap);
+}
+
+function drawTrendsPrice(months,labels,filtered){
+  destroyCharts('trends-price');
+  const brands=trendsBrandOrder(filtered,16);
+
+  const series={};
+  filtered.forEach((f,mi)=>{
+    const by={};
+    for(const r of f){
+      if(!by[r.brand]) by[r.brand]={sum:0,tot:0};
+      by[r.brand].sum+=r.price*r.revenue;
+      by[r.brand].tot+=r.revenue;
+    }
+    for(const [b,d] of Object.entries(by)){
+      if(!series[b]) series[b]=new Array(labels.length).fill(null);
+      series[b][mi]=d.tot>0?+(d.sum/d.tot).toFixed(2):null;
+    }
+  });
+
+  let mi=0,ci=0;
+  const datasets=brands.map(b=>{
+    const ours=isMera(b);
+    const color=ours?MERA_PALETTE[mi++%MERA_PALETTE.length]:COMP_PALETTE[ci++%COMP_PALETTE.length];
+    return {label:b,data:series[b]||new Array(labels.length).fill(null),
+      borderColor:color,backgroundColor:'transparent',
+      borderWidth:ours?2.5:1.5,pointRadius:ours?4:2.5,pointHoverRadius:6,
+      tension:.3,spanGaps:true,order:ours?0:1};
+  });
+
+  if(document.getElementById('tShowMed').checked){
+    datasets.push({label:'Market Median',
+      data:filtered.map(f=>{const p=f.map(r=>r.price).sort((a,b)=>a-b);return p.length?+p[Math.floor(p.length/2)].toFixed(2):null;}),
+      borderColor:'#fbbf24',backgroundColor:'transparent',borderWidth:2,borderDash:[6,3],pointRadius:0,tension:.3,spanGaps:true,order:2});
+  }
+  if(document.getElementById('tShowRW').checked){
+    datasets.push({label:'Rev-Wtd Avg',
+      data:filtered.map(f=>{const t=f.reduce((a,r)=>a+r.revenue,0);return t>0?+(f.reduce((a,r)=>a+r.price*r.revenue,0)/t).toFixed(2):null;}),
+      borderColor:'#f87171',backgroundColor:'transparent',borderWidth:2,borderDash:[3,3],pointRadius:0,tension:.3,spanGaps:true,order:2});
+  }
+  const myP=parseFloat(document.getElementById('tMyPrice').value);
+  if(!isNaN(myP)&&myP>0){
+    datasets.push({label:'My Price',data:labels.map(()=>myP),
+      borderColor:'#ffffff',backgroundColor:'transparent',borderWidth:3,borderDash:[2,2],
+      pointRadius:4,pointStyle:'rectRot',tension:0,spanGaps:true,order:-1});
+  }
+
+  charts['trends-price']=new Chart(freshCanvas('trendsPriceCanvas'),{
+    type:'line',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top',labels:{color:'#c9cede',boxWidth:14,boxHeight:8,font:{size:10},usePointStyle:false}},
+        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $'+(c.parsed.y==null?'—':c.parsed.y.toFixed(2))}},
+      },
+      scales:{
+        x:{ticks:{color:'#8b91a7',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+        y:{ticks:{color:'#8b91a7',font:{size:10},callback:v=>'$'+v},grid:{color:'rgba(255,255,255,.07)'}},
+      },
+    },
+  });
+}
+
+function drawTrendsShare(months,labels,filtered){
+  destroyCharts('trends-share');
+  const brands=trendsBrandOrder(filtered,12);
+  const bset=new Set(brands);
+
+  const totals=filtered.map(f=>f.reduce((a,r)=>a+r.revenue,0));
+  const data={};
+  brands.forEach(b=>data[b]=new Array(labels.length).fill(0));
+  const other=new Array(labels.length).fill(0);
+  filtered.forEach((f,mi)=>{
+    if(!totals[mi]) return;
+    for(const r of f){
+      const pct=r.revenue/totals[mi]*100;
+      if(bset.has(r.brand)) data[r.brand][mi]+=pct; else other[mi]+=pct;
+    }
+  });
+
+  let mi=0,ci=0;
+  const datasets=brands.map(b=>{
+    const ours=isMera(b);
+    const color=ours?MERA_PALETTE[mi++%MERA_PALETTE.length]:COMP_PALETTE[ci++%COMP_PALETTE.length];
+    return {label:b,data:data[b].map(v=>+v.toFixed(2)),backgroundColor:color,borderColor:'rgba(0,0,0,.25)',borderWidth:.5,stack:'s'};
+  });
+  if(other.some(v=>v>0.01)) datasets.push({label:'Other',data:other.map(v=>+v.toFixed(2)),backgroundColor:'#3a4160',borderColor:'rgba(0,0,0,.25)',borderWidth:.5,stack:'s'});
+
+  charts['trends-share']=new Chart(freshCanvas('trendsShareCanvas'),{
+    type:'bar',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{color:'#c9cede',boxWidth:14,boxHeight:8,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}},
+      },
+      scales:{
+        x:{stacked:true,ticks:{color:'#8b91a7',font:{size:10}},grid:{display:false}},
+        y:{stacked:true,min:0,max:100,ticks:{color:'#8b91a7',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.07)'}},
+      },
+    },
+  });
+}
+</script>
+
 </body>
 </html>
