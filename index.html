@@ -1647,8 +1647,7 @@ function renderLadder(){
           html+='<div class="seg-card"><div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(b.seg.name)+'</span><span class="pos-pill par">no matches</span></div><div class="seg-desc">'+esc(describeFilters(b.seg))+'</div></div><div class="chart-empty">No SKUs matched in '+monthLabel(curMonth)+'</div></div>';
           continue;
         }
-        try{ html+=renderSegCard(b.d,thr,omThr,pendingCharts,totalMeraRev),segTier[b.seg.id]||'all'; }catch(e){ console.error('card',e); html+='<div class="seg-card"><div class="seg-card-head"><span class="seg-title">'+esc(b.seg.name)+'</span><div class="seg-desc" style="color:var(--danger)">Card failed: '+esc(e.message||e)+'</div></div></div>'; }
-      }
+        try{ html+=renderSegCard(b.d,thr,omThr,pendingCharts,totalMeraRev,segTier[b.seg.id]||'all'); }catch(e){ console.error('card',e); html+='<div class="seg-card"><div class="seg-card-head"><span class="seg-title">'+esc(b.seg.name)+'</span><div class="seg-desc" style="color:var(--danger)">Card failed: '+esc(e.message||e)+'</div></div></div>'; }      }
       html+='</div>';
     }
     html+='</div></div>';
