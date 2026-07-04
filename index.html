@@ -821,6 +821,8 @@ function uppMatch(segVal,rowVal){
   return Math.abs(a-b)<0.01;
 }
 function loose(a,b){ a=String(a||'').toLowerCase(); b=String(b||'').toLowerCase(); return a===b||a.includes(b)||b.includes(a); }
+  const SUBSUB_MERGE_GROUPS=[['disposable vape pens','all-in-one vape pens'],['510 thread cartridges','510 thread vape cartridges']];
+  function subsubEquivalent(a,b){ if(loose(a,b)) return true; a=String(a||'').toLowerCase(); b=String(b||'').toLowerCase(); for(const g of SUBSUB_MERGE_GROUPS){ if(g.some(x=>loose(x,a))&&g.some(x=>loose(x,b))) return true; } return false; }
 
 /* ═══════════════════════════════════════════
    MONTH DETECTION
@@ -1153,7 +1155,7 @@ function setAssign(itemNumber,segId){
 /* Standard OCS sub-subcategories, keyed by subcategory.
    Values found in uploaded data are always merged in on top. */
 const OCS_TAXONOMY={
-  'vapes':['510 Thread Cartridges','Disposable Vape Pens','All-in-One Vape Pens','Pod Systems','Vape Kits & Batteries'],
+  'vapes':['510 Thread Vape Cartridges','Disposable Vape Pens','Pod Systems','Vape Kits & Batteries'],
   'dried flower':['Whole Flower','Milled Flower','Pre-Milled Flower'],
   'pre-rolled':['Pre-Rolls','Infused Pre-Rolls','Blunts','Infused Blunts'],
   'pre-rolls':['Pre-Rolls','Infused Pre-Rolls','Blunts','Infused Blunts'],
@@ -1378,7 +1380,7 @@ function matchesSeg(seg,row,avail){
   }
   if(seg.subcategory && !loose(seg.subcategory,row.subcategory)) return false;
   // Optional fields: only enforce when the month's file actually has the column
-  if(seg.subsub && (!avail||avail.subsub) && !loose(seg.subsub,row.subsub)) return false;
+  if(seg.subsub && (!avail||avail.subsub) && !subsubEquivalent(seg.subsub,row.subsub)) return false;
   if(seg.netContents && (!avail||avail.net) && !contentsMatch(seg.netContents,row.netContents)) return false;
   if(seg.unitsPerPack && (!avail||avail.upp) && !uppMatch(seg.unitsPerPack,row.unitsPerPack)) return false;
   return true;
