@@ -1193,7 +1193,9 @@ function computeFieldAvail(){
     fieldAvail[m]={
       subsub:rows.some(r=>r.subsub),
       net:rows.some(r=>r.netContents),
-      upp:rows.some(r=>r.unitsPerPack),
+            upp:rows.some(r=>r.unitsPerPack),
+            revenue:rows.some(r=>r.revenue>0),
+            extraction:rows.some(r=>r.extraction),
     };
   }
 }
@@ -1204,6 +1206,8 @@ function segSkippedFilters(seg,monthKey){
   if(seg.subsub&&!a.subsub) out.push('sub-subcategory');
   if(seg.netContents&&!a.net) out.push('pack contents');
   if(seg.unitsPerPack&&!a.upp) out.push('units/pack');
+    if(!a.revenue) out.push('revenue');
+    if(seg.include?.length && !a.extraction) out.push('extraction process');
   return out;
 }
 
