@@ -634,6 +634,11 @@ async function loadAll(){
     const rows=await stGet(f.name);
     if(Array.isArray(rows)) monthsData[key]=rows;
   }));
+      for(const rows of Object.values(monthsData)){
+              for(const r of rows){
+                        if(!r.revenue && r.units>0 && r.price>0) r.revenue=r.units*r.price;
+  }
+  }
   const presets=await stGet('presets.json');
   if(presets){
     if(Array.isArray(presets.segments)) segments=presets.segments.map(migrateSegment);
