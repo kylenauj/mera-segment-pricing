@@ -752,10 +752,11 @@ function normalizeRows(raw){
     const brand=cellStr(r,cm.brand);
     const product=cellStr(r,cm.product);
     if(!brand&&!product) continue;
-    const rev=cellNum(r,cm.revenue);
+    let rev=cellNum(r,cm.revenue);
     const units=cellNum(r,cm.units);
     let price=cellNum(r,cm.price);
     if(!price&&units>0) price=rev/units;
+          if(!rev && units>0 && price>0) rev=units*price;
     if(price<=0) continue;
     const netContents=cellStr(r,cm.netContents);
     let upp=cellNum(r,cm.unitsPerPack);
