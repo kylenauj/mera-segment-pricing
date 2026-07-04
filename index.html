@@ -1477,11 +1477,12 @@ function buildSegmentData(seg,curKey,cmpKey){
     meraPctile=Math.round((below/skus.length)*100);
   }
   const meraRevShare=totRev>0?meraSkus.reduce((s,r)=>s+r.revenue,0)/totRev:0;
+  const meraRevenue=meraSkus.reduce((s,r)=>s+r.revenue,0);
   return {
     seg,skus,exited,hasPrev,
     mktAvg,mktSimple,prevMktAvg,mktMoM,mktAvgExclNew,newImpact,
     newCount:newSkus.length,
-    meraAvg,prevMeraAvg,meraMoM,meraVsMkt,meraPctile,meraRevShare,
+    meraAvg,prevMeraAvg,meraMoM,meraVsMkt,meraPctile,meraRevShare,meraRevenue,
     meraCount:meraSkus.length,totalSkus:skus.length,
     totalBrands:new Set(cur.map(r=>r.brand.toLowerCase())).size,
   };
@@ -1594,9 +1595,10 @@ function renderLadder(){
   for(const b of built){
     const brand=b.seg.brandGrp||'Portfolio-wide';
     const sub=titleCase(b.seg.subcategory)||'Other';
-    ((groups[brand]=groups[brand]||{})[sub]=groups[brand][sub]||[]).push(b);
+          ((groups[sub]=groups[sub]||{})[brand]=groups[sub][brand]||[]).push(b);
   }
   const pendingCharts=[];
+  const totalMeraRev=curRows.reduce((s,r)=>isMera(r.brand)?s+r.revenue:s,0);
   for(const brand of Object.keys(groups).sort()){
     const subGroups=groups[brand];
     const allB=Object.values(subGroups).flat();
@@ -1617,7 +1619,7 @@ function renderLadder(){
           html+='<div class="seg-card"><div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(b.seg.name)+'</span><span class="pos-pill par">no matches</span></div><div class="seg-desc">'+esc(describeFilters(b.seg))+'</div></div><div class="chart-empty">No SKUs matched in '+monthLabel(curMonth)+'</div></div>';
           continue;
         }
-        try{ html+=renderSegCard(b.d,thr,omThr,pendingCharts); }catch(e){ console.error('card',e); html+='<div class="seg-card"><div class="seg-card-head"><span class="seg-title">'+esc(b.seg.name)+'</span><div class="seg-desc" style="color:var(--danger)">Card failed: '+esc(e.message||e)+'</div></div></div>'; }
+        try{ html+=renderSegCard(b.d,thr,omThr,pendingCharts,totalMeraRev); }catch(e){ console.error('card',e); html+='<div class="seg-card"><div class="seg-card-head"><span class="seg-title">'+esc(b.seg.name)+'</span><div class="seg-desc" style="color:var(--danger)">Card failed: '+esc(e.message||e)+'</div></div></div>'; }
       }
       html+='</div>';
     }
@@ -1642,7 +1644,7 @@ function toggleBrand(brand){
 }
 function setSegView(segId,view){ segView[segId]=view; renderLadder(); }
 
-function renderSegCard(d,thr,omThr,pendingCharts){
+function renderSegCard(d,thr,omThr,pendingCharts,totalMeraRev){
   const {seg,skus,exited,hasPrev}=d;
   const fl=segmentFlags(d,thr,omThr);
   const hasFlag=fl.newBelow.length>0||fl.compDrops.length>0||fl.overMarket.length>0;
@@ -1654,6 +1656,10 @@ function renderSegCard(d,thr,omThr,pendingCharts){
     const cls=d.meraVsMkt>=omThr?'over':d.meraVsMkt<=-omThr?'under':'par';
     const word=d.meraVsMkt>1?'over mkt':d.meraVsMkt<-1?'under mkt':'at mkt';
     posPill='<span class="pos-pill '+cls+'">'+fmtPct(d.meraVsMkt)+' '+word+'</span>';
+  }
+  let pctPill='';
+  if(totalMeraRev>0&&d.meraRevenue>0){
+  pctPill='<span class="pos-pill par" style="margin-left:6px">'+fmtPctPlain(d.meraRevenue/totalMeraRev*100)+' of Mera $</span>';
   }
 
   const kpis=
@@ -1735,7 +1741,7 @@ function renderSegCard(d,thr,omThr,pendingCharts){
   }
 
   return '<div class="seg-card'+(hasFlag?' has-flag':'')+'">'
-    +'<div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(seg.name)+'</span>'+posPill+'</div>'
+    +'<div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(seg.name)+'</span>'+posPill+pctPill+'</div>'
     +'<div class="seg-desc">'+esc(describeFilters(seg))+'</div></div>'
     +'<div class="kpi-strip">'+kpis+'</div>'
     +banners+tabs+body+exitedHtml+footer
