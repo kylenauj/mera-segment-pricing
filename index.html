@@ -105,6 +105,10 @@ main{padding:20px 24px;overflow-y:auto}
 .mini-tab{padding:7px 14px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
 .mini-tab:hover{color:var(--fg)}
 .mini-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tier-tabs{display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap}
+  .tier-tab{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 10px;border-radius:12px;border:1px solid var(--border);color:var(--muted);cursor:pointer}
+  .tier-tab:hover{color:var(--fg)}
+  .tier-tab.active{background:var(--asoft);border-color:var(--accent);color:var(--accent)}
 .chart-wrap{position:relative;height:250px;padding:10px 12px 4px}
 .chart-empty{display:flex;align-items:center;justify-content:center;height:250px;color:var(--muted);font-size:12px;text-align:center;padding:0 24px;line-height:1.7}
 .insights{padding:10px 14px 12px;border-top:1px solid var(--bsoft);display:grid;gap:5px}
@@ -491,6 +495,11 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
             <input type="checkbox" id="segManualOnly" style="width:auto"> Our SKUs join this segment by manual assignment only (no auto-match)
           </label>
         </div>
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;color:var(--fg2);font-weight:500">
+            <input type="checkbox" id="segTiered" style="width:auto"> Enable Good / Better / Best pricing tiers for this segment
+          </label>
+        </div>
         <button class="btn btn-accent" style="width:100%;margin-top:4px" id="segAddBtn" onclick="addSegment()">+ Add Segment</button>
         <button class="btn btn-ghost" style="width:100%;margin-top:6px;display:none" id="segCancelBtn" onclick="cancelEdit()">Cancel edit</button>
         <div class="seg-pills" id="segPills"></div>
@@ -528,6 +537,7 @@ let expandedSegs=new Set();
 let exitedOpen=new Set();
 let collapsedBrands=new Set();
 let segView={};              // segId -> 'trend' | 'share' | 'ladder'
+  let segTier={};
 let charts={};               // canvasId -> Chart instance
 let pfActiveOnly=true;
 
@@ -664,6 +674,7 @@ function migrateSegment(s){
     include:Array.isArray(s.include)?s.include:(s.keyword?[String(s.keyword).toLowerCase()]:[]),
     exclude:Array.isArray(s.exclude)?s.exclude:[],
     manualOnly:!!s.manualOnly,
+    tiered:!!s.tiered,
   };
 }
 async function savePresets(){
@@ -1279,12 +1290,14 @@ function readSegForm(){
     include:parseKw(document.getElementById('segInclude').value),
     exclude:parseKw(document.getElementById('segExclude').value),
     manualOnly:document.getElementById('segManualOnly').checked,
+    tiered:document.getElementById('segTiered').checked,
   };
 }
 function clearSegForm(){
   ['segName','segInclude','segExclude'].forEach(id=>document.getElementById(id).value='');
   ['segBrandGrp','segSubcat','segSubsub','segContents','segUnitsPP'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('segManualOnly').checked=false;
+  document.getElementById('segTiered').checked=false;
 }
 function addSegment(){
   const s=readSegForm();
@@ -1318,6 +1331,7 @@ function editSegment(id){
   document.getElementById('segInclude').value=(s.include||[]).join(', ');
   document.getElementById('segExclude').value=(s.exclude||[]).join(', ');
   document.getElementById('segManualOnly').checked=!!s.manualOnly;
+  document.getElementById('segTiered').checked=!!s.tiered;
   document.getElementById('segBuilderTitle').textContent='Edit Segment';
   document.getElementById('segAddBtn').textContent='✓ Save Changes';
   document.getElementById('segCancelBtn').style.display='';
@@ -1421,6 +1435,16 @@ function wAvg(list){
   return list.length?list.reduce((s,r)=>s+r.price,0)/list.length:0;
 }
 function sAvg(list){ return list.length?list.reduce((s,r)=>s+r.price,0)/list.length:0; }
+  function pickTier(rows,tier){
+  const sorted=rows.slice().sort((a,b)=>a.price-b.price);
+  const n=sorted.length;
+  if(n<3) return sorted;
+  const t1=Math.round(n/3),t2=Math.round(2*n/3);
+  if(tier==='good') return sorted.slice(0,t1);
+  if(tier==='better') return sorted.slice(t1,t2);
+   if(tier==='best') return sorted.slice(t2);
+  return sorted;
+  }
 
 function segMatchFn(seg,monthKey){
   const fm=forcedMatchers(seg);
@@ -1435,10 +1459,15 @@ function segMatchFn(seg,monthKey){
   };
 }
 
-function buildSegmentData(seg,curKey,cmpKey){
-  const cur=getRows(curKey).filter(segMatchFn(seg,curKey));
+function buildSegmentData(seg,curKey,cmpKey,tier){
+  let cur=getRows(curKey).filter(segMatchFn(seg,curKey));
   if(!cur.length) return null;
-  const prev=cmpKey?getRows(cmpKey).filter(segMatchFn(seg,cmpKey)):[];
+  let prev=cmpKey?getRows(cmpKey).filter(segMatchFn(seg,cmpKey)):[];
+  if(seg.tiered&&tier&&tier!=='all'){
+  cur=pickTier(cur,tier);
+  if(!cur.length) return null;
+  if(prev.length) prev=pickTier(prev,tier);
+  }
   const prevMap=new Map(prev.map(r=>[skuKey(r),r]));
   const curKeys=new Set(cur.map(skuKey));
   const exited=prev.filter(r=>!curKeys.has(skuKey(r)));
@@ -1487,11 +1516,12 @@ function buildSegmentData(seg,curKey,cmpKey){
 }
 
 /* Time series across ALL uploaded months, per segment */
-function segTimeSeries(seg){
+function segTimeSeries(seg,tier){
   const months=Object.keys(monthsData).sort();
   const out=[];
   for(const m of months){
-    const rows=getRows(m).filter(segMatchFn(seg,m));
+let rows=getRows(m).filter(segMatchFn(seg,m));
+    if(seg.tiered&&tier&&tier!=='all') rows=pickTier(rows,tier);
     if(!rows.length){ out.push({m,empty:true}); continue; }
     const byBrand={};
     for(const r of rows){ (byBrand[r.brand]=byBrand[r.brand]||[]).push(r); }
@@ -1581,7 +1611,7 @@ function renderLadder(){
   }
 
   const built=segments.map(seg=>{
-    try{ return {seg,d:buildSegmentData(seg,curMonth,cmpMonth)}; }
+    try{ return {seg,d:buildSegmentData(seg,curMonth,cmpMonth,segTier[seg.id]||'all')}; }
     catch(e){ console.error('segment',seg.name,e); return {seg,d:null,err:e}; }
   });
   if(!built.some(b=>b.d)){
@@ -1617,7 +1647,7 @@ function renderLadder(){
           html+='<div class="seg-card"><div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(b.seg.name)+'</span><span class="pos-pill par">no matches</span></div><div class="seg-desc">'+esc(describeFilters(b.seg))+'</div></div><div class="chart-empty">No SKUs matched in '+monthLabel(curMonth)+'</div></div>';
           continue;
         }
-        try{ html+=renderSegCard(b.d,thr,omThr,pendingCharts,totalMeraRev); }catch(e){ console.error('card',e); html+='<div class="seg-card"><div class="seg-card-head"><span class="seg-title">'+esc(b.seg.name)+'</span><div class="seg-desc" style="color:var(--danger)">Card failed: '+esc(e.message||e)+'</div></div></div>'; }
+        try{ html+=renderSegCard(b.d,thr,omThr,pendingCharts,totalMeraRev),segTier[b.seg.id]||'all'; }catch(e){ console.error('card',e); html+='<div class="seg-card"><div class="seg-card-head"><span class="seg-title">'+esc(b.seg.name)+'</span><div class="seg-desc" style="color:var(--danger)">Card failed: '+esc(e.message||e)+'</div></div></div>'; }
       }
       html+='</div>';
     }
@@ -1641,8 +1671,9 @@ function toggleBrand(brand){
   renderLadder();
 }
 function setSegView(segId,view){ segView[segId]=view; renderLadder(); }
+  function setSegTier(segId,tier){ segTier[segId]=tier; renderLadder(); }
 
-function renderSegCard(d,thr,omThr,pendingCharts,totalMeraRev){
+function renderSegCard(d,thr,omThr,pendingCharts,totalMeraRev,tier){
   const {seg,skus,exited,hasPrev}=d;
   const fl=segmentFlags(d,thr,omThr);
   const hasFlag=fl.newBelow.length>0||fl.compDrops.length>0||fl.overMarket.length>0;
@@ -1658,6 +1689,11 @@ function renderSegCard(d,thr,omThr,pendingCharts,totalMeraRev){
   let pctPill='';
   if(totalMeraRev>0&&d.meraRevenue>0){
   pctPill='<span class="pos-pill par" style="margin-left:6px">'+fmtPctPlain(d.meraRevenue/totalMeraRev*100)+' of Mera $</span>';
+  }
+  let tierTabs='';
+  if(seg.tiered){
+  const curTier=tier||'all';
+  tierTabs='<div class="tier-tabs">'+['all','good','better','best'].map(t=>'<span class="tier-tab'+(curTier===t?' active':'')+'" onclick="setSegTier('+seg.id+',\''+t+'\')">'+(t==='all'?'All':t.charAt(0).toUpperCase()+t.slice(1))+'</span>').join('')+'</div>';
   }
 
   const kpis=
@@ -1700,7 +1736,7 @@ function renderSegCard(d,thr,omThr,pendingCharts,totalMeraRev){
     }else if(!window.Chart){
       body='<div class="chart-empty">Chart library failed to load (CDN blocked). Ladder view still works.</div>';
     }else{
-      const ts=segTimeSeries(seg);
+              const ts=segTimeSeries(seg,tier);
       const cid='ch-'+seg.id+'-'+view;
       body='<div class="chart-wrap"><canvas id="'+cid+'"></canvas></div>';
       pendingCharts.push({type:view==='trend'?'trend':'share',canvasId:cid,ts,seg});
@@ -1740,7 +1776,7 @@ function renderSegCard(d,thr,omThr,pendingCharts,totalMeraRev){
 
   return '<div class="seg-card'+(hasFlag?' has-flag':'')+'">'
     +'<div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(seg.name)+'</span>'+posPill+pctPill+'</div>'
-    +'<div class="seg-desc">'+esc(describeFilters(seg))+'</div></div>'
+    +'<div class="seg-desc">'+esc(describeFilters(seg))+'</div></div>'+tierTabs
     +'<div class="kpi-strip">'+kpis+'</div>'
     +banners+tabs+body+exitedHtml+footer
     +'</div>';
