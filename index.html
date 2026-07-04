@@ -25,7 +25,7 @@
   --sh:0 4px 24px rgba(0,0,0,.45);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh}
+html,body{color-scheme:dark;background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh}
 .app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
 
 /* ── Topbar ── */
@@ -83,7 +83,7 @@ main{padding:20px 24px;overflow-y:auto}
 .seg-card.has-flag{border-color:rgba(246,107,92,.45)}
 .seg-card-head{padding:12px 14px;border-bottom:1px solid var(--bsoft)}
 .seg-card-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.seg-title{font-size:13px;font-weight:700}
+.seg-title{font-size:16px;font-weight:800;letter-spacing:.01em}
 .seg-desc{font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
 .pos-pill{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid}
 .pos-pill.over{color:var(--danger);border-color:rgba(246,107,92,.35);background:var(--dbg)}
@@ -1121,8 +1121,6 @@ function renderPortfolio(){
       for(const c of byBrand[b][sc]){
         const chips=c.auto.map(sg=>'<span class="seg-chip">'+esc(sg.name)
             +'<button class="chip-x" title="Remove this SKU from '+escAttr(sg.name)+'" onclick="excludeSku(\''+sg.id+'\',\''+escAttr(c.p.pfKey)+'\')">✕</button></span>').join('')
-          +c.excluded.map(sg=>'<span class="seg-chip excluded">'+esc(sg.name)
-            +'<button class="chip-x" title="Restore to '+escAttr(sg.name)+'" onclick="includeSku(\''+sg.id+'\',\''+escAttr(c.p.pfKey)+'\')">↩</button></span>').join('')
           +(c.manual?'<span class="seg-chip manual">✎ '+esc(c.manual.name)+'</span>':'');
         const sel='<select onchange="setAssign(\''+escAttr(c.p.pfKey)+'\',this.value)"><option value="">(auto only)</option>'
           +segments.map(s=>'<option value="'+s.id+'"'+(c.manual&&c.manual.id===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select>';
