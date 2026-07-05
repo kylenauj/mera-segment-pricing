@@ -24,6 +24,18 @@
   --r:8px;--rm:12px;--rl:16px;
   --sh:0 4px 24px rgba(0,0,0,.45);
 }
+  [data-theme="light"]{
+      --bg:#f3f4f9;--surface:#ffffff;--s2:#eef0f6;--inset:#eceff5;
+      --fg:#171a26;--fg2:#565b78;--muted:#8b8fa8;--faint:#e6e9f2;
+      --border:#dde1ec;--bsoft:#e9ecf4;
+      --asoft:rgba(255,122,61,.12);
+      --success:#1f9d5c;--sbg:rgba(31,157,92,.09);
+      --warn:#b8860b;--wbg:rgba(184,134,11,.09);
+      --danger:#d9362a;--dbg:rgba(217,54,42,.09);
+      --blue:#2563c9;
+      --sh:0 4px 24px rgba(20,20,40,.08);
+  }
+  html[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{color-scheme:dark;background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh}
 .app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
@@ -300,6 +312,8 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
     <select id="selCompare"><option value="">(none)</option></select>
   </div>
   <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark mode">Dark</button>
+          <button class="btn btn-ghost btn-sm" id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle fullscreen">Fullscreen</button>
     <span class="conn connecting" id="connBadge"><span class="conn-dot"></span><span id="connText">Connecting…</span></span>
   </div>
 </div>
@@ -602,9 +616,31 @@ async function stDel(file){
 /* ═══════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════ */
+  function applyTheme(mode){
+    document.documentElement.setAttribute('data-theme',mode);
+    const btn=document.getElementById('themeToggleBtn');
+    if(btn) btn.textContent=(mode==='light')?'Light':'Dark';
+      try{ localStorage.setItem('mera_theme',mode); }catch(_){ }
+  }
+  function toggleTheme(){
+      const cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';
+      applyTheme(cur==='light'?'dark':'light');
+  }
+  function toggleFullscreen(){
+    if(!document.fullscreenElement){
+      document.documentElement.requestFullscreen().catch(function(){});
+    }else{
+                            document.exitFullscreen().catch(function(){});
+  }
+}
+      document.addEventListener('fullscreenchange',function(){
+    const btn=document.getElementById('fullscreenBtn');
+          if(btn) btn.textContent=document.fullscreenElement?'Exit Fullscreen':'Fullscreen';
+  });
 window.addEventListener('error',e=>{ try{ toast('JS error: '+(e.message||e.error)+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno,'error'); }catch(_){} });
 window.addEventListener('unhandledrejection',e=>{ try{ toast('Async error: '+(e.reason&&e.reason.message||e.reason),'error'); }catch(_){} });
 window.addEventListener('DOMContentLoaded', async ()=>{
+    try{ applyTheme(localStorage.getItem('mera_theme')||'dark'); }catch(_){ }
   if(window.Chart){
     Chart.defaults.color='#8b90b8';
     Chart.defaults.borderColor='rgba(37,45,69,.6)';
