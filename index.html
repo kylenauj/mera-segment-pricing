@@ -544,6 +544,7 @@ let segments    = [];
 let portfolio   = [];
 let assignments = {};
 let exclusions  = {};      // { segmentId: [itemNumber,...] } SKUs pulled OUT of a segment
+let manualPrices = {};  // { pfKey: number } manual price entry for SKUs with no current sales
 let meraBrands  = DEFAULT_MERA.slice();
 let curMonth='', cmpMonth='';
 let editingSegId=null;
@@ -688,12 +689,39 @@ async function loadAll(){
                         if(!r.revenue && r.units>0 && r.price>0) r.revenue=r.units*r.price;
   }
   }
-  const presets=await stGet('presets.json');
+  {
+    const brandCounts = {};
+    for(const rows of Object.values(monthsData)){
+      for(const r of rows){
+        const key = String(r.brand||'').trim().toLowerCase();
+        if(!key) continue;
+        const casing = String(r.brand).trim();
+        if(!brandCounts[key]) brandCounts[key] = {};
+        brandCounts[key][casing] = (brandCounts[key][casing]||0) + 1;
+      }
+    }
+    const canonicalBrand = {};
+    for(const key in brandCounts){
+      let best = null, bestCount = -1;
+      for(const casing in brandCounts[key]){
+        if(brandCounts[key][casing] > bestCount){ best = casing; bestCount = brandCounts[key][casing]; }
+      }
+      canonicalBrand[key] = best;
+    }
+    for(const rows of Object.values(monthsData)){
+      for(const r of rows){
+        const key = String(r.brand||'').trim().toLowerCase();
+        if(key && canonicalBrand[key]) r.brand = canonicalBrand[key];
+      }
+    }
+  }
+  const presets = await stGet('presets.json');
   if(presets){
     if(Array.isArray(presets.segments)) segments=presets.segments.map(migrateSegment);
     if(Array.isArray(presets.meraBrands)&&presets.meraBrands.length) meraBrands=presets.meraBrands;
     if(presets.assignments&&typeof presets.assignments==='object') assignments=presets.assignments;
     if(presets.exclusions&&typeof presets.exclusions==='object') exclusions=presets.exclusions;
+    if(presets.manualPrices && typeof presets.manualPrices==='object') manualPrices = presets.manualPrices;
   }
   const pf=await stGet('portfolio.json');
   if(Array.isArray(pf)) portfolio=pf.map(p=>({...p, pfKey:p.pfKey||(p.itemNumber+'::'+norm(p.size||''))}));
@@ -715,7 +743,7 @@ function migrateSegment(s){
   };
 }
 async function savePresets(){
-  try{ await stPut('presets.json',{segments,meraBrands,assignments,exclusions}); }
+  try{ await stPut('presets.json',{segments,meraBrands,assignments,exclusions,manualPrices}); }
   catch(e){ console.warn('savePresets',e); toast('Settings not saved: '+(isNetErr(e)?'network blocked':e.message),'error'); }
 }
 
@@ -1165,7 +1193,7 @@ function renderPortfolio(){
     html+='<div class="pf-brand"><div class="pf-brand-title">'+esc(b)+'</div><div class="pf-brand-bar"></div>';
     for(const sc of Object.keys(byBrand[b]).sort()){
       html+='<div class="pf-subcat">'+esc(sc)+'</div>';
-      html+='<table class="pf-table"><thead><tr><th>Item</th><th>Size</th><th>Status</th><th>Segments (auto-matched)</th><th style="width:210px">Manual assign</th></tr></thead><tbody>';
+      html+='<table class="pf-table"><thead><tr><th>Item</th><th>Size</th><th>Status</th><th>Segments (auto-matched)</th><th style="width:210px">Manual assign</th><th style="width:150px">Manual price</th></tr></thead><tbody>';
       for(const c of byBrand[b][sc]){
         const chips=c.auto.map(sg=>'<span class="seg-chip">'+esc(sg.name)
             +'<button class="chip-x" title="Remove this SKU from '+escAttr(sg.name)+'" onclick="excludeSku(\''+sg.id+'\',\''+escAttr(c.p.pfKey)+'\')">✕</button></span>').join('')
@@ -1178,6 +1206,7 @@ function renderPortfolio(){
           +'<td>'+(c.p.active?'<span class="badge badge-active">Active</span>':'<span class="badge badge-inactive">'+esc(c.p.lifecycle||'—')+'</span>')+'</td>'
           +'<td>'+(chips||'<span class="no-seg">⚠ no segment</span>')+'</td>'
           +'<td class="pf-assign">'+sel+'</td>'
+          +'<td class="pf-manual-price"><input type="number" step="0.01" min="0" placeholder="no sales — set $" value="'+(manualPrices[c.p.pfKey]?esc(String(manualPrices[c.p.pfKey])):'')+'" onchange="setManualPrice(\''+escAttr(c.p.pfKey)+'\',this.value)" style="width:110px"></td>'
           +'</tr>';
       }
       html+='</tbody></table>';
@@ -1191,6 +1220,14 @@ function setAssign(itemNumber,segId){
   if(legacy!==itemNumber) delete assignments[legacy];
   if(segId) assignments[itemNumber]=isNaN(+segId)?segId:+segId;
   else delete assignments[itemNumber];
+  savePresets();
+  renderPortfolio();
+  runAll();
+}
+function setManualPrice(pfKey,value){
+  const v = parseFloat(value);
+  if(!isNaN(v) && v>0) manualPrices[pfKey] = v;
+  else delete manualPrices[pfKey];
   savePresets();
   renderPortfolio();
   runAll();
@@ -1438,7 +1475,7 @@ function forcedMatchers(seg){
   for(const p of portfolio){
     const aid=assignments[p.pfKey]!==undefined?assignments[p.pfKey]:assignments[p.itemNumber];
     if(aid!==seg.id) continue;
-    out.push({name:norm(p.itemName),brand:norm(p.brand)});
+    out.push({name:norm(p.itemName),brand:norm(p.brand),size:p.size||''});
   }
   return out;
 }
@@ -1529,11 +1566,27 @@ function buildSegmentData(seg,curKey,cmpKey,tier){
   const newSkus=skus.filter(s=>s.isNew);
   const mktAvgExclNew=(hasPrev&&carriedOver.length)?wAvg(carriedOver):null;
   const newImpact=(mktAvgExclNew!=null&&newSkus.length)?mktAvg-mktAvgExclNew:null;
-  const meraSkus=skus.filter(s=>s.isMera);
-  const meraAvg=meraSkus.length?wAvg(meraSkus):null;
+  const meraSkus = skus.filter(s=>s.isMera);
+  let meraAvg = meraSkus.length?wAvg(meraSkus):null;
+  let meraAvgIsManual = false;
+  if(meraAvg===null){
+    const manualItems = portfolio.filter(p=>{
+      const aid = assignments[p.pfKey]!==undefined?assignments[p.pfKey]:assignments[p.itemNumber];
+      const manuallyAssigned = aid===seg.id;
+      const autoEligible = !seg.manualOnly && !aid && segMatchesPortfolioSku(seg,p);
+      if(!manuallyAssigned && !autoEligible) return false;
+      const mp = manualPrices[p.pfKey];
+      return typeof mp==='number' && mp>0;
+    });
+    if(manualItems.length){
+      const vals = manualItems.map(p=>manualPrices[p.pfKey]);
+      meraAvg = vals.reduce((a,b)=>a+b,0)/vals.length;
+      meraAvgIsManual = true;
+    }
+  }
   const prevMeraRows=prev.filter(r=>isMera(r.brand));
   const prevMeraAvg=prevMeraRows.length?wAvg(prevMeraRows):null;
-  const meraMoM=(meraAvg!=null&&prevMeraAvg)?((meraAvg-prevMeraAvg)/prevMeraAvg)*100:null;
+  const meraMoM = (!meraAvgIsManual&&meraAvg!=null&&prevMeraAvg)?((meraAvg-prevMeraAvg)/prevMeraAvg)*100:null;
   const meraVsMkt=(meraAvg!=null&&mktAvg>0)?((meraAvg-mktAvg)/mktAvg)*100:null;
   let meraPctile=null;
   if(meraAvg!=null&&skus.length>1){
@@ -1546,7 +1599,7 @@ function buildSegmentData(seg,curKey,cmpKey,tier){
     seg,skus,exited,hasPrev,
     mktAvg,mktSimple,prevMktAvg,mktMoM,mktAvgExclNew,newImpact,
     newCount:newSkus.length,
-    meraAvg,prevMeraAvg,meraMoM,meraVsMkt,meraPctile,meraRevShare,meraRevenue,
+    meraAvg,meraAvgIsManual,prevMeraAvg,meraMoM,meraVsMkt,meraPctile,meraRevShare,meraRevenue,
     meraCount:meraSkus.length,totalSkus:skus.length,
     totalBrands:new Set(cur.map(r=>r.brand.toLowerCase())).size,
   };
@@ -1734,8 +1787,8 @@ function renderSegCard(d,thr,omThr,pendingCharts,totalMeraRev,tier){
 
   const kpis=
     '<div class="kpi"><div class="kpi-val mera">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</div>'
-      +(d.meraMoM!=null?'<div class="kpi-sub">'+momSub(d.meraMoM)+'</div>':'')
-      +'<div class="kpi-lbl">Our Avg</div></div>'
+      +(d.meraAvgIsManual?'<div class="kpi-sub" style="color:var(--warn,#f0b73d)">manual · no sales</div>':(d.meraMoM!=null?'<div class="kpi-sub">'+momSub(d.meraMoM)+'</div>':''))
+      +'<div class="kpi-lbl">Our Avg'+(d.meraAvgIsManual?' <span title="Manually entered — no matching sales this period" style="cursor:help">✎</span>':'')+'</div></div>'
     +'<div class="kpi"><div class="kpi-val">'+fmt$(d.mktAvg)+'</div>'
       +(d.mktMoM!=null?'<div class="kpi-sub">'+momSub(d.mktMoM)+'</div>':'')
       +'<div class="kpi-lbl">Mkt Rev-Wtd</div></div>'
@@ -1944,39 +1997,45 @@ function pickChartBrands(ts,limit){
 }
 
 function makeTrendChart(pc){
-  const {canvasId,ts}=pc;
-  const cv=freshCanvas(canvasId);
+  const {canvasId,ts} = pc;
+  const cv = freshCanvas(canvasId);
   if(!cv) return;
-  const labels=ts.map(t=>monthLabel(t.m));
-  const brands=pickChartBrands(ts,16);
-  let mi=0,ci=0;
-  const datasets=brands.map(b=>{
-    const isOurs=ts.some(t=>!t.empty&&t.brands[b]&&t.brands[b].isMera);
-    const color=isOurs?MERA_PALETTE[mi++%MERA_PALETTE.length]:COMP_PALETTE[ci++%COMP_PALETTE.length];
+  const labels = ts.map(t => monthLabel(t.m));
+  const brands = pickChartBrands(ts,10);
+  const hexA = (hex,a) => {
+    const h = hex.replace('#','');
+    const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+    return 'rgba('+r+','+g+','+b+','+a+')';
+  };
+  let mi = 0,ci = 0;
+  const datasets = brands.map(b => {
+    const isOurs = ts.some(t => !t.empty && t.brands[b] && t.brands[b].isMera);
+    const rawColor = isOurs ? MERA_PALETTE[mi++%MERA_PALETTE.length] : COMP_PALETTE[ci++%COMP_PALETTE.length];
+    const color = isOurs ? rawColor : hexA(rawColor,.55);
     return {
       label:b,
-      data:ts.map(t=>t.empty||!t.brands[b]?null:+t.brands[b].avg.toFixed(2)),
+      data:ts.map(t => t.empty||!t.brands[b] ? null:+t.brands[b].avg.toFixed(2)),
       borderColor:color,backgroundColor:'transparent',
-      borderWidth:isOurs?2.5:1.5,
-      pointRadius:isOurs?4:2.5,
+      borderWidth:isOurs ? 2:1,
+      pointRadius:isOurs ? 3:1.5,
       pointStyle:'circle',
       tension:.3,spanGaps:true,
-      order:isOurs?0:1,
+      order:isOurs ? 0:1,
     };
   });
   datasets.push({
     label:'Rev-Wtd Avg',
-    data:ts.map(t=>t.empty?null:+t.mkt.toFixed(2)),
+    data:ts.map(t => t.empty ? null:+t.mkt.toFixed(2)),
     borderColor:'#f87171',backgroundColor:'transparent',
-    borderWidth:2,borderDash:[3,3],pointRadius:0,tension:.3,spanGaps:true,order:2,
+    borderWidth:4,pointRadius:2,pointBackgroundColor:'#f87171',tension:.3,spanGaps:true,order:2,
   });
   datasets.push({
     label:'Market Median',
-    data:ts.map(t=>t.empty?null:+t.median.toFixed(2)),
+    data:ts.map(t => t.empty ? null:+t.median.toFixed(2)),
     borderColor:'#fbbf24',backgroundColor:'transparent',
-    borderWidth:2,borderDash:[6,3],pointRadius:0,tension:.3,spanGaps:true,order:3,
+    borderWidth:4,borderDash:[8,4],pointRadius:2,pointBackgroundColor:'#fbbf24',tension:.3,spanGaps:true,order:3,
   });
-  charts[canvasId]=new Chart(cv,{
+  charts[canvasId] = new Chart(cv,{
     type:'line',
     data:{labels,datasets},
     options:{
@@ -1984,10 +2043,10 @@ function makeTrendChart(pc){
       interaction:{mode:'nearest',intersect:false},
       plugins:{
         legend:{position:'bottom',labels:{boxWidth:9,boxHeight:9,padding:8,font:{size:9}}},
-        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $'+(c.parsed.y??0).toFixed(2)}},
+        tooltip:{callbacks:{label:c => ' '+c.dataset.label+': $'+(c.parsed.y??0).toFixed(2)}},
       },
       scales:{
-        y:{ticks:{callback:v=>'$'+v},grid:{color:'rgba(37,45,69,.5)'}},
+        y:{ticks:{callback:v => '$'+v},grid:{color:'rgba(37,45,69,.5)'}},
         x:{grid:{display:false}},
       },
     },
