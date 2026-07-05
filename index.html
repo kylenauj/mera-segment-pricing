@@ -2263,7 +2263,7 @@ async function exportPDF(){
    TAB NAV + UTILS
 ═══════════════════════════════════════════ */
 function showTab(tab){
-  ['ladder','brief','portfolio','data'].forEach(t=>{
+  ['ladder','brief','portfolio','data','trends'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===tab?'':'none';
     document.querySelectorAll('.tab').forEach(el=>{ if(el.dataset.tab===t) el.classList.toggle('active',t===tab); });
   });
