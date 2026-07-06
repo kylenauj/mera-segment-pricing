@@ -81,6 +81,7 @@ main{padding:20px 24px;overflow-y:auto}
 .brand-block.collapsed .brand-chev{transform:rotate(-90deg)}
 .brand-block-title{font-size:16px;font-weight:800;letter-spacing:-.01em}
 .brand-block-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;display:flex;gap:14px;align-items:center}
+.cat-pct{font-size:13px;font-weight:700;color:var(--accent);margin-left:8px;font-family:var(--mono)}
 .brand-flag-count{color:var(--danger);font-weight:700}
 .brand-block-body{padding:16px 18px;border-top:1px solid var(--bsoft)}
 .brand-block.collapsed .brand-block-body{display:none}
@@ -97,7 +98,7 @@ main{padding:20px 24px;overflow-y:auto}
 .seg-card-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .seg-title{font-size:16px;font-weight:800;letter-spacing:.01em}
 .seg-desc{font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
-.pos-pill{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;border:1px solid}
+.pos-pill{display:inline-block;font-family:var(--mono);font-size:14px;font-weight:800;padding:6px 14px;border-radius:14px;border:1px solid}
   .pos-pill.over{color:var(--danger);border-color:rgba(246,107,92,.35);background:var(--dbg)}
   .pos-pill.under{color:var(--success);border-color:rgba(61,220,138,.35);background:var(--sbg)}
 .pos-pill.par{color:var(--fg2);border-color:var(--border);background:var(--s2);font-weight:800}
@@ -260,15 +261,17 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 .threshold-row{display:flex;align-items:center;gap:6px}
 .threshold-row label{font-size:12px;color:var(--fg2)}
 .thr-input{width:56px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;color:var(--fg);font:inherit;font-size:12px;text-align:center}
-.brief-sections{display:grid;gap:14px}
+.brief-sections{display:grid;gap:10px}
 .brief-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);overflow:hidden}
-.brief-section-head{padding:13px 16px;border-bottom:1px solid var(--bsoft);background:var(--inset);display:flex;align-items:center;justify-content:space-between}
+.brief-section-head{padding:8px 14px;border-bottom:1px solid var(--bsoft);background:var(--inset);display:flex;align-items:center;justify-content:space-between}
+details.brief-section>summary.brief-section-head{cursor:pointer;list-style:revert}
+details.brief-section:not([open])>summary.brief-section-head{border-bottom:none}
 .brief-section-title{font-size:13px;font-weight:700}
 .brief-section-title.danger{color:var(--danger)}
 .brief-section-title.warn{color:var(--warn)}
 .brief-section-title.success{color:var(--success)}
-.flag-items{padding:12px 16px;display:grid;gap:8px}
-.flag-item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:var(--r);border:1px solid}
+.flag-items{padding:8px 12px;display:grid;gap:4px}
+.flag-item{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:5px 10px;border-radius:var(--r);border:1px solid}
 .flag-item.up{background:var(--dbg);border-color:rgba(246,107,92,.2)}
 .flag-item.down{background:var(--sbg);border-color:rgba(61,220,138,.2)}
 .flag-item.new{background:var(--wbg);border-color:rgba(240,183,61,.2)}
@@ -284,10 +287,11 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 .pos-table{width:100%;border-collapse:collapse}
 .pos-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 16px;border-bottom:1px solid var(--bsoft);text-align:left}
 .pos-table th.r,.pos-table td.r{text-align:right}
-.pos-table td{font-size:12px;padding:9px 16px;border-bottom:1px solid var(--bsoft);font-family:var(--mono)}
+.pos-table td{font-size:12px;padding:6px 16px;border-bottom:1px solid var(--bsoft);font-family:var(--mono)}
 .pos-table td.name{font-family:var(--font);font-weight:700}
 .pos-table td.grp{font-family:var(--font);color:var(--fg2);font-size:11px}
 .pos-table tr:last-child td{border-bottom:none}
+.pos-group-row td{background:var(--inset);font-family:var(--font);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--fg2);padding:6px 16px}
 
 /* ── Toast ── */
 .toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:999}
@@ -386,6 +390,11 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
           <select id="tUpp" onchange="refreshTrendsAll()"><option value="">(all)</option></select>
         </div>
       </div>
+      <div class="field">
+        <label>Landed Cost $ (excl. HST)</label>
+        <input type="number" id="tLandedCalc" step="0.01" placeholder="e.g. 16.50" oninput="onTrendsLandedCalc()">
+      </div>
+      <div id="tCalcMini" style="display:none;font-size:11px;color:var(--fg2);background:var(--inset);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;margin-bottom:12px;line-height:1.7"></div>
       <div class="field">
         <label>My price $ (drawn on chart)</label>
         <input type="number" id="tMyPrice" step="0.01" placeholder="—" oninput="trendsKwDebounce()">
@@ -1526,8 +1535,8 @@ function segMatchFn(seg,monthKey){
   const avail=fieldAvail[monthKey];
   return r=>{
     const mera=isMera(r.brand);
+    if(isForced(fm,r)) return true;                       // manually assigned in — takes precedence over exclusions
     if(mera&&xm.length&&nameMatch(xm,r)) return false;   // explicitly removed from this segment
-    if(isForced(fm,r)) return true;                       // manually assigned in
     if(seg.manualOnly&&mera) return false;                // our SKUs only join by assignment
     return matchesSeg(seg,r,avail);
   };
@@ -1722,12 +1731,14 @@ function renderLadder(){
     const allB=Object.values(subGroups).flat();
     const nSegs=allB.length;
     let flagCount=0;
-    for(const b of allB){ if(b.d){ const f=segmentFlags(b.d,thr,omThr); flagCount+=f.newBelow.length+f.compDrops.length+f.overMarket.length; } }
+    let catMeraRev=0;
+    for(const b of allB){ if(b.d){ const f=segmentFlags(b.d,thr,omThr); flagCount+=f.newBelow.length+f.compDrops.length+f.overMarket.length; catMeraRev+=b.d.meraRevenue||0; } }
     const collapsed=collapsedBrands.has(brand);
+    const catPct=totalMeraRev>0?(catMeraRev/totalMeraRev*100):0;
     html+='<div class="brand-block'+(collapsed?' collapsed':'')+'" id="bb-'+cssId(brand)+'">'
       +'<div class="brand-block-head" onclick="toggleBrand(\''+escAttr(brand)+'\')">'
         +'<span class="brand-chev">▾</span>'
-        +'<span class="brand-block-title">'+esc(brand)+'</span>'
+        +'<span class="brand-block-title">'+esc(brand)+(totalMeraRev>0?' <span class="cat-pct">'+fmtPctPlain(catPct)+' of Mera $</span>':'')+'</span>'
         +'<span class="brand-block-meta">'+(flagCount?'<span class="brand-flag-count">⚠ '+flagCount+' alert'+(flagCount>1?'s':'')+'</span>':'')+'<span>'+nSegs+' segment'+(nSegs>1?'s':'')+'</span></span>'
       +'</div><div class="brand-block-body">';
     for(const sub of Object.keys(subGroups).sort()){
@@ -2158,30 +2169,35 @@ function renderBrief(){
     for(const k of Object.keys(all)) all[k].push(...fl[k]);
     posRows.push(d);
   }
-  posRows.sort((a,b)=>(a.seg.brandGrp||'zz').localeCompare(b.seg.brandGrp||'zz')||(a.seg.subcategory||'').localeCompare(b.seg.subcategory||''));
+  posRows.sort((a,b)=>(a.seg.subcategory||'').localeCompare(b.seg.subcategory||'')||(a.seg.brandGrp||'zz').localeCompare(b.seg.brandGrp||'zz'));
+  const totalMeraRev=posRows.reduce((s,d)=>s+(d.meraRevenue||0),0);
   let html='';
   if(posRows.length){
     html+='<div class="brief-section"><div class="brief-section-head"><span class="brief-section-title">Segment Positioning — '+monthLabel(curMonth)+(cmpMonth?' vs '+monthLabel(cmpMonth):'')+'</span></div>'
-      +'<table class="pos-table"><thead><tr><th>Brand / Subcat</th><th>Segment</th><th class="r">Our Avg</th><th class="r">Mkt Avg</th><th class="r">vs Mkt</th><th class="r">Mkt MoM</th><th class="r">New</th><th class="r">Exited</th><th class="r">Our Rev Share</th></tr></thead><tbody>'
-      +posRows.map(d=>{
+      +'<table class="pos-table"><thead><tr><th>Brand</th><th>Segment</th><th class="r">Our Avg</th><th class="r">Mkt Avg</th><th class="r">vs Mkt</th><th class="r">Mkt MoM</th><th class="r">New</th><th class="r">Exited</th><th class="r">Market Share</th><th class="r">Contribution %</th></tr></thead><tbody>'
+      +(()=>{ let lastGrp=''; return posRows.map(d=>{
         const vsCls=d.meraVsMkt==null?'c-mut':d.meraVsMkt>=omThr?'c-up':d.meraVsMkt<=-omThr?'c-down':'';
         const momCls=d.mktMoM==null?'c-mut':d.mktMoM>0.5?'c-up':d.mktMoM<-0.5?'c-down':'c-mut';
-        return '<tr><td class="grp">'+esc(d.seg.brandGrp||'Portfolio-wide')+(d.seg.subcategory?' · '+esc(titleCase(d.seg.subcategory)):'')+'</td>'
+        const grp=titleCase(d.seg.subcategory||'Other');
+        let head='';
+        if(grp!==lastGrp){ lastGrp=grp; head='<tr class="pos-group-row"><td colspan="10">'+esc(grp)+'</td></tr>'; }
+        return head+'<tr><td class="grp">'+esc(d.seg.brandGrp||'Portfolio-wide')+'</td>'
           +'<td class="name">'+esc(d.seg.name)+'</td>'
-          +'<td class="r">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</td>'
+          +'<td class="r">'+(d.meraAvg!==null?fmt$(d.meraAvg):'—')+'</td>'
           +'<td class="r">'+fmt$(d.mktAvg)+'</td>'
-          +'<td class="r '+vsCls+'">'+(d.meraVsMkt!=null?fmtPct(d.meraVsMkt):'—')+'</td>'
-          +'<td class="r '+momCls+'">'+(d.mktMoM!=null?fmtPct(d.mktMoM):'—')+'</td>'
+          +'<td class="r '+vsCls+'">'+(d.meraVsMkt!==null?fmtPct(d.meraVsMkt):'—')+'</td>'
+          +'<td class="r '+momCls+'">'+(d.mktMoM!==null?fmtPct(d.mktMoM):'—')+'</td>'
           +'<td class="r">'+(d.hasPrev?d.newCount:'—')+'</td>'
           +'<td class="r">'+(d.hasPrev?d.exited.length:'—')+'</td>'
-          +'<td class="r">'+fmtPctPlain(d.meraRevShare*100)+'</td></tr>';
-      }).join('')
+          +'<td class="r">'+fmtPctPlain(d.meraRevShare*100)+'</td>'
+          +'<td class="r">'+(totalMeraRev>0?fmtPctPlain(d.meraRevenue/totalMeraRev*100):'—')+'</td></tr>';
+      }).join(''); })()
       +'</tbody></table></div>';
   }
   const dedup=arr=>[...new Map(arr.map(x=>[(x.brand||'')+'|'+(x.product||'')+'|'+x.segName,x])).values()];
   const mkSection=(title,items,cls,renderer)=>{
     if(!items.length) return '';
-    return '<div class="brief-section"><div class="brief-section-head"><span class="brief-section-title '+cls+'">'+title+'</span><span style="font-size:11px;color:var(--muted)">'+items.length+' alert'+(items.length>1?'s':'')+'</span></div><div class="flag-items">'+items.map(renderer).join('')+'</div></div>';
+    return '<details class="brief-section"><summary class="brief-section-head"><span class="brief-section-title '+cls+'">'+title+'</span><span style="font-size:11px;color:var(--muted)">'+items.length+' alert'+(items.length>1?'s':'')+'</span></summary><div class="flag-items">'+items.map(renderer).join('')+'</div></details>';
   };
   html+=mkSection('⚠ Segments Where We Are Over Market (+'+omThr+'%)',all.overMarket,'danger',f=>
     '<div class="flag-item up"><span class="flag-icon">⚠</span><div class="flag-body"><span class="flag-brand">'+esc(f.segName)+'</span><div class="flag-detail">Our rev-wtd avg '+fmt$(f.meraAvg)+' vs market '+fmt$(f.mktAvg)+'</div></div><div class="flag-delta up">'+fmtPct(f.vsMkt)+'</div></div>');
@@ -2297,9 +2313,34 @@ function trendsKwDebounce(){
   clearTimeout(trendsKwTimer);
   trendsKwTimer=setTimeout(refreshTrendsAll,300);
 }
+const OCS_MARKUPS={'Dried Flower':0.23,'Pre-Rolled':0.29,'Infused Pre-Rolls':0.29,'Vapes':0.25,'Concentrates':0.25};
+const OCS_WHOLESALE_DEFAULT=0.29;
+const OCS_ECOM_MARKUP=0.39;
+function getOcsMarkup(subcat){ return OCS_MARKUPS[subcat]!==undefined?OCS_MARKUPS[subcat]:OCS_WHOLESALE_DEFAULT; }
+function onTrendsLandedCalc(){
+  const landedEl=document.getElementById('tLandedCalc');
+  const box=document.getElementById('tCalcMini');
+  const landed=parseFloat(landedEl.value);
+  if(isNaN(landed)||landed<=0){ box.style.display='none'; return; }
+  const subcat=document.getElementById('tSubcat').value;
+  const wm=getOcsMarkup(subcat);
+  const em=OCS_ECOM_MARKUP;
+  const ws=landed*(1+wm);
+  const ec=ws*(1+em);
+  const ecHst=Math.ceil(ec*1.13*20)/20;
+  box.style.display='block';
+  box.innerHTML='Markup: <b>'+(wm*100).toFixed(0)+'%</b> wholesale'+(subcat?' ('+esc(subcat)+')':' (default rate)')+' \u00b7 <b>'+(em*100).toFixed(0)+'%</b> eComm<br>'
+  +'Wholesale (excl. HST): <b>'+fmt$(ws)+'</b><br>'
+  +'eComm (excl. HST): <b style="color:var(--accent)">'+fmt$(ec)+'</b><br>'
+  +'eComm (incl. HST): <b>'+fmt$(ecHst)+'</b>';
+  document.getElementById('tMyPrice').value=ec.toFixed(2);
+  trendsKwDebounce();
+}
+
 function onTrendsSubcat(){
   fillSelect('tSubsub',subsubOptionsFor(document.getElementById('tSubcat').value),'no values available');
   refreshTrendsAll();
+  onTrendsLandedCalc();
 }
 function readTrendsFilters(){
   trends.subcat=document.getElementById('tSubcat').value;
@@ -2315,8 +2356,16 @@ function trendsMatch(r,avail){
     const hay=(r.product+' '+r.brand+' '+(r.extraction||'')).toLowerCase();
     if(!hay.includes(trends.kw)) return false;
   }
-  if(trends.contents&&(!avail||avail.net)&&!contentsMatch(trends.contents,r.netContents)) return false;
-  if(trends.upp&&(!avail||avail.upp)&&!uppMatch(trends.upp,r.unitsPerPack)) return false;
+  const contentsOk=!trends.contents||(avail&&!avail.net)||contentsMatch(trends.contents,r.netContents);
+  const uppOk=!trends.upp||(avail&&!avail.upp)||uppMatch(trends.upp,r.unitsPerPack);
+  if(!contentsOk||!uppOk){
+    if(trends.contents&&trends.upp){
+      const want=parseFloat(trends.contents)*parseFloat(trends.upp);
+      const got=parseGrams(r.netContents);
+      if(!isNaN(want)&&got&&Math.abs(got.total-want)<0.011) return true;
+    }
+    return false;
+  }
   return true;
 }
 
