@@ -1613,6 +1613,15 @@ function wAvg(list){
   if(t>0) return list.reduce((s,r)=>s+r.price*(r.revenue/t),0);
   return list.length?list.reduce((s,r)=>s+r.price,0)/list.length:0;
 }
+/* Revenue-weighted median: the price at which the 50th cent of revenue trades */
+function wMedian(list){
+  const rows=list.filter(r=>r.revenue>0).sort((a,b)=>a.price-b.price);
+  if(!rows.length) return list.length?list[Math.floor(list.length/2)].price:0;
+  const tot=rows.reduce((s,r)=>s+r.revenue,0);
+  let acc=0;
+  for(const r of rows){ acc+=r.revenue; if(acc>=tot/2) return r.price; }
+  return rows[rows.length-1].price;
+}
 function sAvg(list){ return list.length?list.reduce((s,r)=>s+r.price,0)/list.length:0; }
 
 function segMatchFn(seg,monthKey){
@@ -1662,15 +1671,29 @@ function buildSegmentData(seg,curKey,cmpKey){
   const prevMeraAvg=prevMeraRows.length?wAvg(prevMeraRows):null;
   const meraMoM=(meraAvg!=null&&prevMeraAvg)?((meraAvg-prevMeraAvg)/prevMeraAvg)*100:null;
   const meraVsMkt=(meraAvg!=null&&mktAvg>0)?((meraAvg-mktAvg)/mktAvg)*100:null;
-  let meraPctile=null;
+  /* Percentile weighted by REVENUE, not SKU count: what share of the money
+     in this segment changes hands below our price. A segment can have 30 tail
+     SKUs priced under us that together move almost nothing. */
+  let meraPctile=null, skuPctile=null;
   if(meraAvg!=null&&skus.length>1){
-    const below=skus.filter(s=>s.price<meraAvg).length;
-    meraPctile=Math.round((below/skus.length)*100);
+    skuPctile=Math.round((skus.filter(s=>s.price<meraAvg).length/skus.length)*100);
+    const revBelow=skus.filter(s=>s.price<meraAvg).reduce((a,r)=>a+r.revenue,0);
+    meraPctile=totRev>0?Math.round(revBelow/totRev*100):null;
   }
+  /* Revenue-weighted median price: the price at which the 50th dollar trades. */
+  const mktMedian=wMedian(cur);
+  /* Effective number of competitors (inverse Herfindahl). Forty brands where
+     two hold half the revenue is not a forty-brand market. */
+  const brandRev={};
+  for(const r of cur){ const b=r.brand.toLowerCase(); brandRev[b]=(brandRev[b]||0)+r.revenue; }
+  let hhi=0;
+  if(totRev>0) for(const v of Object.values(brandRev)){ const sh=v/totRev; hhi+=sh*sh; }
+  const effBrands=hhi>0?1/hhi:0;
   const meraRevShare=totRev>0?meraSkus.reduce((s,r)=>s+r.revenue,0)/totRev:0;
   return {
     seg,skus,exited,hasPrev,
-    mktAvg,mktSimple,prevMktAvg,mktMoM,mktAvgExclNew,newImpact,
+    mktAvg,mktSimple,mktMedian,prevMktAvg,mktMoM,mktAvgExclNew,newImpact,
+    effBrands,hhi,skuPctile,
     newCount:newSkus.length,
     meraAvg,prevMeraAvg,meraMoM,meraVsMkt,meraPctile,meraRevShare,
     meraCount:meraSkus.length,totalSkus:skus.length,
@@ -1692,8 +1715,7 @@ function segTimeSeries(seg){
       const list=byBrand[b];
       brands[b]={avg:wAvg(list),rev:list.reduce((s,r)=>s+r.revenue,0),isMera:isMera(b)};
     }
-    const prices=rows.map(r=>r.price).sort((a,b)=>a-b);
-    const median=prices[Math.floor(prices.length/2)];
+    const median=wMedian(rows);
     const meraRows=rows.filter(r=>isMera(r.brand));
     out.push({
       m,brands,median,
@@ -1909,7 +1931,7 @@ function renderSegCard(d,thr,omThr,pendingCharts){
     +'<div class="kpi"><div class="kpi-val">'+fmt$(d.mktAvg)+'</div>'
       +(d.mktMoM!=null?'<div class="kpi-sub">'+momSub(d.mktMoM)+'</div>':'')
       +'<div class="kpi-lbl">Mkt Rev-Wtd</div></div>'
-    +'<div class="kpi"><div class="kpi-val">'+(d.meraPctile!=null?d.meraPctile+'<span style="font-size:9px">th</span>':'—')+'</div><div class="kpi-lbl">Percentile</div></div>'
+    +'<div class="kpi"><div class="kpi-val">'+(d.meraPctile!=null?d.meraPctile+'<span style="font-size:9px">th</span>':'—')+'</div><div class="kpi-lbl">Rev below us</div></div>'
     +'<div class="kpi"><div class="kpi-val">'+fmtPctPlain(d.meraRevShare*100)+'</div><div class="kpi-lbl">Our Rev Shr</div></div>';
 
   let banners='';
@@ -1932,7 +1954,7 @@ function renderSegCard(d,thr,omThr,pendingCharts){
     +'<div class="mini-tab'+(view==='trend'?' active':'')+'" onclick="setSegView('+seg.id+',\'trend\')">Price Trend</div>'
     +'<div class="mini-tab'+(view==='share'?' active':'')+'" onclick="setSegView('+seg.id+',\'share\')">Rev Share</div>'
     +'<div class="mini-tab'+(view==='ladder'?' active':'')+'" onclick="setSegView('+seg.id+',\'ladder\')">Ladder</div>'
-    +'<div class="mini-tab'+(view==='skus'?' active':'')+'" onclick="setSegView('+seg.id+',\'skus\')">SKUs ('+d.totalSkus+')</div>'
+    +'<div class="mini-tab'+(view==='skus'?' active':'')+'" onclick="setSegView('+seg.id+',\'skus\')">SKUs ('+d.meraCount+'/'+d.totalSkus+')</div>'
     +'</div>';
 
   let body='';
@@ -2160,8 +2182,20 @@ function renderBrandLadder(d){
 function renderLadderTable(d){
   const {seg,skus}=d;
   const expanded=expandedSegs.has(seg.id);
-  const shown=expanded?skus:skus.slice(0,LADDER_LIMIT);
-  const rows=shown.map((s,i)=>{
+  /* Never truncate our own SKUs out of view. The list is price-sorted, so in a
+     200-SKU segment ours can sit past the cut and look like they're missing. */
+  const rank=new Map(skus.map((s,i)=>[s,i+1]));
+  let shown, pinned=0;
+  if(expanded){ shown=skus; }
+  else{
+    const head=skus.slice(0,LADDER_LIMIT);
+    const inHead=new Set(head);
+    const ourMissing=skus.filter(s=>s.isMera&&!inHead.has(s));
+    pinned=ourMissing.length;
+    shown=[...head,...ourMissing].sort((a,b)=>a.price-b.price);
+  }
+  const rows=shown.map(s=>{
+    const i=rank.get(s)-1;
     const rowClass=(s.isMera?'mera-row':'')+(s.isNew&&!s.isMera?' new-row':'');
     const vsMkt=d.mktAvg>0?((s.price-d.mktAvg)/d.mktAvg)*100:null;
     const vsCls=vsMkt==null?'c-mut':vsMkt>1?'c-up':vsMkt<-1?'c-down':'c-mut';
@@ -2177,7 +2211,12 @@ function renderLadderTable(d){
       +'<td class="rev-cell">'+fmtRev(s.revenue)+'</td>'
       +'</tr>';
   }).join('');
-  return '<table class="ladder-table"><thead><tr><th>#</th><th>SKU</th><th class="r">Price</th><th class="r">vs Mkt</th><th class="r">MoM</th><th class="r">Rev</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  const note=expanded
+    ? '<div class="seg-note">All '+skus.length+' SKUs · price-sorted</div>'
+    : '<div class="seg-note">Showing '+Math.min(LADDER_LIMIT,skus.length)+' of '+skus.length+' SKUs by price'
+      +(pinned?' · '+pinned+' of ours pinned in from further up the ladder':'')
+      +(d.meraCount?' · # = true rank in segment':'')+'</div>';
+  return '<table class="ladder-table"><thead><tr><th>#</th><th>SKU</th><th class="r">Price</th><th class="r">vs Mkt</th><th class="r">MoM</th><th class="r">Rev</th></tr></thead><tbody>'+rows+'</tbody></table>'+note;
 }
 function toggleExpand(id){ expandedSegs.has(id)?expandedSegs.delete(id):expandedSegs.add(id); renderLadder(); }
 function toggleExited(id){ exitedOpen.has(id)?exitedOpen.delete(id):exitedOpen.add(id); renderLadder(); }
@@ -2752,7 +2791,12 @@ function analyzeSegment(seg){
   const slope=slopeOf(known.slice(-3).map(h=>h.share));
   const proj=(cur&&slope!=null)?Math.max(0,cur.share+slope):null;
 
-  const fair=d.totalBrands>0?100/d.totalBrands:0;
+  /* Fair share is benchmarked against EFFECTIVE competitors (inverse
+     Herfindahl), not the raw brand count. In a segment where two brands hold
+     half the revenue, 1/N flatters us badly. */
+  const effBrands=d.effBrands||d.totalBrands||1;
+  const fair=effBrands>0?100/effBrands:0;
+  const fairNaive=d.totalBrands>0?100/d.totalBrands:0;
   const shareIdx=(fair>0&&cur)?cur.share/fair:0;
   const vp=volumePrice(d);
   const priceGap=(d.meraAvg!=null&&vp)?((d.meraAvg-vp)/vp)*100:null;
@@ -2760,11 +2804,17 @@ function analyzeSegment(seg){
   let sc=0;
   sc+=40*Math.min(shareIdx/2,1);
   if(shareMoM==null) sc+=15; else sc+=30*Math.max(0,Math.min(1,(shareMoM+2)/4));
-  const off=d.meraVsMkt==null?0:Math.abs(d.meraVsMkt);
+  /* Price is scored against the VOLUME price (where revenue actually trades)
+     rather than the flat market average. */
+  const off=priceGap!=null?Math.abs(priceGap):(d.meraVsMkt==null?0:Math.abs(d.meraVsMkt));
   sc+=20*Math.max(0,Math.min(1,(15-Math.max(0,off-5))/15));
-  const medSkus=(()=>{const c={};d.skus.forEach(r=>{if(!r.isMera)c[r.brand]=(c[r.brand]||0)+1;});
-    const v=Object.values(c).sort((a,b)=>a-b);return v.length?v[Math.floor(v.length/2)]:1;})();
-  sc+=10*Math.min(1,d.meraCount/Math.max(1,medSkus));
+  /* Breadth measured in revenue per competitor, not SKU count. */
+  const compRev={};
+  d.skus.forEach(r=>{ if(!r.isMera) compRev[r.brand]=(compRev[r.brand]||0)+r.revenue; });
+  const compVals=Object.values(compRev).sort((a,b)=>a-b);
+  const medCompRev=compVals.length?compVals[Math.floor(compVals.length/2)]:0;
+  const ourRev=d.skus.filter(r=>r.isMera).reduce((s,r)=>s+r.revenue,0);
+  sc+=10*Math.min(1,medCompRev>0?ourRev/medCompRev:(d.meraCount?1:0));
   const health=Math.round(Math.max(0,Math.min(100,sc)));
 
   const movers=[];
@@ -2781,11 +2831,12 @@ function analyzeSegment(seg){
     }
   }
   const newProducts=d.skus.filter(r=>r.isNew).sort((a,b)=>b.revenue-a.revenue);
-  return {seg,d,ts,hist,cur,shareMoM,slope,proj,fair,shareIdx,vp,priceGap,health,movers,newProducts,medSkus};
+  return {seg,d,ts,hist,cur,shareMoM,slope,proj,fair,fairNaive,effBrands,shareIdx,vp,priceGap,health,movers,newProducts,medCompRev,ourRev};
 }
 
 function evalText(a){
   const {d,cur,shareMoM,proj,fair,shareIdx,vp}=a;
+  void 0;
   const out=[];
   if(!d.meraCount){
     out.push('We do not compete here yet. The segment turns over '+fmtRev(d.skus.reduce((s,r)=>s+r.revenue,0))
@@ -2795,8 +2846,16 @@ function evalText(a){
   }
   const sharePct=cur?cur.share:0;
   const idxWord=shareIdx>=1.5?'well above':shareIdx>=1?'above':shareIdx>=0.5?'below':'far below';
+  const eff=a.effBrands||d.totalBrands;
   out.push('We hold '+sharePct.toFixed(1)+'% of segment revenue across '+d.meraCount+' SKU'+(d.meraCount>1?'s':'')
-    +' — '+idxWord+' the '+fair.toFixed(1)+'% an average brand would hold among '+d.totalBrands+' competitors.');
+    +' — '+idxWord+' the '+fair.toFixed(1)+'% a meaningful player would hold. '
+    +d.totalBrands+' brands list here, but revenue concentrates into roughly '+eff.toFixed(1)+' real competitors.');
+  if(d.meraPctile!=null){
+    out.push(d.meraPctile+'% of segment revenue trades below our price'
+      +(d.skuPctile!=null&&Math.abs(d.skuPctile-d.meraPctile)>=12
+        ? ' — though '+d.skuPctile+'% of listed SKUs sit below us, so the cheap end is thinner than the shelf suggests.'
+        : '.'));
+  }
   if(shareMoM!=null){
     const dir=shareMoM>0.3?'gained':shareMoM<-0.3?'lost':'held';
     out.push(dir==='held'
