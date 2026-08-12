@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tenor+Sans&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════
@@ -647,6 +648,7 @@ textarea:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--acce
         <option value="move">Sort: biggest share move</option>
       </select>
       <button class="btn btn-ghost btn-sm" onclick="expandAllOv(ovOpen.size===0)">Expand all</button>
+      <button class="btn btn-accent btn-sm" onclick="exportExecPptx()">Executive Deck</button>
       <button class="btn btn-ghost btn-sm" onclick="exportOverviewPdf()">Export PDF</button>
     </div>
   </div>
@@ -3779,6 +3781,337 @@ function brandRecognitionWarning(){
   el.innerHTML='<div class="fd-warn"><b>'+bad.size+' of your catalogue brand'+(bad.size>1?'s are':' is')
     +' not recognised as ours:</b> '+[...bad].map(b=>esc(b)).join(', ')
     +'. Their SKUs are being counted as competitors. Add them to Our Brands below.</div>';
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   EXECUTIVE DECK — one-button PowerPoint export
+   Current month vs prior: scorecard, wins, flags, full table.
+   ═══════════════════════════════════════════════════════════ */
+const DK={ bg:'1B1B1E', surf:'26262B', surf2:'2F2F36', line:'373F51',
+           fg:'F6F5FC', fg2:'C9C9D2', mut:'A9A9A9',
+           gold:'E2BE66', good:'3DDC8A', bad:'FF6B5C', blue:'5B9BF0' };
+/* Change this one line if the brand font isn't installed on the viewing machine */
+const DK_FONT='Plus Jakarta Sans';
+
+function pxTrunc(t,n){ t=String(t==null?'':t); return t.length>n?t.slice(0,n-1)+'\u2026':t; }
+
+/* Gather everything the deck needs, current vs comparison month */
+function execSummary(){
+  const list=segments.map(sg=>{ try{ return analyzeSegment(sg); }catch(e){ return null; } }).filter(a=>a);
+  if(!list.length) return null;
+
+  const segRevOf=a=>a.d.skus.reduce((s,r)=>s+r.revenue,0);
+  const totRev=list.reduce((s,a)=>s+segRevOf(a),0);
+  const ourRev=list.reduce((s,a)=>s+a.d.skus.filter(r=>r.isMera).reduce((x,r)=>x+r.revenue,0),0);
+  const prevOur=list.reduce((s,a)=>{
+    const ts=a.ts; if(ts.length<2) return s;
+    const p=ts[ts.length-2]; if(p.empty) return s;
+    let o=0; for(const [b,v] of Object.entries(p.brands)) if(v.isMera) o+=v.rev;
+    return s+o;
+  },0);
+  const prevTot=list.reduce((s,a)=>{
+    const ts=a.ts; if(ts.length<2) return s;
+    const p=ts[ts.length-2]; return p.empty?s:s+p.totRev;
+  },0);
+
+  const wins=[],flags=[];
+  for(const a of list){
+    const nm=a.seg.name;
+    for(const o of (a.opps||[])){
+      if(o.kind==='launch-good') wins.push({seg:nm,title:o.title,text:o.text});
+      else if(o.kind==='gap') wins.push({seg:nm,title:o.title,text:o.text});
+    }
+    if(a.shareMoM!=null&&a.shareMoM>=0.5)
+      wins.push({seg:nm,title:'Share gained',
+        text:'Up '+a.shareMoM.toFixed(1)+'pp month over month to '+(a.cur?a.cur.share.toFixed(1):'?')+'% of segment revenue.'});
+    for(const r of (a.risks||[])) if(r.sev==='high') flags.push({seg:nm,title:r.title,text:r.text});
+    if(a.shareMoM!=null&&a.shareMoM<=-0.5&&!(a.risks||[]).some(r=>r.sev==='high'))
+      flags.push({seg:nm,title:'Share lost',
+        text:'Down '+Math.abs(a.shareMoM).toFixed(1)+'pp month over month to '+(a.cur?a.cur.share.toFixed(1):'?')+'%.'});
+    for(const o of (a.opps||[])) if(o.kind==='launch-risk') flags.push({seg:nm,title:o.title,text:o.text});
+  }
+  const newProds=[];
+  for(const a of list) for(const p of a.newProducts.filter(x=>x.isMera))
+    newProds.push({seg:a.seg.name,p,mkt:a.d.mktAvg,vp:a.vp});
+
+  list.sort((a,b)=>a.health-b.health);
+  return {
+    list,totRev,ourRev,prevOur,prevTot,
+    shareNow:totRev>0?ourRev/totRev*100:0,
+    sharePrev:prevTot>0?prevOur/prevTot*100:null,
+    revMoM:prevOur>0?((ourRev-prevOur)/prevOur)*100:null,
+    mktMoM:prevTot>0?((totRev-prevTot)/prevTot)*100:null,
+    avgHealth:Math.round(list.reduce((s,a)=>s+a.health,0)/list.length),
+    wins,flags,newProds,
+  };
+}
+
+/* Six-month share story in one or two sentences */
+function trendNarrative(a){
+  const pts=a.hist.filter(h=>h);
+  if(pts.length<2) return 'Only one month of data loaded — no trend to read yet.';
+  const use=pts.slice(-6);
+  const first=use[0], last=use[use.length-1];
+  const dpp=last.share-first.share;
+  const dir=dpp>0.3?'gained':dpp<-0.3?'lost':'held flat at';
+  const span=use.length;
+  let t='Over '+span+' month'+(span>1?'s':'')+' our share went '+first.share.toFixed(1)+'% ('+monthLabel(first.m)
+    +') to '+last.share.toFixed(1)+'% ('+monthLabel(last.m)+') — '
+    +(dir==='held flat at'?'held flat.':dir+' '+Math.abs(dpp).toFixed(1)+'pp.');
+  const peak=use.reduce((p,c)=>c.share>p.share?c:p,use[0]);
+  if(peak!==last&&peak.share-last.share>0.5)
+    t+=' Peak was '+peak.share.toFixed(1)+'% in '+monthLabel(peak.m)+'.';
+  const sl=slopeOf(use.slice(-3).map(h=>h.share));
+  if(sl!=null&&Math.abs(sl)>=0.1)
+    t+=' Last three months trend '+(sl>0?'+':'')+sl.toFixed(1)+'pp per month'
+      +(a.proj!=null?', putting next month near '+a.proj.toFixed(1)+'%.':'.');
+  return t;
+}
+
+function exportExecPptx(){
+  if(typeof PptxGenJS==='undefined'){ toast('PowerPoint library did not load — check your connection','error'); return; }
+  const S=execSummary();
+  if(!S){ toast('No segments with data to summarise','error'); return; }
+  try{
+    const pptx=new PptxGenJS();
+    pptx.layout='LAYOUT_16x9';                 // 10 x 5.625in — set before adding slides
+    pptx.author='Countryside Cannabis Corp.';
+    pptx.title='Executive Summary '+(curMonth?monthLabel(curMonth):'');
+
+    const period=(curMonth?monthLabel(curMonth):'')+(cmpMonth?'  vs  '+monthLabel(cmpMonth):'');
+    const card=(sl,x,y,w,h,fill)=>sl.addShape(pptx.ShapeType.roundRect,
+      {x,y,w,h,fill:{color:fill||DK.surf},line:{color:DK.line,width:0.5},rectRadius:0.06});
+
+    /* ── 1. Title ── */
+    let sl=pptx.addSlide(); sl.background={color:DK.bg};
+    sl.addText('Executive Summary',{x:0.6,y:1.5,w:8.8,h:0.9,fontFace:DK_FONT,fontSize:40,bold:true,color:DK.fg});
+    sl.addText(period,{x:0.6,y:2.42,w:8.8,h:0.4,fontFace:DK_FONT,fontSize:16,color:DK.gold});
+    sl.addText('OCS market performance across '+S.list.length+' tracked segments',
+      {x:0.6,y:2.95,w:8.8,h:0.4,fontFace:DK_FONT,fontSize:12,color:DK.mut});
+    sl.addText([
+      {text:S.wins.length+' wins',options:{color:DK.good,bold:true}},
+      {text:'   ·   ',options:{color:DK.mut}},
+      {text:S.flags.length+' flags',options:{color:DK.bad,bold:true}},
+    ],{x:0.6,y:3.5,w:8.8,h:0.4,fontFace:DK_FONT,fontSize:14});
+    sl.addText('Countryside Cannabis Corp.  ·  Price Intelligence',
+      {x:0.6,y:4.85,w:8.8,h:0.3,fontFace:DK_FONT,fontSize:9,color:DK.mut});
+    sl.addNotes('Auto-generated from the Price Intelligence tool. Figures are OCS sales dollars, price excluding HST.');
+
+    /* ── 2. Scorecard ── */
+    sl=pptx.addSlide(); sl.background={color:DK.bg};
+    sl.addText('Portfolio scorecard',{x:0.5,y:0.35,w:9,h:0.5,fontFace:DK_FONT,fontSize:26,bold:true,color:DK.fg});
+    const kpis=[
+      {l:'Our revenue',v:fmtRev(S.ourRev),
+       s:S.revMoM==null?'no prior month':(S.revMoM>=0?'+':'')+S.revMoM.toFixed(1)+'% MoM',
+       c:S.revMoM==null?DK.mut:S.revMoM>=0?DK.good:DK.bad},
+      {l:'Share of tracked segments',v:S.shareNow.toFixed(1)+'%',
+       s:S.sharePrev==null?'no prior month':(S.shareNow-S.sharePrev>=0?'+':'')+(S.shareNow-S.sharePrev).toFixed(1)+'pp MoM',
+       c:S.sharePrev==null?DK.mut:S.shareNow>=S.sharePrev?DK.good:DK.bad},
+      {l:'Segments tracked',v:String(S.list.length),s:fmtRev(S.totRev)+' addressable',c:DK.mut},
+      {l:'Average health',v:S.avgHealth+'/100',s:healthBand(S.avgHealth).word,
+       c:S.avgHealth>=70?DK.good:S.avgHealth>=45?DK.gold:DK.bad},
+    ];
+    kpis.forEach((k,i)=>{
+      const x=0.5+i*2.28;
+      card(sl,x,1.0,2.08,1.28);
+      sl.addText(k.l,{x:x+0.15,y:1.12,w:1.8,h:0.28,fontFace:DK_FONT,fontSize:9,color:DK.mut,margin:0});
+      sl.addText(k.v,{x:x+0.15,y:1.42,w:1.8,h:0.45,fontFace:DK_FONT,fontSize:22,bold:true,color:DK.fg,margin:0});
+      sl.addText(k.s,{x:x+0.15,y:1.9,w:1.8,h:0.28,fontFace:DK_FONT,fontSize:9,color:k.c,margin:0});
+    });
+
+    // Native chart: our share vs the share a meaningful player would hold
+    const top=S.list.slice().sort((a,b)=>
+      (b.d.skus.reduce((s,r)=>s+r.revenue,0))-(a.d.skus.reduce((s,r)=>s+r.revenue,0))).slice(0,6).reverse();
+    if(top.length){
+      sl.addText('Our share vs a meaningful player\u2019s share, by segment',
+        {x:0.5,y:2.45,w:9,h:0.3,fontFace:DK_FONT,fontSize:11,color:DK.fg2});
+      sl.addChart(pptx.ChartType.bar,[
+        {name:'Our share %',labels:top.map(a=>pxTrunc(a.seg.name,26)),values:top.map(a=>+(a.cur?a.cur.share:0).toFixed(1))},
+        {name:'Meaningful-player share %',labels:top.map(a=>pxTrunc(a.seg.name,26)),values:top.map(a=>+a.fair.toFixed(1))},
+      ],{x:0.5,y:2.75,w:9,h:2.5,barDir:'bar',chartColors:[DK.gold,DK.line],
+         showValue:true,dataLabelPosition:'outEnd',dataLabelColor:DK.fg2,dataLabelFontSize:8,dataLabelFontFace:DK_FONT,
+         dataLabelFormatCode:'0.0"%"',valAxisLabelFormatCode:'0"%"',
+         catAxisLabelColor:DK.fg2,catAxisLabelFontSize:9,catAxisLabelFontFace:DK_FONT,
+         valAxisLabelColor:DK.mut,valAxisLabelFontSize:8,valGridLine:{color:DK.line,size:0.5},
+         catGridLine:{style:'none'},showLegend:true,legendPos:'t',legendColor:DK.fg2,legendFontSize:9});
+    }
+    sl.addNotes('Fair share is based on effective competitors (inverse Herfindahl), not the raw brand count.');
+
+    /* ── 3. Wins ── */
+    sl=pptx.addSlide(); sl.background={color:DK.bg};
+    sl.addText('Major wins',{x:0.5,y:0.35,w:9,h:0.5,fontFace:DK_FONT,fontSize:26,bold:true,color:DK.fg});
+    if(!S.wins.length){
+      sl.addText('No material wins flagged this month.',{x:0.5,y:1.1,w:9,h:0.4,fontFace:DK_FONT,fontSize:13,color:DK.mut});
+    }else{
+      S.wins.slice(0,5).forEach((w,i)=>{
+        const y=1.0+i*0.85;
+        card(sl,0.5,y,9,0.75);
+        sl.addShape(pptx.ShapeType.ellipse,{x:0.72,y:y+0.28,w:0.14,h:0.14,fill:{color:DK.good},line:{color:DK.good,width:0}});
+        sl.addText(pxTrunc(w.seg,40),{x:1.0,y:y+0.08,w:3.0,h:0.26,fontFace:DK_FONT,fontSize:9,color:DK.gold,bold:true,margin:0});
+        sl.addText(pxTrunc(w.title,60),{x:1.0,y:y+0.28,w:8.2,h:0.24,fontFace:DK_FONT,fontSize:12,bold:true,color:DK.fg,margin:0});
+        sl.addText(pxTrunc(w.text,116),{x:1.0,y:y+0.5,w:8.2,h:0.22,fontFace:DK_FONT,fontSize:9,color:DK.fg2,margin:0,valign:'top'});
+      });
+      if(S.wins.length>5) sl.addText('+'+(S.wins.length-5)+' more',{x:0.5,y:5.25,w:9,h:0.25,fontFace:DK_FONT,fontSize:9,color:DK.mut});
+    }
+
+    /* ── 4. Flags ── */
+    sl=pptx.addSlide(); sl.background={color:DK.bg};
+    sl.addText('Major flags',{x:0.5,y:0.35,w:9,h:0.5,fontFace:DK_FONT,fontSize:26,bold:true,color:DK.fg});
+    if(!S.flags.length){
+      sl.addText('No high-severity risks flagged this month.',{x:0.5,y:1.1,w:9,h:0.4,fontFace:DK_FONT,fontSize:13,color:DK.mut});
+    }else{
+      S.flags.slice(0,5).forEach((f,i)=>{
+        const y=1.0+i*0.85;
+        card(sl,0.5,y,9,0.75);
+        sl.addShape(pptx.ShapeType.ellipse,{x:0.72,y:y+0.28,w:0.14,h:0.14,fill:{color:DK.bad},line:{color:DK.bad,width:0}});
+        sl.addText(pxTrunc(f.seg,40),{x:1.0,y:y+0.08,w:3.0,h:0.26,fontFace:DK_FONT,fontSize:9,color:DK.gold,bold:true,margin:0});
+        sl.addText(pxTrunc(f.title,60),{x:1.0,y:y+0.28,w:8.2,h:0.24,fontFace:DK_FONT,fontSize:12,bold:true,color:DK.fg,margin:0});
+        sl.addText(pxTrunc(f.text,116),{x:1.0,y:y+0.5,w:8.2,h:0.22,fontFace:DK_FONT,fontSize:9,color:DK.fg2,margin:0,valign:'top'});
+      });
+      if(S.flags.length>5) sl.addText('+'+(S.flags.length-5)+' more',{x:0.5,y:5.25,w:9,h:0.25,fontFace:DK_FONT,fontSize:9,color:DK.mut});
+    }
+
+    /* ── 5. One slide per segment, biggest opportunity first ── */
+    const bySize=S.list.slice().sort((a,b)=>b.sizing.segRev-a.sizing.segRev);
+    for(const a of bySize){
+      const d=a.d, sg=a.seg;
+      const ourSegRev=d.skus.filter(r=>r.isMera).reduce((x,r)=>x+r.revenue,0);
+      const band=healthBand(a.health);
+      const bandCol=a.health>=70?DK.good:a.health>=45?DK.gold:DK.bad;
+      sl=pptx.addSlide(); sl.background={color:DK.bg};
+
+      // 1 — which segment
+      sl.addText(pxTrunc(titleCase(sg.subcategory)||'Segment',48).toUpperCase(),
+        {x:0.5,y:0.28,w:9,h:0.25,fontFace:DK_FONT,fontSize:9,bold:true,color:DK.gold,charSpacing:2,margin:0});
+      sl.addText(pxTrunc(sg.name,46),
+        {x:0.5,y:0.52,w:9,h:0.55,fontFace:DK_FONT,fontSize:28,bold:true,color:DK.fg,margin:0});
+
+      // 2 — how big the opportunity is
+      card(sl,0.5,1.22,4.3,1.0);
+      sl.addText('SEGMENT OPPORTUNITY',{x:0.68,y:1.32,w:4,h:0.22,fontFace:DK_FONT,fontSize:8,bold:true,color:DK.mut,charSpacing:1,margin:0});
+      sl.addText(fmtRev(a.sizing.segRev),{x:0.68,y:1.52,w:2.2,h:0.42,fontFace:DK_FONT,fontSize:26,bold:true,color:DK.fg,margin:0});
+      sl.addText((a.sizing.ofSubcat!=null?a.sizing.ofSubcat.toFixed(1)+'% of '+pxTrunc(titleCase(sg.subcategory),18):'')
+        +'  ·  '+d.totalBrands+' brands',
+        {x:0.68,y:1.95,w:4,h:0.22,fontFace:DK_FONT,fontSize:9,color:DK.fg2,margin:0});
+
+      // 3 — how much of it we hold
+      card(sl,0.5,2.32,4.3,1.0);
+      sl.addText('WE CAPTURE',{x:0.68,y:2.42,w:4,h:0.22,fontFace:DK_FONT,fontSize:8,bold:true,color:DK.mut,charSpacing:1,margin:0});
+      sl.addText(fmtRev(ourSegRev),{x:0.68,y:2.62,w:2.2,h:0.42,fontFace:DK_FONT,fontSize:26,bold:true,color:DK.gold,margin:0});
+      sl.addText((a.cur?a.cur.share.toFixed(1):'0.0')+'% of segment  ·  '+d.meraCount+' SKU'+(d.meraCount===1?'':'s')
+        +'  ·  a meaningful player holds '+a.fair.toFixed(1)+'%',
+        {x:0.68,y:3.05,w:4,h:0.22,fontFace:DK_FONT,fontSize:9,color:DK.fg2,margin:0});
+
+      // 4 — our price
+      card(sl,0.5,3.42,4.3,0.95);
+      sl.addText('OUR PRICE',{x:0.68,y:3.52,w:4,h:0.22,fontFace:DK_FONT,fontSize:8,bold:true,color:DK.mut,charSpacing:1,margin:0});
+      sl.addText(d.meraAvg!=null?fmt$(d.meraAvg):'—',
+        {x:0.68,y:3.72,w:2.2,h:0.38,fontFace:DK_FONT,fontSize:22,bold:true,color:DK.fg,margin:0});
+      sl.addText((d.meraVsMkt!=null?fmtPct(d.meraVsMkt)+' vs market '+fmt$(d.mktAvg):'market '+fmt$(d.mktAvg))
+        +(a.vp?'  ·  volume price '+fmt$(a.vp):''),
+        {x:0.68,y:4.1,w:4,h:0.22,fontFace:DK_FONT,fontSize:9,
+         color:d.meraVsMkt==null?DK.fg2:d.meraVsMkt>8?DK.bad:d.meraVsMkt<-8?DK.blue:DK.fg2,margin:0});
+
+      // 5 — current status
+      sl.addText('STATUS',{x:5.1,y:1.32,w:2,h:0.22,fontFace:DK_FONT,fontSize:8,bold:true,color:DK.mut,charSpacing:1,margin:0});
+      sl.addText(band.word,{x:5.1,y:1.5,w:2.6,h:0.32,fontFace:DK_FONT,fontSize:17,bold:true,color:bandCol,margin:0});
+      sl.addText(a.health+'/100',{x:7.6,y:1.54,w:1.9,h:0.28,fontFace:DK_FONT,fontSize:12,color:DK.fg2,align:'right',margin:0});
+      sl.addShape(pptx.ShapeType.rect,{x:5.1,y:1.9,w:4.4,h:0.07,fill:{color:DK.surf2},line:{color:DK.surf2,width:0}});
+      sl.addShape(pptx.ShapeType.rect,{x:5.1,y:1.9,w:Math.max(0.05,4.4*a.health/100),h:0.07,fill:{color:bandCol},line:{color:bandCol,width:0}});
+
+      // 6 — six-month share trend
+      const pts=a.hist.filter(h=>h).slice(-6);
+      if(pts.length>1){
+        sl.addChart(pptx.ChartType.line,[{
+          name:'Our share %',labels:pts.map(p=>monthLabel(p.m)),values:pts.map(p=>+p.share.toFixed(2)),
+        }],{x:5.0,y:2.12,w:4.6,h:1.65,chartColors:[DK.gold],lineDataSymbol:'circle',lineDataSymbolSize:5,
+            lineSize:2.5,showLegend:false,showTitle:false,
+            catAxisLabelColor:DK.mut,catAxisLabelFontSize:8,catAxisLabelFontFace:DK_FONT,
+            valAxisLabelColor:DK.mut,valAxisLabelFontSize:8,valAxisLabelFormatCode:'0.0"%"',
+            valGridLine:{color:DK.line,size:0.5},catGridLine:{style:'none'}});
+      }else{
+        sl.addText('Upload more months to see the share trend.',
+          {x:5.1,y:2.6,w:4.4,h:0.3,fontFace:DK_FONT,fontSize:10,color:DK.mut,margin:0});
+      }
+      sl.addText(pxTrunc(trendNarrative(a),210),
+        {x:5.1,y:3.85,w:4.4,h:0.62,fontFace:DK_FONT,fontSize:9,color:DK.fg2,margin:0,valign:'top'});
+
+      // 7 — the small print, for anyone who wants to read on
+      const det=[];
+      const r0=(a.risks||[])[0], o0=(a.opps||[])[0];
+      if(r0) det.push({t:'Risk · '+r0.title+' — '+r0.text,c:DK.bad});
+      if(o0) det.push({t:'Opportunity · '+o0.title+' — '+o0.text,c:DK.good});
+      const adv=priceAdvice(a);
+      if(adv&&det.length<3) det.push({t:'Price · '+adv.text,c:DK.fg2});
+      if((sg.notes||'').trim()&&det.length<3) det.push({t:'Note · '+sg.notes.trim(),c:DK.gold});
+      if(det.length){
+        card(sl,0.5,4.55,9,0.78,DK.surf);
+        det.slice(0,3).forEach((x,i)=>{
+          sl.addText(pxTrunc(x.t,150),{x:0.68,y:4.63+i*0.23,w:8.7,h:0.21,fontFace:DK_FONT,fontSize:8,color:x.c,margin:0,valign:'top'});
+        });
+      }
+      sl.addNotes(trendNarrative(a)+(adv?'  Price: '+adv.text:''));
+    }
+
+    /* ── 6. Segment table (paginated) ── */
+    const head=['Segment','Category','Size','% of cat.','Our share','MoM','Our price','vs Mkt','Health'];
+    const perPage=11;
+    for(let pg=0;pg*perPage<S.list.length;pg++){
+      sl=pptx.addSlide(); sl.background={color:DK.bg};
+      sl.addText('Segment detail'+(S.list.length>perPage?'  ('+(pg+1)+'/'+Math.ceil(S.list.length/perPage)+')':''),
+        {x:0.5,y:0.35,w:9,h:0.5,fontFace:DK_FONT,fontSize:26,bold:true,color:DK.fg});
+      const rows=[head.map(h=>({text:h,options:{bold:true,color:DK.mut,fontSize:9,fill:{color:DK.surf}}}))];
+      for(const a of S.list.slice(pg*perPage,(pg+1)*perPage)){
+        const d=a.d, mm=a.shareDeltas.m1;
+        const mmTxt=mm==null?'\u2014':(mm.pp>0?'+':'')+mm.pp.toFixed(1)+'pp';
+        const mmCol=mm==null?DK.mut:mm.pp>0.3?DK.good:mm.pp<-0.3?DK.bad:DK.mut;
+        const vs=d.meraVsMkt;
+        rows.push([
+          {text:pxTrunc(a.seg.name,30),options:{color:DK.fg,fontSize:9,bold:true}},
+          {text:pxTrunc(titleCase(a.seg.subcategory)||'\u2014',16),options:{color:DK.mut,fontSize:9}},
+          {text:fmtRev(a.sizing.segRev),options:{color:DK.fg2,fontSize:9,align:'right'}},
+          {text:a.sizing.ofSubcat!=null?a.sizing.ofSubcat.toFixed(1)+'%':'\u2014',options:{color:DK.gold,fontSize:9,align:'right',bold:true}},
+          {text:(a.cur?a.cur.share.toFixed(1):'0.0')+'%',options:{color:DK.fg2,fontSize:9,align:'right'}},
+          {text:mmTxt,options:{color:mmCol,fontSize:9,align:'right'}},
+          {text:d.meraAvg!=null?fmt$(d.meraAvg):'\u2014',options:{color:DK.fg2,fontSize:9,align:'right'}},
+          {text:vs!=null?fmtPct(vs):'\u2014',options:{color:vs==null?DK.mut:vs>1?DK.good:vs<-1?DK.bad:DK.mut,fontSize:9,align:'right'}},
+          {text:String(a.health),options:{color:a.health>=70?DK.good:a.health>=45?DK.gold:DK.bad,fontSize:9,align:'right',bold:true}},
+        ]);
+      }
+      sl.addTable(rows,{x:0.5,y:1.0,w:9,colW:[1.95,1.45,0.85,0.8,0.85,0.8,0.85,0.75,0.7],
+        border:{type:'solid',color:DK.line,pt:0.5},fill:{color:DK.bg},fontFace:DK_FONT,rowH:0.3,valign:'middle'});
+      sl.addText('Sorted by health, weakest first. % of cat. = segment size within its own product category.',
+        {x:0.5,y:5.15,w:9,h:0.3,fontFace:DK_FONT,fontSize:8,color:DK.mut});
+    }
+
+    /* ── 7. New products ── */
+    if(S.newProds.length){
+      sl=pptx.addSlide(); sl.background={color:DK.bg};
+      sl.addText('New products this month',{x:0.5,y:0.35,w:9,h:0.5,fontFace:DK_FONT,fontSize:26,bold:true,color:DK.fg});
+      S.newProds.slice(0,5).forEach((n,i)=>{
+        const y=1.0+i*0.85;
+        const gap=n.vp?((n.p.price-n.vp)/n.vp)*100:null;
+        const ok=gap!=null&&gap<=2;
+        card(sl,0.5,y,9,0.75);
+        sl.addShape(pptx.ShapeType.ellipse,{x:0.72,y:y+0.28,w:0.14,h:0.14,
+          fill:{color:ok?DK.good:DK.gold},line:{color:ok?DK.good:DK.gold,width:0}});
+        sl.addText(pxTrunc(n.seg,40),{x:1.0,y:y+0.08,w:3.0,h:0.26,fontFace:DK_FONT,fontSize:9,color:DK.gold,bold:true,margin:0});
+        sl.addText(pxTrunc(n.p.brand+' \u00b7 '+n.p.product,64),{x:1.0,y:y+0.28,w:8.2,h:0.24,fontFace:DK_FONT,fontSize:12,bold:true,color:DK.fg,margin:0});
+        sl.addText(fmt$(n.p.price)+(gap!=null?'  ('+fmtPct(gap)+' vs volume price)':'')
+          +'  \u00b7  '+fmtRev(n.p.revenue)+' in month one  \u00b7  '+(n.p.revShare*100).toFixed(1)+'% share'
+          +(ok?'  \u00b7  priced where the volume trades':''),
+          {x:1.0,y:y+0.5,w:8.2,h:0.22,fontFace:DK_FONT,fontSize:9,color:DK.fg2,margin:0,valign:'top'});
+      });
+    }
+
+    pptx.writeFile({fileName:'Executive-Summary-'+(curMonth||'')+'.pptx'});
+    toast('Executive deck exported','success');
+  }catch(e){
+    console.error('pptx',e);
+    toast('Deck export failed: '+(e.message||e),'error');
+  }
 }
 </script>
 
