@@ -253,6 +253,48 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .exited-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
 .exited-list{font-size:10px;color:var(--fg2);font-family:var(--mono);line-height:1.9;margin-top:6px}
 
+/* ── SKU audit + missing-SKU callouts ── */
+.audit-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.audit-big{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--fg)}
+.audit-pct{font-family:var(--mono);font-size:11px;color:var(--accent);background:var(--asoft);border-radius:var(--pill);padding:2px 8px;margin-left:6px}
+.audit-note{font-size:11.5px;color:var(--fg2);line-height:1.55;margin-bottom:8px}
+.audit-ok{font-size:12px;color:var(--success)}
+.audit-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+.audit-list li{font-size:12px;color:var(--fg);padding:7px 10px;background:var(--wbg);border:1px solid rgba(226,190,102,.2);border-radius:var(--r)}
+.audit-meta{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}
+.miss-box{margin:10px 12px 12px;padding:10px 12px;background:var(--wbg);border:1px solid rgba(226,190,102,.25);border-radius:var(--r)}
+.miss-t{font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--warn);margin-bottom:6px}
+.miss-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+.miss-list li{font-size:11.5px;color:var(--fg2);line-height:1.45}
+.miss-list b{color:var(--fg);font-weight:600}
+.miss-size{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.miss-why{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+.miss-more{font-size:10.5px;color:var(--muted);margin-top:5px}
+
+/* ── Sizing strip, share deltas, risk + opportunity ── */
+.ov-sizing{display:flex;flex-wrap:wrap;gap:4px 14px;padding:9px 0 2px;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.ov-sizing b{color:var(--fg2);font-weight:500}
+.dstrip{display:flex;gap:6px;flex-wrap:wrap}
+.dchip{display:flex;align-items:center;gap:6px;padding:4px 9px;border-radius:var(--pill);border:1px solid var(--border);background:var(--surface)}
+.dchip-l{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.dchip-v{font-family:var(--mono);font-size:11px;font-weight:500}
+.dchip-up .dchip-v{color:var(--success)}
+.dchip-down .dchip-v{color:var(--danger)}
+.dchip-flat .dchip-v,.dchip-na .dchip-v{color:var(--muted)}
+.dchip-up{border-color:rgba(61,220,138,.28)}
+.dchip-down{border-color:rgba(255,107,92,.28)}
+.ov-risk,.ov-opp{margin-top:11px;padding:10px 12px;border-radius:var(--r)}
+.ov-risk{background:var(--dbg);border:1px solid rgba(255,107,92,.22)}
+.ov-opp{background:var(--sbg);border:1px solid rgba(61,220,138,.22)}
+.risk-list{list-style:none;display:flex;flex-direction:column;gap:7px}
+.risk-list li{font-size:11.5px;line-height:1.5;padding-left:11px;position:relative;color:var(--fg2)}
+.risk-list li:before{content:'';position:absolute;left:0;top:6px;width:4px;height:4px;border-radius:50%;background:var(--muted)}
+.risk-list li.risk-high:before{background:var(--danger)}
+.risk-list li.risk-med:before{background:var(--warn)}
+.risk-list li.opp-good:before{background:var(--success)}
+.risk-list li.opp-warn:before{background:var(--warn)}
+.risk-list b{display:block;color:var(--fg);font-weight:600;font-size:11.5px;margin-bottom:1px}
+
 /* ── Overview / leadership front page ── */
 .ov-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
 .ov-title{font-family:var(--font-display);font-size:22px;font-weight:400;letter-spacing:-.01em;margin-top:2px}
@@ -598,6 +640,7 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 
 <!-- ── PORTFOLIO ── -->
 <div id="tab-portfolio" style="display:none">
+  <div id="pfAudit"></div>
   <div id="pfUploadCard" class="card" style="margin-bottom:16px">
     <div class="card-title">Mera Portfolio Catalogue</div>
     <div class="drop-zone"
@@ -1280,6 +1323,7 @@ function includeSku(segId,itemNumber){
   toast('SKU restored to segment','info');
 }
 function renderPortfolio(){
+  try{ renderSkuAudit(); }catch(e){ console.warn('audit',e); }
   const el=document.getElementById('pfContent');
   const badge=document.getElementById('pfBadge');
   if(!portfolio.length){
@@ -1389,6 +1433,7 @@ function updateSubsubOptions(){
    excluding every competitor SKU. */
 let fieldAvail={};
 function computeFieldAvail(){
+  try{ clearMarketCache(); }catch(e){}
   fieldAvail={};
   for(const m of Object.keys(monthsData)){
     const rows=monthsData[m];
@@ -1977,6 +2022,16 @@ function renderSegCard(d,thr,omThr,pendingCharts){
     body=renderBrandLadder(d);
   }else{
     body=renderLadderTable(d);
+    try{
+      const miss=segMissingSkus(seg,d);
+      if(miss.length){
+        body+='<div class="miss-box"><div class="miss-t">'+miss.length+' of our SKUs not showing here</div><ul class="miss-list">'
+          +miss.slice(0,8).map(m=>'<li><b>'+esc(truncate(m.p.itemName,44))+'</b>'
+            +(m.p.size?' <span class="miss-size">'+esc(m.p.size)+'</span>':'')
+            +'<span class="miss-why">'+esc(m.reason)+'</span></li>').join('')
+          +'</ul>'+(miss.length>8?'<div class="miss-more">+'+(miss.length-8)+' more</div>':'')+'</div>';
+      }
+    }catch(e){ console.warn('missing',e); }
   }
 
   let footer='<div class="seg-footer"><span>'+d.totalSkus+' SKUs · '+d.totalBrands+' brands · '+d.meraCount+' ours'
@@ -2745,6 +2800,25 @@ function drawTrendsShare(months,labels,filtered){
    health score, share trend, projection, price guidance.
    ═══════════════════════════════════════════════════════════ */
 
+/* Total revenue of an entire uploaded month, and of one subcategory,
+   so a segment can be sized against the market it sits in. */
+const _mktTotCache={};
+function monthTotalRev(mk){
+  if(_mktTotCache[mk]!=null) return _mktTotCache[mk];
+  const v=getRows(mk).reduce((s,r)=>s+r.revenue,0);
+  _mktTotCache[mk]=v; return v;
+}
+const _subcatCache={};
+function monthSubcatRev(mk,subcat){
+  if(!subcat) return 0;
+  const k=mk+'||'+String(subcat).toLowerCase();
+  if(_subcatCache[k]!=null) return _subcatCache[k];
+  const v=getRows(mk).filter(r=>loose(subcat,r.subcategory)).reduce((s,r)=>s+r.revenue,0);
+  _subcatCache[k]=v; return v;
+}
+function clearMarketCache(){ for(const k of Object.keys(_mktTotCache)) delete _mktTotCache[k];
+  for(const k of Object.keys(_subcatCache)) delete _subcatCache[k]; }
+
 /* Our revenue share in every uploaded month */
 function shareHistory(ts){
   return ts.map(t=>{
@@ -2831,7 +2905,39 @@ function analyzeSegment(seg){
     }
   }
   const newProducts=d.skus.filter(r=>r.isNew).sort((a,b)=>b.revenue-a.revenue);
-  return {seg,d,ts,hist,cur,shareMoM,slope,proj,fair,fairNaive,effBrands,shareIdx,vp,priceGap,health,movers,newProducts,medCompRev,ourRev};
+
+  /* Share change over 1, 3 and 6 months of available data (pp) */
+  const deltaOver=n=>{
+    if(!cur||known.length<2) return null;
+    // Not enough history for the full window — compare to the oldest month we
+    // do have and report the real span rather than showing nothing.
+    const idx=Math.max(0,known.length-1-n);
+    const back=known[idx];
+    if(!back||back===cur) return null;
+    const actual=known.length-1-idx;
+    return {pp:cur.share-back.share,from:back.m,months:actual,partial:actual<n};
+  };
+  const shareDeltas={m1:deltaOver(1),m3:deltaOver(3),m6:deltaOver(6)};
+
+  /* How big is this segment inside the wider market we track? */
+  const segRev=d.skus.reduce((s,r)=>s+r.revenue,0);
+  const totMkt=monthTotalRev(curMonth);
+  const subRev=monthSubcatRev(curMonth,seg.subcategory);
+  const sizing={
+    segRev,totMkt,subRev,
+    ofMarket:totMkt>0?segRev/totMkt*100:null,
+    ofSubcat:subRev>0?segRev/subRev*100:null,
+  };
+
+  /* Segment growth itself (is the pool shrinking under us?) */
+  const prevTot=(ts.length>1&&!ts[ts.length-2].empty)?ts[ts.length-2].totRev:null;
+  const segGrowth=(prevTot&&prevTot>0)?((segRev-prevTot)/prevTot)*100:null;
+
+  const a={seg,d,ts,hist,cur,shareMoM,slope,proj,fair,fairNaive,effBrands,shareIdx,vp,priceGap,
+           health,movers,newProducts,medCompRev,ourRev,shareDeltas,sizing,segGrowth,known};
+  a.risks=detectRisks(a);
+  a.opps=detectOpportunities(a);
+  return a;
 }
 
 function evalText(a){
@@ -2929,13 +3035,22 @@ function renderOverview(){
   const declining=list.filter(a=>a.shareMoM!=null&&a.shareMoM<-0.3).length;
   const newCount=list.reduce((s,a)=>s+a.newProducts.filter(p=>p.isMera).length,0);
   const avgHealth=Math.round(list.reduce((s,a)=>s+a.health,0)/list.length);
+  const riskN=list.filter(a=>a.risks&&a.risks.some(r=>r.sev==='high')).length;
+  const oppN=list.reduce((s,a)=>s+(a.opps?a.opps.filter(o=>o.kind==='launch-good').length:0),0);
+  const trackedMkt=monthTotalRev(curMonth);
+  const coverage=trackedMkt>0?totRev/trackedMkt*100:null;
   if(roll) roll.innerHTML=
-     ovStat('Segments tracked',list.length,'')
+     ovStat('Segments tracked',list.length,coverage!=null?coverage.toFixed(1)+'% of market covered':'')
     +ovStat('Our revenue share',totRev>0?(ourRev/totRev*100).toFixed(1)+'%':'—',fmtRev(ourRev)+' of '+fmtRev(totRev))
     +ovStat('Avg health',avgHealth,healthBand(avgHealth).word)
     +ovStat('Losing share',declining,declining?'segment'+(declining>1?'s':'')+' declining MoM':'none')
+    +ovStat('High risks',riskN,riskN?'segment'+(riskN>1?'s':'')+' flagged':'none flagged')
     +ovStat('At risk',atRisk,atRisk?'need action':'none')
-    +ovStat('New SKUs live',newCount,'this month');
+    +(oppN?ovStat('Launch wins',oppN,'new SKUs priced right'):'')
+    +ovStat('New SKUs live',newCount,'this month')
+    +(function(){ try{ const a=auditPortfolio();
+        return a.active?ovStat('No sales data',a.missing.length,a.missing.length?'active SKUs absent':'all SKUs reporting'):''; }
+      catch(e){ return ''; } })();
 
   const sort=(document.getElementById('ovSort')||{}).value||'health';
   const segRevOf=a=>a.d.skus.reduce((s,r)=>s+r.revenue,0);
@@ -3015,13 +3130,36 @@ function ovCard(a){
       +'<div class="ov-metric"><div class="ov-m-lbl">Our share</div><div class="ov-m-val">'+share.toFixed(1)+'%</div><div class="ov-m-sub">'+momHtml+'</div></div>'
       +'<div class="ov-metric"><div class="ov-m-lbl">Next month</div><div class="ov-m-val">'+(proj!=null?proj.toFixed(1)+'%':'—')+'</div><div class="ov-m-sub">projected</div></div>'
       +'<div class="ov-metric"><div class="ov-m-lbl">Our price</div><div class="ov-m-val">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</div><div class="ov-m-sub">'+(d.meraVsMkt!=null?fmtPct(d.meraVsMkt)+' vs mkt':fmt$(d.mktAvg)+' mkt')+'</div></div>'
-      +'<div class="ov-metric"><div class="ov-m-lbl">Segment</div><div class="ov-m-val">'+fmtRev(segRev)+'</div><div class="ov-m-sub">'+d.totalBrands+' brands</div></div>'
+      +'<div class="ov-metric"><div class="ov-m-lbl">Segment size</div><div class="ov-m-val">'+fmtRev(segRev)+'</div><div class="ov-m-sub">'
+        +(a.sizing.ofMarket!=null?a.sizing.ofMarket.toFixed(1)+'% of market':d.totalBrands+' brands')+'</div></div>'
     +'</div>'
+    +'<div class="ov-sizing">'
+      +'<span><b>'+(a.sizing.ofMarket!=null?a.sizing.ofMarket.toFixed(1)+'%':'—')+'</b> of tracked market</span>'
+      +(a.sizing.ofSubcat!=null?'<span><b>'+a.sizing.ofSubcat.toFixed(1)+'%</b> of '+esc(titleCase(seg.subcategory)||'category')+'</span>':'')
+      +'<span><b>'+d.totalBrands+'</b> brands · ~'+(a.effBrands||0).toFixed(1)+' effective</span>'
+      +(a.segGrowth!=null?'<span>segment '+(a.segGrowth>=0?'grew ':'shrank ')+'<b>'+Math.abs(a.segGrowth).toFixed(0)+'%</b> MoM</span>':'')
+    +'</div>'
+    +'<div class="ov-block-t" style="margin-top:11px">Our share change</div>'
+    +shareDeltaStrip(a)
     +spark
     +'<div class="ov-eval"><div class="ov-block-t">Evaluation</div>'+lines+'</div>'
     +(adv?'<div class="ov-advice '+(adv.tone==='warn'?'warn':'')+'"><div class="ov-block-t">Price position</div><p>'+esc(adv.text)+'</p></div>':'')
+    +riskBlock(a)+oppBlock(a)
     +mv+np
     +'</div>';
+}
+
+function riskBlock(a){
+  if(!a.risks||!a.risks.length) return '';
+  return '<div class="ov-risk"><div class="ov-block-t">⚠ Risk'+(a.risks.length>1?'s':'')+'</div><ul class="risk-list">'
+    +a.risks.slice(0,4).map(r=>'<li class="risk-'+r.sev+'"><b>'+esc(r.title)+'</b><span>'+esc(r.text)+'</span></li>').join('')
+    +'</ul></div>';
+}
+function oppBlock(a){
+  if(!a.opps||!a.opps.length) return '';
+  return '<div class="ov-opp"><div class="ov-block-t">✦ Opportunit'+(a.opps.length>1?'ies':'y')+'</div><ul class="risk-list">'
+    +a.opps.slice(0,4).map(o=>'<li class="opp-'+(o.kind==='launch-risk'?'warn':'good')+'"><b>'+esc(o.title)+'</b><span>'+esc(o.text)+'</span></li>').join('')
+    +'</ul></div>';
 }
 
 function ovSpark(pts){
@@ -3072,6 +3210,219 @@ function exportOverviewPdf(){
     doc.save('portfolio-health-'+(curMonth||'')+'.pdf');
     toast('PDF exported','success');
   }catch(e){ toast('PDF failed: '+(e.message||e),'error'); }
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SKU AUDIT — catalogue vs market data
+   Answers "why can't I see this SKU?" precisely: no sales
+   reported at all, or excluded by a specific segment filter.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Market rows that correspond to a catalogue SKU (brand + name, size aware) */
+function marketRowsFor(p,rows,sizeAware){
+  const pn=norm(p.itemName||''), pb=norm(p.brand||'');
+  return rows.filter(r=>{
+    const rb=norm(r.brand||'');
+    if(pb&&rb&&!(rb.includes(pb)||pb.includes(rb))) return false;
+    const rn=norm(r.product||'');
+    let nameOk=(rn===pn);
+    if(!nameOk&&pn&&rn){
+      const long=rn.length>=pn.length?rn:pn, short=rn.length>=pn.length?pn:rn;
+      nameOk=long.includes(short)&&short.length/long.length>=0.7;
+    }
+    if(!nameOk) return false;
+    if(sizeAware&&p.size&&r.netContents&&!contentsMatch(p.size,r.netContents)) return false;
+    return true;
+  });
+}
+
+/* Which filter rejected this row — reported in plain language */
+function whyFiltered(seg,row,monthKey){
+  const avail=fieldAvail[monthKey]||{};
+  if(seg.subcategory&&!loose(seg.subcategory,row.subcategory))
+    return 'subcategory is "'+(row.subcategory||'blank')+'", segment wants "'+seg.subcategory+'"';
+  if(seg.subsub&&avail.subsub!==false&&!loose(seg.subsub,row.subsub))
+    return 'sub-subcategory is "'+(row.subsub||'blank')+'", segment wants "'+seg.subsub+'"';
+  if(seg.netContents&&avail.net!==false&&!contentsMatch(seg.netContents,row.netContents))
+    return 'net contents is "'+(row.netContents||'blank')+'", segment wants "'+seg.netContents+'"';
+  if(seg.unitsPerPack&&avail.upp!==false&&!uppMatch(seg.unitsPerPack,row.unitsPerPack))
+    return 'units per pack is '+(row.unitsPerPack||'blank')+', segment wants '+seg.unitsPerPack;
+  if(seg.include&&seg.include.length){
+    const hay=(row.product+' '+row.brand+' '+(row.extraction||'')).toLowerCase();
+    if(!seg.include.some(k=>hay.includes(k)))
+      return 'none of the keywords ('+seg.include.join(', ')+') appear in the name, brand or extraction process';
+  }
+  if(seg.exclude&&seg.exclude.length){
+    const hay=(row.product+' '+row.brand+' '+(row.extraction||'')).toLowerCase();
+    const hit=seg.exclude.find(k=>hay.includes(k));
+    if(hit) return 'excluded by keyword "'+hit+'"';
+  }
+  if(seg.manualOnly) return 'segment is manual-assign only and this SKU is not assigned to it';
+  if((exclusions[seg.id]||[]).some(x=>x===row.pfKey)) return 'manually removed from this segment';
+  return 'price or another filter';
+}
+
+/* Our catalogue SKUs that belong to a segment but are absent from its market rows */
+function segMissingSkus(seg,d){
+  if(!portfolio.length) return [];
+  const cur=getRows(curMonth);
+  const cov=portfolioCoverage().filter(c=>{
+    if(!c.p.active) return false;
+    if(c.excluded.some(s=>s.id===seg.id)) return false;
+    return c.auto.some(s=>s.id===seg.id)||(c.manual&&c.manual.id===seg.id);
+  });
+  const out=[];
+  for(const c of cov){
+    const inSeg=marketRowsFor(c.p,d.skus.filter(r=>r.isMera),true);
+    if(inSeg.length) continue;
+    const anywhere=marketRowsFor(c.p,cur,true);
+    const anyName=anywhere.length?anywhere:marketRowsFor(c.p,cur,false);
+    out.push({
+      p:c.p,
+      reason:anyName.length?whyFiltered(seg,anyName[0],curMonth)
+                           :'no sales reported in '+monthLabel(curMonth)
+    });
+  }
+  return out;
+}
+
+/* Portfolio-wide: active SKUs with no market row at all this month */
+function auditPortfolio(){
+  if(!portfolio.length||!curMonth) return {active:0,matched:0,missing:[]};
+  const cur=getRows(curMonth);
+  const active=portfolio.filter(p=>p.active);
+  const missing=[];
+  for(const p of active){
+    if(!marketRowsFor(p,cur,false).length) missing.push(p);
+  }
+  return {active:active.length,matched:active.length-missing.length,missing};
+}
+
+function renderSkuAudit(){
+  const el=document.getElementById('pfAudit');
+  if(!el) return;
+  if(!portfolio.length||!curMonth){ el.innerHTML=''; return; }
+  const a=auditPortfolio();
+  if(!a.active){ el.innerHTML=''; return; }
+  const pct=Math.round(a.matched/a.active*100);
+  let html='<div class="card"><div class="card-title">SKU Audit · '+esc(monthLabel(curMonth))+'</div>'
+    +'<div class="audit-head"><div><span class="audit-big">'+a.matched+'</span> of '+a.active
+    +' active SKUs found in market data <span class="audit-pct">'+pct+'%</span></div></div>';
+  if(a.missing.length){
+    html+='<div class="audit-note">These are listed as released in your catalogue but reported no sales this month. '
+      +'They are absent from the OCS export, so no segment can show them.</div><ul class="audit-list">';
+    for(const p of a.missing.slice(0,40)){
+      html+='<li><b>'+esc(p.itemName)+'</b><span class="audit-meta">'+esc(p.brand)
+        +(p.size?' · '+esc(p.size):'')+(p.itemNumber?' · #'+esc(p.itemNumber):'')+'</span></li>';
+    }
+    html+='</ul>';
+    if(a.missing.length>40) html+='<div class="audit-note">+'+(a.missing.length-40)+' more</div>';
+  }else{
+    html+='<div class="audit-ok">Every active SKU is present in this month\u2019s market data.</div>';
+  }
+  el.innerHTML=html+'</div>';
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   RISK + OPPORTUNITY DETECTION
+   Each rule states the evidence, so a flag can be checked
+   rather than taken on faith.
+   ═══════════════════════════════════════════════════════════ */
+function detectRisks(a){
+  const {d,cur,shareMoM,shareDeltas,slope,vp,priceGap,movers,segGrowth,effBrands}=a;
+  const out=[];
+  if(!d.meraCount){
+    if(a.sizing.ofMarket!=null&&a.sizing.ofMarket>=1)
+      out.push({sev:'med',title:'No presence in a material segment',
+        text:'This segment is '+a.sizing.ofMarket.toFixed(1)+'% of tracked market revenue ('+fmtRev(a.sizing.segRev)+') and we have no SKUs in it.'});
+    return out;
+  }
+  // Sustained share loss
+  if(shareDeltas.m3&&shareDeltas.m3.pp<=-1)
+    out.push({sev:'high',title:'Sustained share loss',
+      text:'Down '+Math.abs(shareDeltas.m3.pp).toFixed(1)+'pp over 3 months (from '+monthLabel(shareDeltas.m3.from)+'). This is a trend, not a blip.'});
+  else if(shareMoM!=null&&shareMoM<=-1)
+    out.push({sev:'med',title:'Sharp one-month drop',
+      text:'Lost '+Math.abs(shareMoM).toFixed(1)+'pp of share this month.'});
+  // Priced out of the volume
+  if(priceGap!=null&&priceGap>10)
+    out.push({sev:shareMoM!=null&&shareMoM<0?'high':'med',title:'Priced above the volume',
+      text:'We are '+fmtPct(priceGap)+' above the '+fmt$(vp)+' volume price'
+        +(shareMoM!=null&&shareMoM<0?', and share is falling — the premium is not holding.':'.')});
+  // Concentrated competitor taking the segment
+  const top=movers.filter(m=>!m.isMera)[0];
+  if(top&&top.delta>=2)
+    out.push({sev:'med',title:'Competitor taking share fast',
+      text:top.brand+' gained '+top.delta.toFixed(1)+'pp this month to '+top.share.toFixed(1)+'%.'});
+  // The pool itself is shrinking
+  if(segGrowth!=null&&segGrowth<=-10)
+    out.push({sev:'med',title:'Segment contracting',
+      text:'Segment revenue fell '+fmtPct(segGrowth)+' month over month — share gains here are worth less than they look.'});
+  // Thin presence in a concentrated market
+  if(effBrands&&cur&&cur.share<(100/effBrands)*0.25&&a.sizing.ofMarket>=0.5)
+    out.push({sev:'med',title:'Sub-scale in a concentrated segment',
+      text:'Revenue concentrates into ~'+effBrands.toFixed(1)+' real competitors and we hold only '+cur.share.toFixed(1)+'%.'});
+  // Our SKUs disappearing
+  if(d.exited&&d.exited.filter(r=>isMera(r.brand)).length)
+    out.push({sev:'high',title:'Our SKUs dropped out',
+      text:d.exited.filter(r=>isMera(r.brand)).length+' of our SKUs reported sales last month but none this month.'});
+  return out.sort((x,y)=>(x.sev==='high'?0:1)-(y.sev==='high'?0:1));
+}
+
+function detectOpportunities(a){
+  const {d,vp,newProducts,movers,shareDeltas}=a;
+  const out=[];
+  const ourNew=newProducts.filter(p=>p.isMera);
+  for(const p of ourNew){
+    const gapVsVol=vp?((p.price-vp)/vp)*100:null;
+    const gapVsMkt=d.mktAvg>0?((p.price-d.mktAvg)/d.mktAvg)*100:null;
+    if(gapVsVol!=null&&gapVsVol<=2){
+      out.push({kind:'launch-good',title:'New SKU launched at a winning price',
+        text:'"'+truncate(p.product,44)+'" entered at '+fmt$(p.price)+', '
+          +(gapVsVol<-2?Math.abs(gapVsVol).toFixed(0)+'% below':'right at')
+          +' the '+fmt$(vp)+' volume price. It took '+fmtRev(p.revenue)+' ('+(p.revShare*100).toFixed(1)+'% share) in its first month — '
+          +'priced where the volume actually trades, so push distribution behind it.'});
+    }else if(gapVsVol!=null&&gapVsVol>10){
+      out.push({kind:'launch-risk',title:'New SKU launched above the volume',
+        text:'"'+truncate(p.product,44)+'" entered at '+fmt$(p.price)+', '+gapVsVol.toFixed(0)+'% above the '+fmt$(vp)
+          +' volume price. First month '+fmtRev(p.revenue)+'. Consider a price review before it sets an anchor.'});
+    }else{
+      out.push({kind:'launch',title:'New SKU in market',
+        text:'"'+truncate(p.product,44)+'" entered at '+fmt$(p.price)
+          +(gapVsMkt!=null?' ('+fmtPct(gapVsMkt)+' vs market)':'')+', '+fmtRev(p.revenue)+' in month one.'});
+    }
+  }
+  // Under-priced with momentum = room to take price
+  if(a.priceGap!=null&&a.priceGap<-8&&shareDeltas.m1&&shareDeltas.m1.pp>=0)
+    out.push({kind:'price',title:'Headroom on price',
+      text:'We sit '+Math.abs(a.priceGap).toFixed(0)+'% under the '+fmt$(vp)+' volume price while holding share — room to take price toward '+fmt$(vp*0.97)+'.'});
+  // Competitor retreating
+  const falling=movers.filter(m=>!m.isMera&&m.delta<=-2)[0];
+  if(falling)
+    out.push({kind:'gap',title:'Competitor giving up share',
+      text:falling.brand+' lost '+Math.abs(falling.delta).toFixed(1)+'pp this month to '+falling.share.toFixed(1)+'% — volume is in play.'});
+  return out;
+}
+
+/* Small strip: share change over 1 / 3 / 6 months */
+function deltaChip(lbl,dd){
+  if(!dd) return '<div class="dchip dchip-na"><span class="dchip-l">'+lbl+'</span><span class="dchip-v">—</span></div>';
+  const cls=dd.pp>0.3?'up':dd.pp<-0.3?'down':'flat';
+  const arrow=dd.pp>0.3?'▲':dd.pp<-0.3?'▼':'•';
+  return '<div class="dchip dchip-'+cls+'" title="vs '+esc(monthLabel(dd.from))+' ('+dd.months+' mo of data)">'
+    +'<span class="dchip-l">'+lbl+(dd.partial?'*':'')+'</span>'
+    +'<span class="dchip-v">'+arrow+' '+(dd.pp>0?'+':'')+dd.pp.toFixed(1)+'pp</span></div>';
+}
+function shareDeltaStrip(a){
+  return '<div class="dstrip">'
+    +deltaChip('MoM',a.shareDeltas.m1)
+    +deltaChip('3-mo',a.shareDeltas.m3)
+    +deltaChip('6-mo',a.shareDeltas.m6)
+    +'</div>';
 }
 </script>
 
