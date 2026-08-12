@@ -170,7 +170,19 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .card,.seg-card{box-shadow:var(--sh)}
 .seg-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rm);overflow:hidden;display:flex;flex-direction:column}
 .seg-card.has-flag{border-color:rgba(246,107,92,.45)}
-.seg-card-head{padding:12px 14px;border-bottom:1px solid var(--bsoft)}
+.seg-card-head{padding:12px 14px;border-bottom:1px solid var(--bsoft);cursor:pointer;transition:background .15s}
+.seg-card-head:hover{background:var(--surface)}
+.seg-card-head:hover .seg-expand{color:var(--accent);border-color:var(--accent)}
+.seg-expand{margin-left:auto;flex-shrink:0;font-size:11px;color:var(--muted);border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:1px 7px;line-height:1.5;transition:all .15s}
+/* Expanded (focused) segment */
+.seg-focus-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.seg-focus-bar .btn{flex-shrink:0}
+.seg-focus-cat{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.seg-card.expanded{border-color:rgba(226,190,102,.35);box-shadow:var(--sh-hover)}
+.seg-card.expanded .chart-wrap{height:420px}
+.seg-card.expanded .kpi-strip{padding:14px}
+.seg-card.expanded .kpi-val{font-size:26px}
+.seg-card.expanded .ladder-table td{padding:9px 14px;font-size:12px}
 .seg-card-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .seg-title{font-size:13px;font-weight:700}
 .seg-desc{font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
@@ -212,6 +224,8 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .ladder-table tr.mera-row td{background:rgba(255,122,61,.05)}
 .ladder-table tr.mera-row td:first-child{border-left:3px solid var(--accent)}
 .ladder-table tr.new-row td{background:rgba(240,183,61,.05)}
+.ladder-table tr.tier-row td{padding:5px 12px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);background:var(--surface);border-top:1px solid var(--border)}
+.brkt-tag{display:inline-block;margin-left:6px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);background:rgba(91,155,240,.12);border:1px solid rgba(91,155,240,.3);border-radius:4px;padding:1px 5px}
 .ladder-table tr.mkt-row td{padding:4px 12px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fbbf24;text-align:center;background:rgba(251,191,36,.06);border-top:1px dashed rgba(251,191,36,.4);border-bottom:1px dashed rgba(251,191,36,.4)}
 .share-cell{min-width:90px}
 .share-mini{display:flex;align-items:center;gap:6px}
@@ -238,6 +252,63 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .exited-wrap{padding:8px 14px;border-top:1px solid var(--bsoft);background:var(--inset)}
 .exited-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
 .exited-list{font-size:10px;color:var(--fg2);font-family:var(--mono);line-height:1.9;margin-top:6px}
+
+/* ── Overview / leadership front page ── */
+.ov-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.ov-title{font-family:var(--font-display);font-size:22px;font-weight:400;letter-spacing:-.01em;margin-top:2px}
+.eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+.ov-actions{display:flex;gap:8px;align-items:center}
+.ov-rollup{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:22px}
+.ov-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);padding:12px 14px;box-shadow:var(--sh)}
+.ov-stat-lbl{font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.ov-stat-val{font-family:var(--mono);font-size:24px;font-weight:500;margin-top:5px;letter-spacing:-.02em}
+.ov-stat-sub{font-size:10px;color:var(--fg2);margin-top:2px}
+.ov-cat{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--fg2);margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+.ov-cat:before{content:'';flex:0 0 18px;height:1px;background:var(--accent)}
+.ov-cat-n{font-size:9px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--pill);padding:1px 7px}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:14px}
+@media(max-width:560px){.ov-grid{grid-template-columns:1fr}}
+.ov-card{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--muted);border-radius:var(--rm);padding:14px 16px 16px;box-shadow:var(--sh)}
+.ov-card.hb-good{border-left-color:var(--success)}
+.ov-card.hb-mid{border-left-color:var(--warn)}
+.ov-card.hb-bad{border-left-color:var(--danger)}
+.ov-card-head{cursor:pointer;margin-bottom:10px}
+.ov-card-head:hover .ov-card-title{color:var(--accent)}
+.ov-card-title{font-size:14px;font-weight:700;letter-spacing:-.01em;transition:color .15s}
+.ov-card-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.ov-health{margin-bottom:12px}
+.ov-health-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px}
+.ov-health-word{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--fg2)}
+.ov-health-num{font-family:var(--mono);font-size:15px;font-weight:500}
+.ov-health-num i{font-style:normal;font-size:10px;color:var(--muted)}
+.ov-bar{height:7px;border-radius:var(--pill);background:var(--faint);overflow:hidden}
+.ov-bar-fill{height:100%;border-radius:var(--pill);transition:width .4s ease}
+.hb-good .ov-bar-fill{background:linear-gradient(90deg,#2fb573,var(--success))}
+.hb-mid .ov-bar-fill{background:var(--grad-accent)}
+.hb-bad .ov-bar-fill{background:linear-gradient(90deg,#c9453a,var(--danger))}
+.ov-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:11px 0;border-top:1px solid var(--bsoft);border-bottom:1px solid var(--bsoft)}
+@media(max-width:480px){.ov-metrics{grid-template-columns:repeat(2,1fr)}}
+.ov-m-lbl{font-family:var(--mono);font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.ov-m-val{font-family:var(--mono);font-size:17px;font-weight:500;margin-top:3px;letter-spacing:-.01em}
+.ov-m-sub{font-family:var(--mono);font-size:9.5px;color:var(--fg2);margin-top:1px}
+.ov-up{color:var(--success)}.ov-down{color:var(--danger)}.ov-flat{color:var(--muted)}
+.ov-spark{display:flex;align-items:center;gap:9px;padding:9px 0 4px}
+.ov-spark svg{width:100%;height:34px;flex:1}
+.ov-spark-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap}
+.ov-block-t{font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:5px}
+.ov-eval{padding-top:11px}
+.ov-eval p{font-size:12px;line-height:1.6;color:var(--fg2);margin-bottom:5px}
+.ov-advice{margin-top:10px;padding:10px 12px;border-radius:var(--r);background:var(--sbg);border:1px solid rgba(61,220,138,.22)}
+.ov-advice.warn{background:var(--wbg);border-color:rgba(226,190,102,.28)}
+.ov-advice p{font-size:12px;line-height:1.55;color:var(--fg2)}
+.ov-block{margin-top:11px}
+.ov-list{list-style:none;display:flex;flex-direction:column;gap:4px}
+.ov-list li{font-size:11.5px;color:var(--fg2);padding-left:12px;position:relative;line-height:1.5}
+.ov-list li:before{content:'';position:absolute;left:0;top:7px;width:4px;height:4px;border-radius:50%;background:var(--muted)}
+.ov-list li.m-up:before{background:var(--success)}
+.ov-list li.m-down:before{background:var(--danger)}
+.ov-list li.m-new:before{background:var(--accent)}
+.ov-list b{color:var(--fg);font-weight:600}
 .trends-layout{display:grid;grid-template-columns:270px 1fr;gap:16px;align-items:start}
 @media(max-width:860px){.trends-layout{grid-template-columns:1fr}}
 .trends-filters .field label{margin-bottom:4px}
@@ -381,7 +452,8 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
   </div>
   <nav class="sidebar-nav">
     <div class="sidebar-section-label">Analysis</div>
-    <button class="sidebar-item active" data-nav="ladder" onclick="showTab('ladder')"><span class="sidebar-ico">▦</span>Pricing Dashboard</button>
+    <button class="sidebar-item active" data-nav="overview" onclick="showTab('overview')"><span class="sidebar-ico">◉</span>Overview</button>
+    <button class="sidebar-item" data-nav="ladder" onclick="showTab('ladder')"><span class="sidebar-ico">▦</span>Pricing Dashboard</button>
     <button class="sidebar-item" data-nav="brief" onclick="showTab('brief')"><span class="sidebar-ico">◈</span>Leadership Brief</button>
     <button class="sidebar-item" data-nav="trends" onclick="showTab('trends')"><span class="sidebar-ico">◠</span>Market Trends</button>
   </nav>
@@ -416,7 +488,7 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 <main>
 
 <!-- ── PRICING DASHBOARD ── -->
-<div id="tab-ladder">
+<div id="tab-ladder" style="display:none">
   <div id="ladderContent"></div>
 </div>
 
@@ -442,6 +514,27 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
     </div>
   </div>
   <div id="briefContent"></div>
+</div>
+
+<!-- ── OVERVIEW (leadership front page) ── -->
+<div id="tab-overview">
+  <div class="ov-head">
+    <div>
+      <div class="eyebrow" id="ovPeriod"></div>
+      <h2 class="ov-title">Portfolio Health</h2>
+    </div>
+    <div class="ov-actions">
+      <select id="ovSort" onchange="renderOverview()">
+        <option value="health">Sort: needs attention first</option>
+        <option value="rev">Sort: segment size</option>
+        <option value="share">Sort: our share</option>
+        <option value="move">Sort: biggest share move</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="exportOverviewPdf()">Export PDF</button>
+    </div>
+  </div>
+  <div id="ovRollup" class="ov-rollup"></div>
+  <div id="ovContent"></div>
 </div>
 
 <!-- ── MARKET TRENDS (v6-style explorer) ── -->
@@ -632,6 +725,7 @@ let unsavedMonths=new Set();
 let expandedSegs=new Set();
 let exitedOpen=new Set();
 let collapsedBrands=new Set();
+let focusedSeg=null;         // segment id shown expanded on its own
 let activeCat=null;          // active category (subcategory) tab in Pricing Dashboard
 let segView={};              // segId -> 'trend' | 'share' | 'ladder'
 let charts={};               // canvasId -> Chart instance
@@ -1640,7 +1734,7 @@ const LADDER_LIMIT=12;
 const COMP_PALETTE=['#5b9bf0','#a78bfa','#29c3d4','#97cf3f','#ff6b5c','#3ddc8a','#e879b9','#94a3ce','#7dd3fc','#6ee7b7'];
 const MERA_PALETTE=['#E2BE66','#EBD08E','#B8912F','#F0DCA8','#8A6A1C'];
 
-function runAll(){ renderLadder(); renderBrief(); }
+function runAll(){ renderOverviewSafe(); renderLadder(); renderBrief(); }
 function showSpinner(id){ const el=document.getElementById(id); if(el) el.innerHTML='<div class="spinner"><div class="spin"></div>Loading…</div>'; }
 function titleCase(s){ return String(s||'').replace(/\b\w/g,c=>c.toUpperCase()); }
 function destroyCharts(prefix){ for(const k of Object.keys(charts)){ if(prefix&&!k.startsWith(prefix)) continue; try{charts[k].destroy();}catch(e){} delete charts[k]; } }
@@ -1716,6 +1810,27 @@ function renderLadder(){
     }).join('')+'</div>';
   }
 
+  // Expanded view: one segment on its own, full width
+  if(focusedSeg!=null){
+    const hit=built.find(b=>b.seg.id===focusedSeg);
+    if(hit&&hit.d){
+      const pend=[];
+      const cat=titleCase(hit.seg.subcategory)||'Uncategorized';
+      let fh='<div class="seg-focus-bar">'
+        +'<button class="btn btn-ghost btn-sm" onclick="toggleFocus(null)">← All segments</button>'
+        +'<span class="seg-focus-cat">'+esc(cat)+(hit.seg.brandGrp?' · '+esc(hit.seg.brandGrp):'')+'</span></div>';
+      try{ fh+=renderSegCard(hit.d,thr,omThr,pend); }
+      catch(e){ fh+='<div class="seg-card"><div class="seg-card-head"><span class="seg-title">'+esc(hit.seg.name)+'</span><div class="seg-desc" style="color:var(--danger)">Card failed: '+esc(e.message||e)+'</div></div></div>'; }
+      el.innerHTML=fh;
+      for(const pc of pend){
+        try{ pc.type==='trend'?makeTrendChart(pc):makeShareChart(pc); }
+        catch(e){ console.warn('chart',e); const cv=document.getElementById(pc.canvasId); if(cv&&cv.parentElement) cv.parentElement.innerHTML='<div class="chart-empty">Chart failed to render: '+esc(e.message||e)+'</div>'; }
+      }
+      return;
+    }
+    focusedSeg=null;   // stale id (segment deleted / filtered out) — fall back to the grid
+  }
+
   const groups=cats[activeCat]||{};
   const pendingCharts=[];
   for(const brand of Object.keys(groups).sort()){
@@ -1759,6 +1874,11 @@ function cssId(s){ return String(s).replace(/[^a-z0-9]/gi,'_'); }
 function toggleBrand(brand){
   collapsedBrands.has(brand)?collapsedBrands.delete(brand):collapsedBrands.add(brand);
   renderLadder();
+}
+function toggleFocus(id){
+  focusedSeg=(id!=null&&focusedSeg!==id)?id:null;
+  renderLadder();
+  window.scrollTo({top:0,behavior:'instant'});
 }
 function setCat(c){
   activeCat=c;
@@ -1860,12 +1980,92 @@ function renderSegCard(d,thr,omThr,pendingCharts){
       +'</div>';
   }
 
-  return '<div class="seg-card'+(hasFlag?' has-flag':'')+'">'
-    +'<div class="seg-card-head"><div class="seg-card-title-row"><span class="seg-title">'+esc(seg.name)+'</span>'+posPill+'</div>'
+  const isFocus=focusedSeg===seg.id;
+  return '<div class="seg-card'+(hasFlag?' has-flag':'')+(isFocus?' expanded':'')+'">'
+    +'<div class="seg-card-head" onclick="toggleFocus('+JSON.stringify(seg.id)+')" title="'+(isFocus?'Collapse':'Click to expand this segment')+'">'
+      +'<div class="seg-card-title-row"><span class="seg-title">'+esc(seg.name)+'</span>'+posPill
+      +'<span class="seg-expand">'+(isFocus?'✕ close':'⤢ expand')+'</span></div>'
     +'<div class="seg-desc">'+esc(describeFilters(seg))+'</div></div>'
     +'<div class="kpi-strip">'+kpis+'</div>'
     +banners+tabs+body+exitedHtml+footer
     +'</div>';
+}
+
+/* ── Price bracket + tier detection ──────────────────────────
+   A "bracket" is a cluster of SKU prices separated by a real gap.
+   Brands often run two of them (standard vs premium line) and
+   averaging across them hides both. */
+function priceClusters(rows){
+  const sorted=[...rows].sort((a,b)=>a.price-b.price);
+  if(sorted.length<2) return [sorted];
+  const out=[]; let cur=[sorted[0]];
+  for(let i=1;i<sorted.length;i++){
+    const gap=sorted[i].price-sorted[i-1].price;
+    const thr=Math.max(2.5,sorted[i-1].price*0.18);   // real step, not noise
+    if(gap>thr){ out.push(cur); cur=[sorted[i]]; } else cur.push(sorted[i]);
+  }
+  out.push(cur);
+  return out;
+}
+const BRKT_STOP=new Set(['the','and','pre','roll','rolls','infused','vape','all','one','pack','packs','cart','cartridge','carts','disposable','live','resin','thread','blunt','box','with','for','size','oz','ml','pen','pens','vapes','flower','kief','sauce','hash']);
+/* Name a bracket after the word that separates it from the brand's other
+   SKUs — "Diamond", "Hi-Fi" — falling back to its price. */
+function bracketLabel(group,others,idx,total){
+  // keep hyphenated names intact so "hi-fi" survives tokenising
+  const toks=list=>list.map(r=>new Set(String(r.product||'').toLowerCase()
+    .replace(/[^a-z0-9- ]/g,' ').split(/\s+/)
+    .map(w=>w.replace(/^-+|-+$/g,''))
+    .filter(w=>w.length>1&&!BRKT_STOP.has(w)&&!/^[\d.]+$/.test(w))));
+  const mine=toks(group), theirs=toks(others);
+  const otherWords=new Set(); theirs.forEach(t=>t.forEach(w=>otherWords.add(w)));
+  const counts={};
+  mine.forEach(t=>t.forEach(w=>{counts[w]=(counts[w]||0)+1;}));
+  // a real separator names EVERY sku in the bracket and none outside it
+  const cands=Object.keys(counts).filter(w=>counts[w]===mine.length&&!otherWords.has(w));
+  if(cands.length){
+    cands.sort((a,b)=>b.length-a.length);
+    return cands[0].split('-').map(p=>p.charAt(0).toUpperCase()+p.slice(1)).join('-');
+  }
+  // no shared name — describe it by position instead of repeating the price column
+  if(total===2) return idx===0?'Core':'Premium';
+  if(idx===0) return 'Core';
+  if(idx===total-1) return 'Premium';
+  return 'Mid';
+}
+/* Segment-wide price tiers, so competitors are grouped rather than
+   listed as one long undifferentiated ladder. */
+function segTiers(rows,mktAvg){
+  const cls=priceClusters(rows);
+  let tiers=cls.map(g=>{
+    const ps=g.map(r=>r.price);
+    return {min:Math.min(...ps),max:Math.max(...ps),rev:g.reduce((s,r)=>s+r.revenue,0)};
+  }).sort((a,b)=>a.min-b.min);
+
+  /* Prices are often continuous (no natural gaps) — competitors still need
+     grouping, so band them around the market average instead. */
+  if(tiers.length===1&&rows.length>=6&&mktAvg>0){
+    const lo=mktAvg*0.92, hi=mktAvg*1.08;
+    const bands=[
+      {name:'Value tier',   test:p=>p<lo},
+      {name:'Core tier',    test:p=>p>=lo&&p<=hi},
+      {name:'Premium tier', test:p=>p>hi},
+    ].map(b=>{
+      const g=rows.filter(r=>b.test(r.price));
+      if(!g.length) return null;
+      const ps=g.map(r=>r.price);
+      return {name:b.name,min:Math.min(...ps),max:Math.max(...ps),rev:g.reduce((s,r)=>s+r.revenue,0)};
+    }).filter(Boolean);
+    if(bands.length>1) return bands;
+  }
+  if(tiers.length===1){ tiers[0].name='All prices'; return tiers; }
+  tiers.forEach(t=>{
+    const mid=(t.min+t.max)/2;
+    t.name=mid<mktAvg*0.92?'Value tier':mid>mktAvg*1.08?'Premium tier':'Core tier';
+  });
+  // disambiguate duplicate names
+  const seen={};
+  tiers.forEach(t=>{ seen[t.name]=(seen[t.name]||0)+1; if(seen[t.name]>1) t.name+=' '+seen[t.name]; });
+  return tiers;
 }
 
 /* Brand-level price ladder: our brands vs the top revenue competitors,
@@ -1874,65 +2074,87 @@ function renderBrandLadder(d){
   const {seg,skus}=d;
   const expanded=expandedSegs.has(seg.id);
 
-  // group current-month SKUs by brand
-  const by={};
-  for(const r of skus){
-    if(!by[r.brand]) by[r.brand]={brand:r.brand,isMera:r.isMera,rev:0,wsum:0,pwsum:0,prevRev:0,n:0};
-    const b=by[r.brand];
-    b.rev+=r.revenue; b.wsum+=r.price*r.revenue; b.n++;
-    if(r.prevPrice!=null){ b.pwsum+=r.prevPrice*r.revenue; b.prevRev+=r.revenue; }
+  // 1) Split each brand into PRICE BRACKETS (a brand selling at two distinct
+  //    price points — e.g. General Admission's Hi-Fi vs Diamond 3-packs —
+  //    must not be blended into one misleading average).
+  const byBrand={};
+  for(const r of skus){ (byBrand[r.brand]=byBrand[r.brand]||[]).push(r); }
+  let entries=[];
+  for(const b of Object.keys(byBrand)){
+    const rows=byBrand[b];
+    const cls=priceClusters(rows);
+    cls.forEach((grp,gi)=>{
+      const others=rows.filter(r=>!grp.includes(r));
+      const rev=grp.reduce((s,r)=>s+r.revenue,0);
+      const pRows=grp.filter(r=>r.prevPrice!=null);
+      const pRev=pRows.reduce((s,r)=>s+r.revenue,0);
+      entries.push({
+        brand:b,isMera:grp[0].isMera,
+        label:cls.length>1?bracketLabel(grp,others,gi,cls.length):'',
+        avg:rev>0?grp.reduce((s,r)=>s+r.price*r.revenue,0)/rev:grp[0].price,
+        prevAvg:pRev>0?pRows.reduce((s,r)=>s+r.prevPrice*r.revenue,0)/pRev:null,
+        rev,n:grp.length,newN:grp.filter(r=>r.isNew).length,
+      });
+    });
   }
-  const all=Object.values(by).map(b=>({
-    ...b,
-    avg:b.rev>0?b.wsum/b.rev:null,
-    prevAvg:b.prevRev>0?b.pwsum/b.prevRev:null,
-  })).filter(b=>b.avg!=null);
-  if(!all.length) return '<div class="chart-empty">No brands matched this month.</div>';
+  if(!entries.length) return '<div class="chart-empty">No brands matched this month.</div>';
 
-  const ours=all.filter(b=>b.isMera);
-  const comps=all.filter(b=>!b.isMera).sort((a,b)=>b.rev-a.rev);
-  const compCap=expanded?Math.max(20-ours.length,5):5;
-  const shown=[...ours,...comps.slice(0,compCap)];
+  // 2) Keep our brands + the top competitors by revenue
+  const ours=entries.filter(e=>e.isMera);
+  const comps=entries.filter(e=>!e.isMera).sort((a,b)=>b.rev-a.rev);
+  const cap=expanded?Math.max(20-ours.length,5):5;
+  const shown=[...ours,...comps.slice(0,cap)];
 
-  // ladder = sorted by price, highest first
-  shown.sort((a,b)=>b.avg-a.avg);
-
-  const totRev=all.reduce((s,b)=>s+b.rev,0);
-  const maxShare=Math.max(...shown.map(b=>totRev>0?b.rev/totRev:0),0.0001);
-
-  // where does the market rev-wtd avg slot in?
-  let mktIdx=shown.findIndex(b=>b.avg<d.mktAvg);
-  if(mktIdx<0) mktIdx=shown.length;
-
-  let rows='';
-  shown.forEach((b,i)=>{
-    if(i===mktIdx){
-      rows+='<tr class="mkt-row"><td colspan="7">— Market rev-wtd avg '+fmt$(d.mktAvg)+' —</td></tr>';
+  // 3) Group what remains into market PRICE TIERS
+  const tiers=segTiers(skus,d.mktAvg);
+  const totRev=entries.reduce((s,e)=>s+e.rev,0);
+  const maxShare=Math.max(...shown.map(e=>totRev>0?e.rev/totRev:0),.0001);
+  const buckets=tiers.map(t=>({t,rows:[]}));
+  for(const e of shown){
+    let bi=buckets.findIndex(b=>e.avg>=b.t.min-.001&&e.avg<=b.t.max+.001);
+    if(bi<0){ // price sits between tiers — attach to nearest
+      let best=0,bd=Infinity;
+      buckets.forEach((b,k)=>{const dist=Math.min(Math.abs(e.avg-b.t.min),Math.abs(e.avg-b.t.max)); if(dist<bd){bd=dist;best=k;}});
+      bi=best;
     }
-    const vsMkt=d.mktAvg>0?((b.avg-d.mktAvg)/d.mktAvg)*100:null;
-    const vsCls=vsMkt==null?'c-mut':vsMkt>1?'c-up':vsMkt<-1?'c-down':'c-mut';
-    const mom=(b.prevAvg&&b.prevAvg>0)?((b.avg-b.prevAvg)/b.prevAvg)*100:null;
-    const share=totRev>0?b.rev/totRev*100:0;
-    const barW=Math.max(2,share/(maxShare*100)*100);
-    rows+='<tr class="'+(b.isMera?'mera-row':'')+'">'
-      +'<td class="rank-cell">'+(i+1)+'</td>'
-      +'<td class="sku-cell"><span class="sku-brand">'+esc(b.brand)+'</span>'
-        +(b.isMera?'<span class="badge badge-mera">OURS</span>':'')
-        +'<div class="sku-prod">'+b.n+' SKU'+(b.n>1?'s':'')+'</div></td>'
-      +'<td class="price-cell'+(b.isMera?' mera-price':'')+'">'+fmt$(b.avg)+'</td>'
-      +'<td class="vsmkt-cell '+vsCls+'">'+(vsMkt!=null?fmtPct(vsMkt):'—')+'</td>'
-      +'<td class="move-cell">'+(mom==null?'<span class="move-neutral">—</span>':mom>0.5?'<span class="move-up">▲ '+fmtPct(mom)+'</span>':mom<-0.5?'<span class="move-down">▼ '+fmtPct(mom)+'</span>':'<span class="move-neutral">'+fmtPct(mom)+'</span>')+'</td>'
-      +'<td class="rev-cell">'+fmtRev(b.rev)+'</td>'
-      +'<td class="share-cell"><div class="share-mini"><div class="share-mini-bar'+(b.isMera?' ours':'')+'" style="width:'+barW.toFixed(0)+'%"></div><span>'+share.toFixed(1)+'%</span></div></td>'
-      +'</tr>';
-  });
-  if(mktIdx===shown.length){
-    rows+='<tr class="mkt-row"><td colspan="7">— Market rev-wtd avg '+fmt$(d.mktAvg)+' —</td></tr>';
+    buckets[bi].rows.push(e);
   }
 
-  const hidden=comps.length-Math.min(comps.length,compCap);
+  let rows='',rank=0;
+  buckets.filter(b=>b.rows.length).sort((a,b)=>b.t.max-a.t.max).forEach(b=>{
+    b.rows.sort((x,y)=>y.rev-x.rev);   // biggest player first inside each bracket
+    const tRev=b.rows.reduce((s,e)=>s+e.rev,0);
+    if(tiers.length>1){
+      rows+='<tr class="tier-row"><td colspan="7">'+esc(b.t.name)+' &nbsp;·&nbsp; '+fmt$(b.t.min)+(b.t.max>b.t.min?'–'+fmt$(b.t.max):'')
+        +' &nbsp;·&nbsp; '+b.rows.length+' shown &nbsp;·&nbsp; '+fmtRev(tRev)+'</td></tr>';
+    }
+    for(const e of b.rows){
+      rank++;
+      const vsMkt=d.mktAvg>0?((e.avg-d.mktAvg)/d.mktAvg)*100:null;
+      const vsCls=vsMkt==null?'c-mut':vsMkt>1?'c-up':vsMkt<-1?'c-down':'c-mut';
+      const mom=(e.prevAvg&&e.prevAvg>0)?((e.avg-e.prevAvg)/e.prevAvg)*100:null;
+      const share=totRev>0?e.rev/totRev*100:0;
+      const barW=Math.max(2,share/(maxShare*100)*100);
+      rows+='<tr class="'+(e.isMera?'mera-row':'')+'">'
+        +'<td class="rank-cell">'+rank+'</td>'
+        +'<td class="sku-cell"><span class="sku-brand">'+esc(e.brand)+'</span>'
+          +(e.label?'<span class="brkt-tag">'+esc(e.label)+'</span>':'')
+          +(e.isMera?'<span class="badge badge-mera">OURS</span>':'')
+          +(e.newN?'<span class="badge badge-new">'+e.newN+' NEW</span>':'')
+          +'<div class="sku-prod">'+e.n+' SKU'+(e.n>1?'s':'')+'</div></td>'
+        +'<td class="price-cell'+(e.isMera?' mera-price':'')+'">'+fmt$(e.avg)+'</td>'
+        +'<td class="vsmkt-cell '+vsCls+'">'+(vsMkt!=null?fmtPct(vsMkt):'—')+'</td>'
+        +'<td class="move-cell">'+(mom==null?'<span class="move-neutral">—</span>':mom>0.5?'<span class="move-up">▲ '+fmtPct(mom)+'</span>':mom<-0.5?'<span class="move-down">▼ '+fmtPct(mom)+'</span>':'<span class="move-neutral">'+fmtPct(mom)+'</span>')+'</td>'
+        +'<td class="rev-cell">'+fmtRev(e.rev)+'</td>'
+        +'<td class="share-cell"><div class="share-mini"><div class="share-mini-bar'+(e.isMera?' ours':'')+'" style="width:'+barW.toFixed(0)+'%"></div><span>'+share.toFixed(1)+'%</span></div></td>'
+        +'</tr>';
+    }
+  });
+
+  const hidden=comps.length-Math.min(comps.length,cap);
   return '<table class="ladder-table"><thead><tr><th>#</th><th>Brand</th><th class="r">Avg Price</th><th class="r">vs Mkt</th><th class="r">MoM</th><th class="r">Rev</th><th>Share</th></tr></thead><tbody>'+rows+'</tbody></table>'
-    +(hidden>0&&!expanded?'<div class="seg-note">Showing our brands + top 5 competitors by revenue · '+hidden+' more competitor'+(hidden>1?'s':'')+' hidden</div>':'');
+    +'<div class="seg-note">Market rev-wtd avg '+fmt$(d.mktAvg)+(tiers.length>1?' · '+tiers.length+' price tiers detected':'')
+    +(hidden>0&&!expanded?' · '+hidden+' more competitor'+(hidden>1?'s':'')+' hidden':'')+'</div>';
 }
 
 function renderLadderTable(d){
@@ -2259,7 +2481,7 @@ function toggleSetup(force){
   g.classList.toggle('open',open);
   t.classList.toggle('open',open);
 }
-const TAB_TITLES={ladder:'Pricing Dashboard',brief:'Leadership Brief',trends:'Market Trends',portfolio:'Portfolio',data:'Data & Segments'};
+const TAB_TITLES={overview:'Overview',ladder:'Pricing Dashboard',brief:'Leadership Brief',trends:'Market Trends',portfolio:'Portfolio',data:'Data & Segments'};
 function showTab(tab){
   for(const t of Object.keys(TAB_TITLES)){
     const pane=document.getElementById('tab-'+t);
@@ -2275,6 +2497,7 @@ function showTab(tab){
   if(ttl) ttl.textContent=TAB_TITLES[tab]||'Dashboard';
   if(tab==='data') refreshSegOptions();
   if(tab==='trends') refreshTrendsAll();
+  if(tab==='overview') renderOverview();
 }
 function fmt$(n){ return n==null?'—':'$'+Number(n).toFixed(2); }
 function fmtPct(n){ return n==null?'—':(n>0?'+':'')+Number(n).toFixed(1)+'%'; }
@@ -2473,6 +2696,323 @@ function drawTrendsShare(months,labels,filtered){
       },
     },
   });
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SEGMENT ANALYSIS ENGINE
+   Deterministic, rule-based evaluation of each segment:
+   health score, share trend, projection, price guidance.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Our revenue share in every uploaded month */
+function shareHistory(ts){
+  return ts.map(t=>{
+    if(t.empty||!t.totRev) return null;
+    let ours=0;
+    for(const [b,v] of Object.entries(t.brands)) if(v.isMera) ours+=v.rev;
+    return {m:t.m,share:ours/t.totRev*100,rev:ours,totRev:t.totRev};
+  });
+}
+
+/* Least-squares slope over the supplied points (pp per month) */
+function slopeOf(vals){
+  const pts=vals.filter(v=>v!=null);
+  if(pts.length<2) return null;
+  const n=pts.length, xs=pts.map((_,i)=>i);
+  const mx=xs.reduce((a,b)=>a+b,0)/n, my=pts.reduce((a,b)=>a+b,0)/n;
+  let num=0,den=0;
+  xs.forEach((x,i)=>{num+=(x-mx)*(pts[i]-my);den+=(x-mx)*(x-mx);});
+  return den?num/den:null;
+}
+
+/* The price point where volume actually trades:
+   rev-weighted average of the top-3 revenue competitors. */
+function volumePrice(d){
+  const by={};
+  for(const r of d.skus){ if(r.isMera) continue; (by[r.brand]=by[r.brand]||[]).push(r); }
+  const ranked=Object.entries(by).map(([b,rows])=>({
+    b,rev:rows.reduce((s,r)=>s+r.revenue,0),rows
+  })).sort((x,y)=>y.rev-x.rev).slice(0,3);
+  const all=ranked.flatMap(x=>x.rows);
+  const rev=all.reduce((s,r)=>s+r.revenue,0);
+  return rev>0?all.reduce((s,r)=>s+r.price*r.revenue,0)/rev:null;
+}
+
+function analyzeSegment(seg){
+  const d=buildSegmentData(seg,curMonth,cmpMonth);
+  if(!d) return null;
+  const ts=segTimeSeries(seg);
+  const hist=shareHistory(ts);
+  const known=hist.filter(h=>h);
+  const cur=known.length?known[known.length-1]:null;
+  const prev=known.length>1?known[known.length-2]:null;
+  const shareMoM=(cur&&prev)?cur.share-prev.share:null;
+  const slope=slopeOf(known.slice(-3).map(h=>h.share));
+  const proj=(cur&&slope!=null)?Math.max(0,cur.share+slope):null;
+
+  const fair=d.totalBrands>0?100/d.totalBrands:0;
+  const shareIdx=(fair>0&&cur)?cur.share/fair:0;
+  const vp=volumePrice(d);
+  const priceGap=(d.meraAvg!=null&&vp)?((d.meraAvg-vp)/vp)*100:null;
+
+  let sc=0;
+  sc+=40*Math.min(shareIdx/2,1);
+  if(shareMoM==null) sc+=15; else sc+=30*Math.max(0,Math.min(1,(shareMoM+2)/4));
+  const off=d.meraVsMkt==null?0:Math.abs(d.meraVsMkt);
+  sc+=20*Math.max(0,Math.min(1,(15-Math.max(0,off-5))/15));
+  const medSkus=(()=>{const c={};d.skus.forEach(r=>{if(!r.isMera)c[r.brand]=(c[r.brand]||0)+1;});
+    const v=Object.values(c).sort((a,b)=>a-b);return v.length?v[Math.floor(v.length/2)]:1;})();
+  sc+=10*Math.min(1,d.meraCount/Math.max(1,medSkus));
+  const health=Math.round(Math.max(0,Math.min(100,sc)));
+
+  const movers=[];
+  if(ts.length>1){
+    const a=ts[ts.length-2],b=ts[ts.length-1];
+    if(!a.empty&&!b.empty&&a.totRev&&b.totRev){
+      const names=new Set([...Object.keys(a.brands),...Object.keys(b.brands)]);
+      for(const n of names){
+        const s0=a.brands[n]?a.brands[n].rev/a.totRev*100:0;
+        const s1=b.brands[n]?b.brands[n].rev/b.totRev*100:0;
+        movers.push({brand:n,delta:s1-s0,share:s1,isMera:isMera(n)});
+      }
+      movers.sort((x,y)=>y.delta-x.delta);
+    }
+  }
+  const newProducts=d.skus.filter(r=>r.isNew).sort((a,b)=>b.revenue-a.revenue);
+  return {seg,d,ts,hist,cur,shareMoM,slope,proj,fair,shareIdx,vp,priceGap,health,movers,newProducts,medSkus};
+}
+
+function evalText(a){
+  const {d,cur,shareMoM,proj,fair,shareIdx,vp}=a;
+  const out=[];
+  if(!d.meraCount){
+    out.push('We do not compete here yet. The segment turns over '+fmtRev(d.skus.reduce((s,r)=>s+r.revenue,0))
+      +' across '+d.totalBrands+' brands at a rev-weighted '+fmt$(d.mktAvg)+'.');
+    if(vp) out.push('Entry would need to land near '+fmt$(vp)+', where the top three brands actually sell.');
+    return out;
+  }
+  const sharePct=cur?cur.share:0;
+  const idxWord=shareIdx>=1.5?'well above':shareIdx>=1?'above':shareIdx>=0.5?'below':'far below';
+  out.push('We hold '+sharePct.toFixed(1)+'% of segment revenue across '+d.meraCount+' SKU'+(d.meraCount>1?'s':'')
+    +' — '+idxWord+' the '+fair.toFixed(1)+'% an average brand would hold among '+d.totalBrands+' competitors.');
+  if(shareMoM!=null){
+    const dir=shareMoM>0.3?'gained':shareMoM<-0.3?'lost':'held';
+    out.push(dir==='held'
+      ? 'Share was flat month over month.'
+      : 'We '+dir+' '+Math.abs(shareMoM).toFixed(1)+'pp of share month over month'
+        +(proj!=null?', and on the current trajectory next month lands near '+proj.toFixed(1)+'%.':'.'));
+  }
+  if(d.meraVsMkt!=null){
+    const pos=d.meraVsMkt>10?'priced well above':d.meraVsMkt>3?'priced above':d.meraVsMkt<-10?'priced well below':d.meraVsMkt<-3?'priced below':'priced in line with';
+    out.push('We are '+pos+' the market at '+fmt$(d.meraAvg)+' vs '+fmt$(d.mktAvg)+'.');
+  }
+  return out;
+}
+
+function priceAdvice(a){
+  const {d,vp,priceGap,shareMoM}=a;
+  if(!d.meraCount||d.meraAvg==null||vp==null) return null;
+  const losing=shareMoM!=null&&shareMoM<-0.3;
+  if(priceGap>8){
+    return {tone:'warn',
+      text:'We sit '+fmtPct(priceGap)+' above the volume price of '+fmt$(vp)+'. '
+        +(losing?'Share is already sliding, which is usually what that premium costs. ':'')
+        +'Holding within ~3% of '+fmt$(vp*1.03)+' would put us where the volume trades without giving away margin.'};
+  }
+  if(priceGap<-8){
+    return {tone:'ok',
+      text:'We are '+fmtPct(Math.abs(priceGap))+' under the volume price of '+fmt$(vp)
+        +'. There is headroom toward '+fmt$(vp*0.97)+' before we look expensive.'};
+  }
+  return {tone:'ok',
+    text:'Our price is within a few points of the '+fmt$(vp)+' volume price — competitively placed; defend share on execution rather than discount.'};
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════
+   OVERVIEW — leadership front page
+═══════════════════════════════════════════ */
+function renderOverviewSafe(){ try{ renderOverview(); }catch(e){ console.error('overview',e); } }
+
+function healthBand(h){
+  return h>=70?{cls:'hb-good',word:'Strong'}
+       :h>=45?{cls:'hb-mid',word:'Watch'}
+       :{cls:'hb-bad',word:'At risk'};
+}
+
+function renderOverview(){
+  const el=document.getElementById('ovContent');
+  if(!el) return;
+  const per=document.getElementById('ovPeriod');
+  if(per) per.textContent=(curMonth?monthLabel(curMonth):'—')+(cmpMonth?' vs '+monthLabel(cmpMonth):'');
+  const roll=document.getElementById('ovRollup');
+
+  if(!segments.length||!Object.keys(monthsData).length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">◉</div><div class="empty-title">Nothing to summarise yet</div>'
+      +'<div class="empty-desc">Upload a month and define segments in Data &amp; Segments.</div></div>';
+    if(roll) roll.innerHTML='';
+    return;
+  }
+
+  const list=segments.map(sg=>{ try{ return analyzeSegment(sg); }catch(e){ console.warn('seg',sg.name,e); return null; } }).filter(a=>a);
+  if(!list.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">◉</div><div class="empty-title">No segments matched this month</div></div>';
+    if(roll) roll.innerHTML='';
+    return;
+  }
+
+  const totRev=list.reduce((s,a)=>s+a.d.skus.reduce((x,r)=>x+r.revenue,0),0);
+  const ourRev=list.reduce((s,a)=>s+a.d.skus.filter(r=>r.isMera).reduce((x,r)=>x+r.revenue,0),0);
+  const atRisk=list.filter(a=>a.health<45).length;
+  const declining=list.filter(a=>a.shareMoM!=null&&a.shareMoM<-0.3).length;
+  const newCount=list.reduce((s,a)=>s+a.newProducts.filter(p=>p.isMera).length,0);
+  const avgHealth=Math.round(list.reduce((s,a)=>s+a.health,0)/list.length);
+  if(roll) roll.innerHTML=
+     ovStat('Segments tracked',list.length,'')
+    +ovStat('Our revenue share',totRev>0?(ourRev/totRev*100).toFixed(1)+'%':'—',fmtRev(ourRev)+' of '+fmtRev(totRev))
+    +ovStat('Avg health',avgHealth,healthBand(avgHealth).word)
+    +ovStat('Losing share',declining,declining?'segment'+(declining>1?'s':'')+' declining MoM':'none')
+    +ovStat('At risk',atRisk,atRisk?'need action':'none')
+    +ovStat('New SKUs live',newCount,'this month');
+
+  const sort=(document.getElementById('ovSort')||{}).value||'health';
+  const segRevOf=a=>a.d.skus.reduce((s,r)=>s+r.revenue,0);
+  list.sort((a,b)=>{
+    if(sort==='rev') return segRevOf(b)-segRevOf(a);
+    if(sort==='share') return (b.cur?b.cur.share:0)-(a.cur?a.cur.share:0);
+    if(sort==='move') return Math.abs(b.shareMoM||0)-Math.abs(a.shareMoM||0);
+    return a.health-b.health;
+  });
+
+  const cats={};
+  for(const a of list){ const c=titleCase(a.seg.subcategory)||'Uncategorized'; (cats[c]=cats[c]||[]).push(a); }
+  let html='';
+  for(const c of Object.keys(cats).sort()){
+    html+='<div class="ov-cat">'+esc(c)+'<span class="ov-cat-n">'+cats[c].length+'</span></div><div class="ov-grid">';
+    for(const a of cats[c]) html+=ovCard(a);
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+
+function ovStat(label,val,sub){
+  return '<div class="ov-stat"><div class="ov-stat-lbl">'+esc(label)+'</div>'
+    +'<div class="ov-stat-val">'+esc(String(val))+'</div>'
+    +(sub?'<div class="ov-stat-sub">'+esc(sub)+'</div>':'')+'</div>';
+}
+
+function ovCard(a){
+  const {seg,d,cur,shareMoM,proj,health,movers,newProducts}=a;
+  const band=healthBand(health);
+  const segRev=d.skus.reduce((s,r)=>s+r.revenue,0);
+  const share=cur?cur.share:0;
+
+  const momHtml=shareMoM==null?'<span class="ov-flat">no prior month</span>'
+    :shareMoM>0.3?'<span class="ov-up">▲ '+shareMoM.toFixed(1)+'pp</span>'
+    :shareMoM<-0.3?'<span class="ov-down">▼ '+Math.abs(shareMoM).toFixed(1)+'pp</span>'
+    :'<span class="ov-flat">flat</span>';
+
+  const pts=a.hist.filter(h=>h).map(h=>h.share);
+  const spark=pts.length>1?ovSpark(pts):'';
+  const lines=evalText(a).map(t=>'<p>'+esc(t)+'</p>').join('');
+  const adv=priceAdvice(a);
+
+  let mv='';
+  if(movers.length){
+    const up=movers[0], down=movers[movers.length-1];
+    const us=movers.find(m=>m.isMera);
+    const bits=[];
+    if(us&&Math.abs(us.delta)>=0.3) bits.push('<li class="'+(us.delta<0?'m-down':'m-up')+'"><b>'+esc(us.brand)+'</b> (ours) '
+      +(us.delta<0?'lost ':'gained ')+Math.abs(us.delta).toFixed(1)+'pp → '+us.share.toFixed(1)+'%</li>');
+    if(up&&up.delta>=0.5&&!up.isMera) bits.push('<li class="m-up"><b>'+esc(up.brand)+'</b> gained '+up.delta.toFixed(1)+'pp → '+up.share.toFixed(1)+'%</li>');
+    if(down&&down.delta<=-0.5&&!down.isMera) bits.push('<li class="m-down"><b>'+esc(down.brand)+'</b> lost '+Math.abs(down.delta).toFixed(1)+'pp → '+down.share.toFixed(1)+'%</li>');
+    if(bits.length) mv='<div class="ov-block"><div class="ov-block-t">Share movers</div><ul class="ov-list">'+bits.join('')+'</ul></div>';
+  }
+
+  let np='';
+  const ourNew=newProducts.filter(p=>p.isMera), compNew=newProducts.filter(p=>!p.isMera);
+  if(ourNew.length||compNew.length){
+    let bits='';
+    for(const p of ourNew.slice(0,3)){
+      const vs=d.mktAvg>0?((p.price-d.mktAvg)/d.mktAvg)*100:null;
+      bits+='<li class="m-new"><b>'+esc(truncate(p.product,42))+'</b> — '+fmt$(p.price)
+        +(vs!=null?' ('+fmtPct(vs)+' vs mkt)':'')+', '+fmtRev(p.revenue)+' in month 1 · '+(p.revShare*100).toFixed(1)+'% share</li>';
+    }
+    if(compNew.length) bits+='<li class="m-flat">'+compNew.length+' competitor launch'+(compNew.length>1?'es':'')+' this month</li>';
+    if(bits) np='<div class="ov-block"><div class="ov-block-t">New products</div><ul class="ov-list">'+bits+'</ul></div>';
+  }
+
+  return '<div class="ov-card '+band.cls+'">'
+    +'<div class="ov-card-head" onclick="jumpToSegment('+JSON.stringify(seg.id)+')" title="Open this segment">'
+      +'<div class="ov-card-title">'+esc(seg.name)+'</div>'
+      +'<div class="ov-card-sub">'+esc(describeFilters(seg))+'</div></div>'
+    +'<div class="ov-health"><div class="ov-health-row"><span class="ov-health-word">'+band.word+'</span>'
+      +'<span class="ov-health-num">'+health+'<i>/100</i></span></div>'
+      +'<div class="ov-bar"><div class="ov-bar-fill" style="width:'+health+'%"></div></div></div>'
+    +'<div class="ov-metrics">'
+      +'<div class="ov-metric"><div class="ov-m-lbl">Our share</div><div class="ov-m-val">'+share.toFixed(1)+'%</div><div class="ov-m-sub">'+momHtml+'</div></div>'
+      +'<div class="ov-metric"><div class="ov-m-lbl">Next month</div><div class="ov-m-val">'+(proj!=null?proj.toFixed(1)+'%':'—')+'</div><div class="ov-m-sub">projected</div></div>'
+      +'<div class="ov-metric"><div class="ov-m-lbl">Our price</div><div class="ov-m-val">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</div><div class="ov-m-sub">'+(d.meraVsMkt!=null?fmtPct(d.meraVsMkt)+' vs mkt':fmt$(d.mktAvg)+' mkt')+'</div></div>'
+      +'<div class="ov-metric"><div class="ov-m-lbl">Segment</div><div class="ov-m-val">'+fmtRev(segRev)+'</div><div class="ov-m-sub">'+d.totalBrands+' brands</div></div>'
+    +'</div>'
+    +spark
+    +'<div class="ov-eval"><div class="ov-block-t">Evaluation</div>'+lines+'</div>'
+    +(adv?'<div class="ov-advice '+(adv.tone==='warn'?'warn':'')+'"><div class="ov-block-t">Price position</div><p>'+esc(adv.text)+'</p></div>':'')
+    +mv+np
+    +'</div>';
+}
+
+function ovSpark(pts){
+  const w=240,h=34,mn=Math.min(...pts),mx=Math.max(...pts),rng=(mx-mn)||1;
+  const step=pts.length>1?w/(pts.length-1):w;
+  const xy=pts.map((p,i)=>[i*step,h-2-((p-mn)/rng)*(h-6)]);
+  const dpath=xy.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=dpath+' L'+w+' '+h+' L0 '+h+' Z';
+  const rising=pts[pts.length-1]>=pts[0];
+  const col=rising?'var(--success)':'var(--danger)';
+  return '<div class="ov-spark"><svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'
+    +'<path d="'+area+'" fill="'+col+'" opacity=".10"/>'
+    +'<path d="'+dpath+'" fill="none" stroke="'+col+'" stroke-width="1.6" stroke-linejoin="round"/>'
+    +'<circle cx="'+xy[xy.length-1][0].toFixed(1)+'" cy="'+xy[xy.length-1][1].toFixed(1)+'" r="2.6" fill="'+col+'"/>'
+    +'</svg><span class="ov-spark-lbl">share trend · '+pts.length+' mo</span></div>';
+}
+
+function jumpToSegment(id){
+  const sg=segments.find(x=>x.id===id);
+  if(sg) activeCat=titleCase(sg.subcategory)||'Uncategorized';
+  focusedSeg=id;
+  showTab('ladder');
+  renderLadder();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function exportOverviewPdf(){
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'letter'});
+    const W=doc.internal.pageSize.getWidth();
+    let y=54;
+    doc.setFont('helvetica','bold');doc.setFontSize(16);
+    doc.text('Portfolio Health — '+(curMonth?monthLabel(curMonth):''),40,y);y+=22;
+    const list=segments.map(sg=>{try{return analyzeSegment(sg);}catch(e){return null;}}).filter(a=>a).sort((a,b)=>a.health-b.health);
+    for(const a of list){
+      if(y>700){doc.addPage();y=54;}
+      doc.setFont('helvetica','bold');doc.setFontSize(11);
+      doc.text(a.seg.name+'  ['+a.health+'/100 '+healthBand(a.health).word+']',40,y);y+=14;
+      doc.setFont('helvetica','normal');doc.setFontSize(9);
+      for(const t of evalText(a)){
+        for(const ln of doc.splitTextToSize(t,W-80)){ if(y>740){doc.addPage();y=54;} doc.text(ln,40,y); y+=12; }
+      }
+      const adv=priceAdvice(a);
+      if(adv) for(const ln of doc.splitTextToSize('Price: '+adv.text,W-80)){ if(y>740){doc.addPage();y=54;} doc.text(ln,40,y); y+=12; }
+      y+=10;
+    }
+    doc.save('portfolio-health-'+(curMonth||'')+'.pdf');
+    toast('PDF exported','success');
+  }catch(e){ toast('PDF failed: '+(e.message||e),'error'); }
 }
 </script>
 
