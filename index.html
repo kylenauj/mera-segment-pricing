@@ -271,10 +271,61 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .miss-why{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
 .miss-more{font-size:10.5px;color:var(--muted);margin-top:5px}
 
+/* ── Summary panel (all segments at a glance) ── */
+.sp-card{padding:0;overflow:hidden;margin-bottom:22px}
+.sp-card .card-title{padding:12px 14px 10px}
+.sp-hint{font-family:var(--font);font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted);margin-left:6px}
+.sp-scroll{overflow-x:auto}
+.sp-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.sp-table th{font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+  padding:7px 10px;text-align:left;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);white-space:nowrap}
+.sp-table th.r,.sp-table td.r{text-align:right}
+.sp-table td{padding:8px 10px;border-bottom:1px solid var(--bsoft);white-space:nowrap;font-family:var(--mono);color:var(--fg2)}
+.sp-table tbody tr{cursor:pointer;transition:background .12s}
+.sp-table tbody tr:hover td{background:var(--surface)}
+.sp-name{font-family:var(--font)!important;font-weight:600;color:var(--fg)!important;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.sp-cat{font-family:var(--font)!important;color:var(--muted)!important;font-size:11px}
+.sp-ofcat b{color:var(--accent);font-weight:500}
+.sp-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:6px;vertical-align:middle}
+.sp-dot.sp-risk{background:var(--danger)}
+.sp-dot.sp-opp{background:var(--success)}
+.sp-h{display:flex;align-items:center;gap:7px;min-width:96px}
+.sp-bar{flex:1;height:5px;border-radius:var(--pill);background:var(--faint);overflow:hidden;min-width:44px}
+.sp-bar i{display:block;height:100%;border-radius:var(--pill)}
+.sp-bar.hb-good i{background:var(--success)}
+.sp-bar.hb-mid i{background:var(--accent)}
+.sp-bar.hb-bad i{background:var(--danger)}
+.sp-h span{font-size:10px;color:var(--muted);min-width:18px;text-align:right}
+
+/* ── Collapsed card detail ── */
+.ov-top{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:9px 11px;border-radius:var(--r);font-size:11.5px;line-height:1.5;color:var(--fg2)}
+.ov-top b{color:var(--fg);font-weight:600}
+.ov-top-i{flex-shrink:0;font-size:11px;line-height:1.5}
+.ov-top-risk{background:var(--dbg);border:1px solid rgba(255,107,92,.2)}
+.ov-top-risk .ov-top-i{color:var(--danger)}
+.ov-top-opp{background:var(--sbg);border:1px solid rgba(61,220,138,.2)}
+.ov-top-opp .ov-top-i{color:var(--success)}
+.ov-top-note{background:var(--faint);border:1px solid var(--border)}
+.ov-toggle{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--border);color:var(--muted);
+  border-radius:var(--r);padding:6px;cursor:pointer;font-family:var(--mono);font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.12em;transition:all .15s}
+.ov-toggle:hover{color:var(--accent);border-color:var(--accent);background:var(--asoft)}
+
+/* ── Context note ── */
+.ov-note{margin-top:11px;padding:10px 12px;border-radius:var(--r);background:var(--faint);border:1px solid var(--border);border-left:3px solid var(--accent)}
+.note-quote{font-size:12px;line-height:1.55;color:var(--fg2);font-style:italic}
+.note-rec{list-style:none;display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.note-rec li{font-size:11.5px;line-height:1.5;color:var(--fg2);padding-left:16px;position:relative}
+.note-rec li:before{position:absolute;left:0;top:0;font-family:var(--mono);font-size:10px}
+.note-rec li.nr-yes:before{content:'\2713';color:var(--success)}
+.note-rec li.nr-no:before{content:'\2717';color:var(--danger)}
+.note-rec li.nr-flat:before{content:'\2248';color:var(--warn)}
+.note-rec li.nr-na:before{content:'?';color:var(--muted)}
+
 /* ── Sizing strip, share deltas, risk + opportunity ── */
 .ov-sizing{display:flex;flex-wrap:wrap;gap:4px 14px;padding:9px 0 2px;font-family:var(--mono);font-size:10px;color:var(--muted)}
 .ov-sizing b{color:var(--fg2);font-weight:500}
-.dstrip{display:flex;gap:6px;flex-wrap:wrap}
+.dstrip{display:flex;gap:6px;flex-wrap:wrap;padding-top:9px}
 .dchip{display:flex;align-items:center;gap:6px;padding:4px 9px;border-radius:var(--pill);border:1px solid var(--border);background:var(--surface)}
 .dchip-l{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .dchip-v{font-family:var(--mono);font-size:11px;font-weight:500}
@@ -310,7 +361,7 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .ov-cat-n{font-size:9px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--pill);padding:1px 7px}
 .ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:14px}
 @media(max-width:560px){.ov-grid{grid-template-columns:1fr}}
-.ov-card{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--muted);border-radius:var(--rm);padding:14px 16px 16px;box-shadow:var(--sh)}
+.ov-card{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--muted);border-radius:var(--rm);padding:13px 15px 14px;box-shadow:var(--sh);display:flex;flex-direction:column}
 .ov-card.hb-good{border-left-color:var(--success)}
 .ov-card.hb-mid{border-left-color:var(--warn)}
 .ov-card.hb-bad{border-left-color:var(--danger)}
@@ -334,7 +385,7 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .ov-m-val{font-family:var(--mono);font-size:17px;font-weight:500;margin-top:3px;letter-spacing:-.01em}
 .ov-m-sub{font-family:var(--mono);font-size:9.5px;color:var(--fg2);margin-top:1px}
 .ov-up{color:var(--success)}.ov-down{color:var(--danger)}.ov-flat{color:var(--muted)}
-.ov-spark{display:flex;align-items:center;gap:9px;padding:9px 0 4px}
+.ov-spark{display:flex;align-items:center;gap:9px;padding:7px 0 2px}
 .ov-spark svg{width:100%;height:34px;flex:1}
 .ov-spark-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap}
 .ov-block-t{font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:5px}
@@ -397,6 +448,10 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 .field label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
 .field input,.field select{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;font:inherit;font-size:12px;max-width:none}
 .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px}
+textarea{background:var(--surface);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font:inherit;font-size:12px;width:100%;resize:vertical;line-height:1.5;font-family:var(--font)}
+textarea:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--accent)}
+.field-wide{grid-column:1/-1}
+.lbl-hint{text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted);font-size:10px}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .field .hint{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
 .seg-pills{display:grid;gap:5px;margin-top:12px}
@@ -572,6 +627,7 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
         <option value="share">Sort: our share</option>
         <option value="move">Sort: biggest share move</option>
       </select>
+      <button class="btn btn-ghost btn-sm" onclick="expandAllOv(ovOpen.size===0)">Expand all</button>
       <button class="btn btn-ghost btn-sm" onclick="exportOverviewPdf()">Export PDF</button>
     </div>
   </div>
@@ -730,6 +786,10 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;color:var(--fg2);font-weight:500">
             <input type="checkbox" id="segManualOnly" style="width:auto"> Our SKUs join this segment by manual assignment only (no auto-match)
           </label>
+        </div>
+        <div class="field field-wide">
+          <label>Context notes <span class="lbl-hint">— folded into the Overview evaluation and checked against the data</span></label>
+          <textarea id="segNotes" rows="3" placeholder="e.g. Ours are 60+ THC, creating a new high-potency space in the 1g blunt category, a growing segment."></textarea>
         </div>
         <button class="btn btn-accent" style="width:100%;margin-top:4px" id="segAddBtn" onclick="addSegment()">+ Add Segment</button>
         <button class="btn btn-ghost" style="width:100%;margin-top:6px;display:none" id="segCancelBtn" onclick="cancelEdit()">Cancel edit</button>
@@ -902,6 +962,7 @@ function migrateSegment(s){
     include:Array.isArray(s.include)?s.include:(s.keyword?[String(s.keyword).toLowerCase()]:[]),
     exclude:Array.isArray(s.exclude)?s.exclude:[],
     manualOnly:!!s.manualOnly,
+    notes:s.notes||'',
   };
 }
 async function savePresets(){
@@ -1517,12 +1578,14 @@ function readSegForm(){
     include:parseKw(document.getElementById('segInclude').value),
     exclude:parseKw(document.getElementById('segExclude').value),
     manualOnly:document.getElementById('segManualOnly').checked,
+    notes:document.getElementById('segNotes').value.trim(),
   };
 }
 function clearSegForm(){
   ['segName','segInclude','segExclude'].forEach(id=>document.getElementById(id).value='');
   ['segBrandGrp','segSubcat','segSubsub','segContents','segUnitsPP'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('segManualOnly').checked=false;
+  document.getElementById('segNotes').value='';
 }
 function addSegment(){
   const s=readSegForm();
@@ -1556,6 +1619,7 @@ function editSegment(id){
   document.getElementById('segInclude').value=(s.include||[]).join(', ');
   document.getElementById('segExclude').value=(s.exclude||[]).join(', ');
   document.getElementById('segManualOnly').checked=!!s.manualOnly;
+  document.getElementById('segNotes').value=s.notes||'';
   document.getElementById('segBuilderTitle').textContent='Edit Segment';
   document.getElementById('segAddBtn').textContent='✓ Save Changes';
   document.getElementById('segCancelBtn').style.display='';
@@ -2980,7 +3044,15 @@ function priceAdvice(a){
   const {d,vp,priceGap,shareMoM}=a;
   if(!d.meraCount||d.meraAvg==null||vp==null) return null;
   const losing=shareMoM!=null&&shareMoM<-0.3;
+  const sig=noteSignals(a.seg.notes);
   if(priceGap>8){
+    // A deliberate premium is a strategy, not an error — say what it costs instead.
+    if(sig&&sig.premium){
+      return {tone:'warn',
+        text:'We sit '+fmtPct(priceGap)+' above the '+fmt$(vp)+' volume price. Your note frames that premium as deliberate, so the question is not whether to cut but whether it converts: '
+          +(losing?'share fell '+Math.abs(shareMoM).toFixed(1)+'pp this month, so it currently is not — either the potency story needs to land harder at shelf, or the gap needs narrowing toward '+fmt$(vp*1.05)+'.'
+                  :'share is holding, which says the premium is being paid. Keep it and defend on the potency claim.')};
+    }
     return {tone:'warn',
       text:'We sit '+fmtPct(priceGap)+' above the volume price of '+fmt$(vp)+'. '
         +(losing?'Share is already sliding, which is usually what that premium costs. ':'')
@@ -2988,7 +3060,7 @@ function priceAdvice(a){
   }
   if(priceGap<-8){
     return {tone:'ok',
-      text:'We are '+fmtPct(Math.abs(priceGap))+' under the volume price of '+fmt$(vp)
+      text:'We are '+Math.abs(priceGap).toFixed(1)+'% under the volume price of '+fmt$(vp)
         +'. There is headroom toward '+fmt$(vp*0.97)+' before we look expensive.'};
   }
   return {tone:'ok',
@@ -3000,6 +3072,7 @@ function priceAdvice(a){
 /* ═══════════════════════════════════════════
    OVERVIEW — leadership front page
 ═══════════════════════════════════════════ */
+const ovOpen=new Set();
 function renderOverviewSafe(){ try{ renderOverview(); }catch(e){ console.error('overview',e); } }
 
 function healthBand(h){
@@ -3061,15 +3134,54 @@ function renderOverview(){
     return a.health-b.health;
   });
 
+  let html=ovSummaryPanel(list);
+
   const cats={};
   for(const a of list){ const c=titleCase(a.seg.subcategory)||'Uncategorized'; (cats[c]=cats[c]||[]).push(a); }
-  let html='';
   for(const c of Object.keys(cats).sort()){
     html+='<div class="ov-cat">'+esc(c)+'<span class="ov-cat-n">'+cats[c].length+'</span></div><div class="ov-grid">';
     for(const a of cats[c]) html+=ovCard(a);
     html+='</div>';
   }
   el.innerHTML=html;
+}
+
+/* Dense at-a-glance table: every segment on one screen, sized against
+   its own category, before anyone scrolls into the detail cards. */
+function ovSummaryPanel(list){
+  const rows=list.map(a=>{
+    const d=a.d, band=healthBand(a.health);
+    const segRev=a.sizing.segRev;
+    const cat=titleCase(a.seg.subcategory)||'—';
+    const ofCat=a.sizing.ofSubcat!=null?a.sizing.ofSubcat.toFixed(1)+'%':'—';
+    const share=a.cur?a.cur.share:0;
+    const mm=a.shareDeltas.m1, m3=a.shareDeltas.m3;
+    const cell=dd=>dd==null?'<span class="c-mut">—</span>'
+      :'<span class="'+(dd.pp>0.3?'c-up':dd.pp<-0.3?'c-down':'c-mut')+'">'+(dd.pp>0?'+':'')+dd.pp.toFixed(1)+'</span>';
+    const nRisk=(a.risks||[]).filter(r=>r.sev==='high').length;
+    const nOpp=(a.opps||[]).filter(o=>o.kind==='launch-good').length;
+    return '<tr onclick="jumpToSegment('+JSON.stringify(a.seg.id)+')" title="Open this segment">'
+      +'<td class="sp-name">'+esc(a.seg.name)
+        +(nRisk?'<span class="sp-dot sp-risk" title="'+nRisk+' high risk"></span>':'')
+        +(nOpp?'<span class="sp-dot sp-opp" title="'+nOpp+' launch win"></span>':'')+'</td>'
+      +'<td class="sp-cat">'+esc(cat)+'</td>'
+      +'<td class="r">'+fmtRev(segRev)+'</td>'
+      +'<td class="r sp-ofcat"><b>'+ofCat+'</b></td>'
+      +'<td class="r">'+share.toFixed(1)+'%</td>'
+      +'<td class="r">'+cell(mm)+'</td>'
+      +'<td class="r">'+cell(m3)+'</td>'
+      +'<td class="r">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</td>'
+      +'<td class="r">'+(d.meraVsMkt!=null?'<span class="'+(d.meraVsMkt>1?'c-up':d.meraVsMkt<-1?'c-down':'c-mut')+'">'+fmtPct(d.meraVsMkt)+'</span>':'—')+'</td>'
+      +'<td class="sp-h"><div class="sp-bar '+band.cls+'"><i style="width:'+a.health+'%"></i></div><span>'+a.health+'</span></td>'
+      +'</tr>';
+  }).join('');
+  return '<div class="card sp-card"><div class="card-title">All segments · '+list.length
+    +' <span class="sp-hint">sized against their own category · click a row to open</span></div>'
+    +'<div class="sp-scroll"><table class="sp-table"><thead><tr>'
+    +'<th>Segment</th><th>Category</th><th class="r">Size</th><th class="r">% of cat.</th>'
+    +'<th class="r">Our share</th><th class="r">MoM</th><th class="r">3-mo</th>'
+    +'<th class="r">Our price</th><th class="r">vs Mkt</th><th>Health</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 function ovStat(label,val,sub){
@@ -3130,25 +3242,73 @@ function ovCard(a){
       +'<div class="ov-metric"><div class="ov-m-lbl">Our share</div><div class="ov-m-val">'+share.toFixed(1)+'%</div><div class="ov-m-sub">'+momHtml+'</div></div>'
       +'<div class="ov-metric"><div class="ov-m-lbl">Next month</div><div class="ov-m-val">'+(proj!=null?proj.toFixed(1)+'%':'—')+'</div><div class="ov-m-sub">projected</div></div>'
       +'<div class="ov-metric"><div class="ov-m-lbl">Our price</div><div class="ov-m-val">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</div><div class="ov-m-sub">'+(d.meraVsMkt!=null?fmtPct(d.meraVsMkt)+' vs mkt':fmt$(d.mktAvg)+' mkt')+'</div></div>'
-      +'<div class="ov-metric"><div class="ov-m-lbl">Segment size</div><div class="ov-m-val">'+fmtRev(segRev)+'</div><div class="ov-m-sub">'
-        +(a.sizing.ofMarket!=null?a.sizing.ofMarket.toFixed(1)+'% of market':d.totalBrands+' brands')+'</div></div>'
+      +'<div class="ov-metric"><div class="ov-m-lbl">Segment size</div><div class="ov-m-val">'+fmtRev(segRev)+'</div><div class="ov-m-sub">'+esc(catShareLabel(a))+'</div></div>'
     +'</div>'
     +'<div class="ov-sizing">'
-      +'<span><b>'+(a.sizing.ofMarket!=null?a.sizing.ofMarket.toFixed(1)+'%':'—')+'</b> of tracked market</span>'
-      +(a.sizing.ofSubcat!=null?'<span><b>'+a.sizing.ofSubcat.toFixed(1)+'%</b> of '+esc(titleCase(seg.subcategory)||'category')+'</span>':'')
+      +(a.sizing.ofMarket!=null?'<span><b>'+a.sizing.ofMarket.toFixed(1)+'%</b> of all tracked</span>':'')
       +'<span><b>'+d.totalBrands+'</b> brands · ~'+(a.effBrands||0).toFixed(1)+' effective</span>'
       +(a.segGrowth!=null?'<span>segment '+(a.segGrowth>=0?'grew ':'shrank ')+'<b>'+Math.abs(a.segGrowth).toFixed(0)+'%</b> MoM</span>':'')
     +'</div>'
-    +'<div class="ov-block-t" style="margin-top:11px">Our share change</div>'
     +shareDeltaStrip(a)
     +spark
-    +'<div class="ov-eval"><div class="ov-block-t">Evaluation</div>'+lines+'</div>'
-    +(adv?'<div class="ov-advice '+(adv.tone==='warn'?'warn':'')+'"><div class="ov-block-t">Price position</div><p>'+esc(adv.text)+'</p></div>':'')
-    +riskBlock(a)+oppBlock(a)
-    +mv+np
+    +topLine(a)
+    +'<div class="ov-more" id="ovm-'+cssId(seg.id)+'" style="display:'+(ovOpen.has(seg.id)?'block':'none')+'">'
+      +'<div class="ov-eval"><div class="ov-block-t">Evaluation</div>'+lines+'</div>'
+      +noteBlock(a)
+      +(adv?'<div class="ov-advice '+(adv.tone==='warn'?'warn':'')+'"><div class="ov-block-t">Price position</div><p>'+esc(adv.text)+'</p></div>':'')
+      +riskBlock(a)+oppBlock(a)
+      +mv+np
+    +'</div>'
+    +'<button class="ov-toggle" onclick="toggleOvCard('+JSON.stringify(seg.id)+')">'
+      +(ovOpen.has(seg.id)?'Hide detail':'Detail'+detailCount(a))+'</button>'
     +'</div>';
 }
 
+/* A collapsed card still needs to say the single most important thing. */
+function topLine(a){
+  const hiRisk=(a.risks||[]).find(r=>r.sev==='high');
+  const win=(a.opps||[]).find(o=>o.kind==='launch-good');
+  const pick=hiRisk||win||(a.risks||[])[0];
+  if(!pick) return '';
+  const kind=hiRisk?'risk':win?'opp':'note';
+  const icon=kind==='risk'?'⚠':kind==='opp'?'✦':'•';
+  return '<div class="ov-top ov-top-'+kind+'"><span class="ov-top-i">'+icon+'</span>'
+    +'<span><b>'+esc(pick.title)+'.</b> '+esc(truncate(pick.text,130))+'</span></div>';
+}
+function detailCount(a){
+  const n=(a.risks||[]).length+(a.opps||[]).length+((a.seg.notes||'').trim()?1:0);
+  return n?' ('+n+')':'';
+}
+function toggleOvCard(id){
+  ovOpen.has(id)?ovOpen.delete(id):ovOpen.add(id);
+  const el=document.getElementById('ovm-'+cssId(id));
+  if(el) el.style.display=ovOpen.has(id)?'block':'none';
+  const btn=el&&el.nextElementSibling;
+  if(btn&&btn.classList.contains('ov-toggle')) btn.textContent=ovOpen.has(id)?'Hide detail':'Detail';
+}
+function expandAllOv(open){
+  if(open) segments.forEach(sg=>ovOpen.add(sg.id)); else ovOpen.clear();
+  renderOverview();
+}
+
+/* The headline sizing number: how big this segment is inside its own
+   category. "0.8% of market" is noise; "10% of Pre-Rolled" is the number
+   that tells leadership how big a pond we're fishing in. */
+function catShareLabel(a){
+  const cat=titleCase(a.seg.subcategory||'');
+  if(a.sizing.ofSubcat!=null&&cat) return a.sizing.ofSubcat.toFixed(1)+'% of '+cat;
+  if(a.sizing.ofMarket!=null) return a.sizing.ofMarket.toFixed(1)+'% of market';
+  return a.d.totalBrands+' brands';
+}
+function noteBlock(a){
+  const note=(a.seg.notes||'').trim();
+  if(!note) return '';
+  const rec=noteReconcile(a);
+  return '<div class="ov-note"><div class="ov-block-t">Context · your note</div>'
+    +'<p class="note-quote">'+esc(note)+'</p>'
+    +(rec.length?'<ul class="note-rec">'+rec.map(r=>'<li class="nr-'+r.v+'">'+esc(r.t)+'</li>').join('')+'</ul>':'')
+    +'</div>';
+}
 function riskBlock(a){
   if(!a.risks||!a.risks.length) return '';
   return '<div class="ov-risk"><div class="ov-block-t">⚠ Risk'+(a.risks.length>1?'s':'')+'</div><ul class="risk-list">'
@@ -3202,6 +3362,12 @@ function exportOverviewPdf(){
       doc.setFont('helvetica','normal');doc.setFontSize(9);
       for(const t of evalText(a)){
         for(const ln of doc.splitTextToSize(t,W-80)){ if(y>740){doc.addPage();y=54;} doc.text(ln,40,y); y+=12; }
+      }
+      if((a.seg.notes||'').trim()){
+        doc.setFont('helvetica','italic');
+        for(const ln of doc.splitTextToSize('Note: '+a.seg.notes.trim(),W-80)){ if(y>740){doc.addPage();y=54;} doc.text(ln,40,y); y+=12; }
+        doc.setFont('helvetica','normal');
+        for(const r of noteReconcile(a)) for(const ln of doc.splitTextToSize('  → '+r.t,W-80)){ if(y>740){doc.addPage();y=54;} doc.text(ln,40,y); y+=12; }
       }
       const adv=priceAdvice(a);
       if(adv) for(const ln of doc.splitTextToSize('Price: '+adv.text,W-80)){ if(y>740){doc.addPage();y=54;} doc.text(ln,40,y); y+=12; }
@@ -3361,7 +3527,7 @@ function detectRisks(a){
   // The pool itself is shrinking
   if(segGrowth!=null&&segGrowth<=-10)
     out.push({sev:'med',title:'Segment contracting',
-      text:'Segment revenue fell '+fmtPct(segGrowth)+' month over month — share gains here are worth less than they look.'});
+      text:'Segment revenue fell '+Math.abs(segGrowth).toFixed(1)+'% month over month — share gains here are worth less than they look.'});
   // Thin presence in a concentrated market
   if(effBrands&&cur&&cur.share<(100/effBrands)*0.25&&a.sizing.ofMarket>=0.5)
     out.push({sev:'med',title:'Sub-scale in a concentrated segment',
@@ -3423,6 +3589,77 @@ function shareDeltaStrip(a){
     +deltaChip('3-mo',a.shareDeltas.m3)
     +deltaChip('6-mo',a.shareDeltas.m6)
     +'</div>';
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONTEXT NOTES
+   Your note is claim + intent the data can't see. The engine
+   reads it for claims it CAN test, then reconciles: agrees,
+   disagrees, or stays silent. It never restates a claim as
+   though the numbers proved it.
+   ═══════════════════════════════════════════════════════════ */
+function noteSignals(note){
+  const t=String(note||'').toLowerCase();
+  if(!t) return null;
+  return {
+    text:String(note).trim(),
+    growth:/\b(grow|growing|growth|expanding|emerging|rising|accelerat)/.test(t),
+    decline:/\b(declin|shrink|fading|contracting|softening)/.test(t),
+    premium:/\b(premium|potency|potent|top ?shelf|craft|strong|high ?thc)/.test(t)||/\d{2}\s*\+?\s*%?\s*thc/.test(t)||/\b\d{2}\+\b/.test(t),
+    value:/\b(value|budget|entry|price ?fighter|affordab)/.test(t),
+    newspace:/\b(new|first|only|creating|pioneer|innovat|whitespace|white ?space)/.test(t),
+  };
+}
+
+/* Test the note's claims against what the month actually shows */
+function noteReconcile(a){
+  const sig=noteSignals(a.seg.notes);
+  if(!sig) return [];
+  const out=[], d=a.d;
+
+  if(sig.growth||sig.decline){
+    if(a.segGrowth==null){
+      out.push({v:'na',t:'Your note describes the segment\u2019s direction; there is no prior month loaded to test it yet.'});
+    }else if(sig.growth&&a.segGrowth>=2){
+      out.push({v:'yes',t:'Your note calls this a growing segment and the data agrees \u2014 segment revenue is up '+fmtPct(a.segGrowth)+' month over month.'});
+    }else if(sig.growth&&a.segGrowth<=-2){
+      out.push({v:'no',t:'Your note calls this a growing segment, but segment revenue fell '+Math.abs(a.segGrowth).toFixed(1)+'% this month. Worth re-checking before it goes in front of leadership.'});
+    }else if(sig.growth){
+      out.push({v:'flat',t:'Your note calls this growing; the segment was broadly flat this month ('+fmtPct(a.segGrowth)+').'});
+    }
+  }
+
+  if(sig.premium&&d.meraVsMkt!=null){
+    const holding=a.shareMoM==null?null:a.shareMoM>=-0.3;
+    if(d.meraVsMkt>3){
+      out.push({v:holding===false?'no':'yes',
+        t:'Your note frames our position as high-potency/premium, which the pricing reflects: '+fmtPct(d.meraVsMkt)+' above market at '+fmt$(d.meraAvg)+'. '
+          +(holding===false
+            ? 'Share is slipping, so the premium is not currently converting \u2014 the question is whether potency is being communicated at shelf.'
+            : holding===true
+              ? 'Share is holding at that premium, which supports the positioning.'
+              : 'No prior month loaded to judge whether it is converting.')});
+    }else if(d.meraVsMkt<-3){
+      out.push({v:'no',t:'Your note frames this as a premium/high-potency play, but we are priced '+Math.abs(d.meraVsMkt).toFixed(1)+'% below market at '+fmt$(d.meraAvg)+'. We may be under-charging for the potency claim.'});
+    }
+  }
+
+  if(sig.value&&d.meraVsMkt!=null&&d.meraVsMkt>5){
+    out.push({v:'no',t:'Your note positions this as value/entry, yet we sit '+fmtPct(d.meraVsMkt)+' above market at '+fmt$(d.meraAvg)+'.'});
+  }
+
+  if(sig.newspace){
+    const ourNew=a.newProducts.filter(p=>p.isMera);
+    if(ourNew.length){
+      const best=ourNew[0];
+      out.push({v:'yes',t:'Your note describes opening new space, and '+ourNew.length+' of our SKUs launched here this month \u2014 "'+truncate(best.product,40)+'" took '+fmtRev(best.revenue)+' ('+(best.revShare*100).toFixed(1)+'% share) out of the gate.'});
+    }else if(a.effBrands&&a.effBrands<=6){
+      out.push({v:'yes',t:'Your note describes a new/uncontested space; revenue does concentrate into only ~'+a.effBrands.toFixed(1)+' effective competitors, so the field is genuinely thin.'});
+    }
+  }
+  return out;
 }
 </script>
 
