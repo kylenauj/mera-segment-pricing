@@ -257,6 +257,9 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}
 .sc-item label{display:block;font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
 .sc-item label b{color:var(--accent);font-size:12px;margin-left:4px}
+.sc-raw{float:right;font-style:normal;color:var(--muted);font-size:10px}
+.sc-dirty{margin-right:auto;font-family:var(--mono);font-size:10px;color:transparent}
+.sc-dirty.on{color:var(--warn)}
 .sc-item input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
 .sc-hint{font-size:10px;color:var(--muted);line-height:1.45;margin-top:4px}
 .sc-tune{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;padding-top:14px;border-top:1px solid var(--bsoft)}
@@ -273,6 +276,15 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .sc-table td i{font-style:normal;color:var(--muted);font-size:9px}
 .sc-name{font-family:var(--font)!important;color:var(--fg)!important;font-weight:600}
 .sc-band{font-size:10px;color:var(--muted)}
+
+/* ── scoring: benchmark, presets, curve ── */
+.sc-bench{padding:12px 0;border-top:1px solid var(--bsoft)}
+.sc-bench label{display:block;font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.sc-bench select{max-width:260px}
+.sc-presets{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.sc-curve{padding:6px 0 12px}
+.sc-curve svg{width:100%;height:70px;display:block;background:var(--inset);border:1px solid var(--border);border-radius:var(--r)}
+.sc-curve-x{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:4px}
 
 /* ── SKU finder ── */
 .fd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;margin-bottom:9px}
@@ -909,10 +921,49 @@ const DEFAULT_SCORING={
   wShare:40, wTrend:30, wPrice:20, wPresence:10,   // weights, normalised to 100
   shareTarget:2,     // full marks at this multiple of a meaningful player's share
   trendRange:2,      // pp swing that spans the full trend range
-  priceFree:5,       // % from the volume price that costs nothing
-  priceRange:15,     // % beyond the free band where the score reaches zero
+  /* Price is scored against a chosen benchmark on an ASYMMETRIC curve.
+     Sitting a little under the benchmark is the sweet spot; being over it
+     costs share fast, being far under it just gives away margin. */
+  priceBenchmark:'avg',      // 'volume' | 'avg' | 'median'
+  priceUndercutOk:true,      // at or below the benchmark scores full marks, full stop
+  priceSweetLow:-5,          // (only used when priceUndercutOk is off)
+  priceSweetHigh:0,          // % above benchmark still earning full marks
+  priceOverRange:15,         // % over the sweet spot where the score hits zero
+  priceUnderRange:30,        // % under before scoring drops (undercut penalty, off by default)
+  wMomentum:0,               // revenue + 6-month share direction
+  momentumRange:3,           // pp of 6-month share change spanning the full range
+  revRange:30,               // % change in our revenue spanning the full range
   bandStrong:70, bandWatch:45,
 };
+const PRICE_BENCHMARKS={
+  volume:{label:'volume price',  hint:'rev-weighted price of the top 3 revenue competitors'},
+  avg:   {label:'market average',hint:'revenue-weighted average price of the whole segment'},
+  median:{label:'market median', hint:'price at which the 50th dollar of revenue trades'},
+};
+/* Asymmetric price score, 0..1.
+   With priceUndercutOk on, anything at or under the benchmark is simply good:
+   a healthy undercut is the position we want, not a deviation to be corrected. */
+function priceScore(gap,W){
+  if(gap==null) return 0.5;
+  const hi=Math.max(W.priceSweetLow,W.priceSweetHigh);
+  if(gap<=hi){
+    if(W.priceUndercutOk) return 1;
+    const lo=Math.min(W.priceSweetLow,W.priceSweetHigh);
+    if(gap>=lo) return 1;
+    return Math.max(0,1-(lo-gap)/Math.max(1,W.priceUnderRange));
+  }
+  return Math.max(0,1-(gap-hi)/Math.max(1,W.priceOverRange));
+}
+/* Momentum: where our revenue and share have been heading over the long window.
+   Kept separate from the MoM trend so a slow bleed cannot hide behind one good month. */
+function momentumScore(a,W){
+  const cl=x=>Math.max(0,Math.min(1,x));
+  const parts=[];
+  const d6=a.shareDeltas&&(a.shareDeltas.m6||a.shareDeltas.m3);
+  if(d6){ const r=Math.max(0.1,W.momentumRange); parts.push(cl((d6.pp+r)/(2*r))); }
+  if(a.ourRevChange!=null){ const r=Math.max(1,W.revRange); parts.push(cl((a.ourRevChange+r)/(2*r))); }
+  return parts.length?parts.reduce((s,x)=>s+x,0)/parts.length:0.5;
+}
 let scoring = {...DEFAULT_SCORING};
 let exclusions  = {};      // { segmentId: [itemNumber,...] } SKUs pulled OUT of a segment
 let meraBrands  = DEFAULT_MERA.slice();
@@ -3051,12 +3102,16 @@ function analyzeSegment(seg){
   const fair=effBrands>0?100/effBrands:0;
   const fairNaive=d.totalBrands>0?100/d.totalBrands:0;
   const shareIdx=(fair>0&&cur)?cur.share/fair:0;
-  const vp=volumePrice(d);
+  const vpVolume=volumePrice(d);
+  const benchKey=(scoring.priceBenchmark||'volume');
+  const benchVal=benchKey==='avg'?d.mktAvg:benchKey==='median'?d.mktMedian:vpVolume;
+  const vp=(benchVal!=null&&benchVal>0)?benchVal:vpVolume;
+  const benchLabel=(PRICE_BENCHMARKS[benchKey]||PRICE_BENCHMARKS.volume).label;
   const priceGap=(d.meraAvg!=null&&vp)?((d.meraAvg-vp)/vp)*100:null;
 
-  const W=scoring, wSum=(W.wShare+W.wTrend+W.wPrice+W.wPresence)||100;
+  const W=scoring, wSum=(W.wShare+W.wTrend+W.wPrice+W.wPresence+(W.wMomentum||0))||100;
   const K=100/wSum;                                  // normalise whatever weights are set
-  const wShare=W.wShare*K, wTrend=W.wTrend*K, wPrice=W.wPrice*K, wPres=W.wPresence*K;
+  const wShare=W.wShare*K, wTrend=W.wTrend*K, wPrice=W.wPrice*K, wPres=W.wPresence*K, wMom=(W.wMomentum||0)*K;
   let sc=0;
   const comp={};
   comp.share=wShare*Math.min(shareIdx/Math.max(0.1,W.shareTarget),1); sc+=comp.share;
@@ -3064,9 +3119,7 @@ function analyzeSegment(seg){
   comp.trend=(shareMoM==null)?wTrend*0.5:wTrend*Math.max(0,Math.min(1,(shareMoM+tr)/(2*tr))); sc+=comp.trend;
   /* Price is scored against the VOLUME price (where revenue actually trades)
      rather than the flat market average. */
-  const off=priceGap!=null?Math.abs(priceGap):(d.meraVsMkt==null?0:Math.abs(d.meraVsMkt));
-  const pr=Math.max(1,W.priceRange);
-  comp.price=wPrice*Math.max(0,Math.min(1,(pr-Math.max(0,off-W.priceFree))/pr)); sc+=comp.price;
+  comp.price=wPrice*priceScore(priceGap!=null?priceGap:(d.meraVsMkt==null?null:d.meraVsMkt),W); sc+=comp.price;
   /* Breadth measured in revenue per competitor, not SKU count. */
   const compRev={};
   d.skus.forEach(r=>{ if(!r.isMera) compRev[r.brand]=(compRev[r.brand]||0)+r.revenue; });
@@ -3074,13 +3127,6 @@ function analyzeSegment(seg){
   const medCompRev=compVals.length?compVals[Math.floor(compVals.length/2)]:0;
   const ourRev=d.skus.filter(r=>r.isMera).reduce((s,r)=>s+r.revenue,0);
   comp.presence=wPres*Math.min(1,medCompRev>0?ourRev/medCompRev:(d.meraCount?1:0)); sc+=comp.presence;
-  const health=Math.round(Math.max(0,Math.min(100,sc)));
-  const healthParts=[
-    {k:'Share',   got:Math.round(comp.share),   max:Math.round(wShare)},
-    {k:'Trend',   got:Math.round(comp.trend),   max:Math.round(wTrend)},
-    {k:'Price',   got:Math.round(comp.price),   max:Math.round(wPrice)},
-    {k:'Presence',got:Math.round(comp.presence),max:Math.round(wPres)},
-  ];
 
   const movers=[];
   if(ts.length>1){
@@ -3110,6 +3156,13 @@ function analyzeSegment(seg){
   };
   const shareDeltas={m1:deltaOver(1),m3:deltaOver(3),m6:deltaOver(6)};
 
+  /* Our own revenue direction over the same long window */
+  let ourRevChange=null, ourRevFrom=null;
+  if(known.length>1){
+    const back=known[Math.max(0,known.length-1-6)];
+    if(back&&back!==cur&&back.rev>0){ ourRevChange=((cur.rev-back.rev)/back.rev)*100; ourRevFrom=back.m; }
+  }
+
   /* How big is this segment inside the wider market we track? */
   const segRev=d.skus.reduce((s,r)=>s+r.revenue,0);
   const totMkt=monthTotalRev(curMonth);
@@ -3124,8 +3177,19 @@ function analyzeSegment(seg){
   const prevTot=(ts.length>1&&!ts[ts.length-2].empty)?ts[ts.length-2].totRev:null;
   const segGrowth=(prevTot&&prevTot>0)?((segRev-prevTot)/prevTot)*100:null;
 
-  const a={seg,d,ts,hist,cur,shareMoM,slope,proj,fair,fairNaive,effBrands,shareIdx,vp,priceGap,
-           health,healthParts,movers,newProducts,medCompRev,ourRev,shareDeltas,sizing,segGrowth,known};
+  /* Momentum needs the long-window figures, so it is scored once those exist */
+  comp.momentum=wMom*momentumScore({shareDeltas,ourRevChange},W); sc+=comp.momentum;
+  const health=Math.round(Math.max(0,Math.min(100,sc)));
+  const healthParts=[
+    {k:'Share',   got:Math.round(comp.share),   max:Math.round(wShare)},
+    {k:'Trend',   got:Math.round(comp.trend),   max:Math.round(wTrend)},
+    {k:'Price',   got:Math.round(comp.price),   max:Math.round(wPrice)},   // vs the chosen benchmark
+    {k:'Presence',got:Math.round(comp.presence),max:Math.round(wPres)},
+  ];
+  if(wMom>0.5) healthParts.push({k:'Momentum',got:Math.round(comp.momentum),max:Math.round(wMom)});
+
+  const a={seg,d,ts,hist,cur,shareMoM,slope,proj,fair,fairNaive,effBrands,shareIdx,vp,vpVolume,benchLabel,priceGap,
+           health,healthParts,movers,newProducts,medCompRev,ourRev,ourRevChange,ourRevFrom,shareDeltas,sizing,segGrowth,known};
   a.risks=detectRisks(a);
   a.opps=detectOpportunities(a);
   return a;
@@ -3176,22 +3240,22 @@ function priceAdvice(a){
     // A deliberate premium is a strategy, not an error — say what it costs instead.
     if(sig&&sig.premium){
       return {tone:'warn',
-        text:'We sit '+fmtPct(priceGap)+' above the '+fmt$(vp)+' volume price. Your note frames that premium as deliberate, so the question is not whether to cut but whether it converts: '
+        text:'We sit '+fmtPct(priceGap)+' above the '+fmt$(vp)+' '+(a.benchLabel||'volume price')+'. Your note frames that premium as deliberate, so the question is not whether to cut but whether it converts: '
           +(losing?'share fell '+Math.abs(shareMoM).toFixed(1)+'pp this month, so it currently is not — either the potency story needs to land harder at shelf, or the gap needs narrowing toward '+fmt$(vp*1.05)+'.'
                   :'share is holding, which says the premium is being paid. Keep it and defend on the potency claim.')};
     }
     return {tone:'warn',
-      text:'We sit '+fmtPct(priceGap)+' above the volume price of '+fmt$(vp)+'. '
+      text:'We sit '+fmtPct(priceGap)+' above the '+(a.benchLabel||'volume price')+' of '+fmt$(vp)+'. '
         +(losing?'Share is already sliding, which is usually what that premium costs. ':'')
         +'Holding within ~3% of '+fmt$(vp*1.03)+' would put us where the volume trades without giving away margin.'};
   }
   if(priceGap<-8){
     return {tone:'ok',
-      text:'We are '+Math.abs(priceGap).toFixed(1)+'% under the volume price of '+fmt$(vp)
+      text:'We are '+Math.abs(priceGap).toFixed(1)+'% under the '+(a.benchLabel||'volume price')+' of '+fmt$(vp)
         +'. There is headroom toward '+fmt$(vp*0.97)+' before we look expensive.'};
   }
   return {tone:'ok',
-    text:'Our price is within a few points of the '+fmt$(vp)+' volume price — competitively placed; defend share on execution rather than discount.'};
+    text:'Our price is within a few points of the '+fmt$(vp)+' '+(a.benchLabel||'volume price')+' — competitively placed; defend share on execution rather than discount.'};
 }
 </script>
 
@@ -3690,6 +3754,11 @@ function detectRisks(a){
         +(rebounding?', despite a '+shareMoM.toFixed(1)+'pp bounce this month — one good month has not reversed it.'
                     :'. The decline is structural, not a blip.')});
   }
+  // Our own revenue shrinking over the long window
+  if(a.ourRevChange!=null&&a.ourRevChange<=-15&&a.ourRevFrom)
+    out.push({sev:a.ourRevChange<=-30?'high':'med',title:'Our revenue declining',
+      text:'Our revenue in this segment is down '+Math.abs(a.ourRevChange).toFixed(0)+'% since '+monthLabel(a.ourRevFrom)
+        +'. Price position does not offset a shrinking base — worth checking listings and velocity.'});
   // Sustained share loss
   if(shareDeltas.m3&&shareDeltas.m3.pp<=-1)
     out.push({sev:'high',title:'Sustained share loss',
@@ -4375,21 +4444,67 @@ const SCORE_FIELDS=[
   {k:'wTrend',   l:'Trend weight',     hint:'month-over-month share movement',              min:0,max:100,step:5},
   {k:'wPrice',   l:'Price weight',     hint:'distance from the volume price',               min:0,max:100,step:5},
   {k:'wPresence',l:'Presence weight',  hint:'our revenue vs the median competitor',         min:0,max:100,step:5},
+  {k:'wMomentum',l:'Momentum weight',  hint:'6-month share direction + our revenue change',  min:0,max:100,step:5},
 ];
 const SCORE_TUNING=[
   {k:'shareTarget',l:'Full marks at',   suffix:'\u00d7 fair share', min:0.5,max:5,step:0.5,
    hint:'2 means we need double a meaningful player\u2019s share for full share points'},
   {k:'trendRange', l:'Trend range',     suffix:'pp',                min:0.5,max:10,step:0.5,
    hint:'a swing of this many points spans zero to full trend score'},
-  {k:'priceFree',  l:'Free price band', suffix:'%',                 min:0,max:20,step:1,
-   hint:'distance from the volume price that costs nothing'},
-  {k:'priceRange', l:'Price falls to 0 after',suffix:'%',           min:5,max:50,step:5,
-   hint:'how far beyond the free band the price score reaches zero'},
+  {k:'priceSweetLow', l:'Sweet spot from',suffix:'%',               min:-30,max:0,step:1,
+   hint:'how far UNDER the benchmark still earns full price marks'},
+  {k:'priceSweetHigh',l:'Sweet spot to',  suffix:'%',               min:0,max:15,step:1,
+   hint:'how far OVER the benchmark still earns full price marks'},
+  {k:'priceOverRange',l:'Zero at +',      suffix:'% over',          min:3,max:40,step:1,
+   hint:'being over the benchmark costs share \u2014 keep this tight'},
+  {k:'priceUnderRange',l:'Zero at \u2212',suffix:'% under',         min:5,max:60,step:5,
+   hint:'being under only gives away margin \u2014 keep this loose'},
+  {k:'momentumRange',l:'Momentum range',suffix:'pp',                min:1,max:10,step:0.5,
+   hint:'6-month share swing spanning zero to full momentum score'},
+  {k:'revRange',   l:'Revenue range',   suffix:'%',                 min:10,max:100,step:5,
+   hint:'change in our revenue spanning zero to full momentum score'},
   {k:'bandStrong', l:'Strong at',       suffix:'/100',              min:50,max:95,step:5,
    hint:'score at or above this reads Strong'},
   {k:'bandWatch',  l:'Watch at',        suffix:'/100',              min:20,max:80,step:5,
    hint:'below this reads At risk'},
 ];
+
+const SCORE_PRESETS={
+  balanced:{label:'Balanced',v:{wShare:40,wTrend:30,wPrice:20,wPresence:10,
+    priceSweetLow:-5,priceSweetHigh:0,priceOverRange:15,priceUnderRange:30,shareTarget:2,trendRange:2}},
+  priceFirst:{label:'Price-first',v:{wShare:20,wTrend:15,wPrice:50,wPresence:15,wMomentum:0,
+    priceUndercutOk:true,priceSweetHigh:2,priceOverRange:10,shareTarget:1.5,trendRange:2}},
+  undercut:{label:'Healthy undercut',v:{wShare:10,wTrend:5,wPrice:50,wPresence:10,wMomentum:25,
+    priceBenchmark:'avg',priceUndercutOk:true,priceSweetHigh:0,priceOverRange:12,
+    momentumRange:3,revRange:30,shareTarget:1.5,trendRange:2,bandStrong:70,bandWatch:45}},
+  shareFirst:{label:'Share-first',v:{wShare:55,wTrend:25,wPrice:10,wPresence:10,
+    priceSweetLow:-5,priceSweetHigh:0,priceOverRange:15,priceUnderRange:30,shareTarget:2,trendRange:2}},
+};
+function applyPreset(k){
+  const p=SCORE_PRESETS[k]; if(!p) return;
+  scoring={...scoring,...p.v};
+  renderScoringPanel();
+  toast(p.label+' preset applied — save to keep it','info');
+}
+
+/* Draw the price curve so its shape is visible before saving */
+function priceCurvePreview(){
+  const W=scoring, w=300,h=70, minG=-40, maxG=40;
+  const pts=[];
+  for(let g=minG;g<=maxG;g+=1){
+    const x=(g-minG)/(maxG-minG)*w;
+    const y=h-4-priceScore(g,W)*(h-10);
+    pts.push((pts.length?'L':'M')+x.toFixed(1)+' '+y.toFixed(1));
+  }
+  const zeroX=(0-minG)/(maxG-minG)*w;
+  return '<div class="sc-curve"><div class="ov-block-t">Price score curve</div>'
+    +'<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'
+    +'<line x1="'+zeroX+'" y1="0" x2="'+zeroX+'" y2="'+h+'" stroke="#373F51" stroke-width="1" stroke-dasharray="3,3"/>'
+    +'<path d="'+pts.join(' ')+'" fill="none" stroke="#E2BE66" stroke-width="2"/>'
+    +'</svg>'
+    +'<div class="sc-curve-x"><span>−40% under</span><span>at benchmark</span><span>+40% over</span></div>'
+    +'<div class="sc-hint">Full marks in the sweet spot, falling off faster on the expensive side than the cheap side.</div></div>';
+}
 
 function renderScoringPanel(){
   const el=document.getElementById('scoringPanel');
@@ -4400,29 +4515,77 @@ function renderScoringPanel(){
     +'<div class="sc-grid">';
   for(const f of SCORE_FIELDS){
     const v=+scoring[f.k]||0, pct=Math.round(v/sum*100);
-    html+='<div class="sc-item"><label>'+esc(f.l)+' <b>'+pct+'%</b></label>'
+    html+='<div class="sc-item"><label>'+esc(f.l)+' <b id="scpct-'+f.k+'">'+pct+'%</b>'
+      +'<i class="sc-raw" id="scraw-'+f.k+'">'+v+'</i></label>'
       +'<input type="range" min="'+f.min+'" max="'+f.max+'" step="'+f.step+'" value="'+v+'" '
       +'oninput="setScore(\''+f.k+'\',this.value)">'
       +'<div class="sc-hint">'+esc(f.hint)+'</div></div>';
   }
-  html+='</div><div class="sc-tune">';
+  html+='</div>'
+    +'<div class="sc-bench"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12px;color:var(--fg2)">'
+    +'<input type="checkbox" style="width:auto"'+(scoring.priceUndercutOk?' checked':'')
+    +' onchange="setScoreBool(\'priceUndercutOk\',this.checked)"> Any price at or below the benchmark scores full marks</label>'
+    +'<div class="sc-hint" style="margin-bottom:12px">Off = deep undercuts lose points for giving away margin.</div>'
+    +'<label>Price benchmark — what "vs market" means</label>'
+    +'<select onchange="setScore(\'priceBenchmark\',this.value)">'
+    +Object.entries(PRICE_BENCHMARKS).map(([k,b])=>'<option value="'+k+'"'
+        +((scoring.priceBenchmark||'volume')===k?' selected':'')+'>'+esc(b.label)+'</option>').join('')
+    +'</select><div class="sc-hint">'+esc((PRICE_BENCHMARKS[scoring.priceBenchmark||'volume']||{}).hint||'')+'</div>'
+    +'<div class="sc-presets">'+Object.entries(SCORE_PRESETS).map(([k,p])=>
+        '<button class="btn btn-ghost btn-sm" onclick="applyPreset(\''+k+'\')">'+esc(p.label)+'</button>').join('')+'</div>'
+    +'</div>'
+    +'<div id="scCurveWrap">'+priceCurvePreview()+'</div>'
+    +'<div class="sc-tune">';
   for(const t of SCORE_TUNING){
     html+='<div class="sc-t"><label>'+esc(t.l)+'</label>'
       +'<div class="sc-trow"><input type="number" min="'+t.min+'" max="'+t.max+'" step="'+t.step+'" value="'+(+scoring[t.k])+'" '
-      +'onchange="setScore(\''+t.k+'\',this.value)"><span>'+esc(t.suffix)+'</span></div>'
+      +'oninput="setScore(\''+t.k+'\',this.value)"><span>'+esc(t.suffix)+'</span></div>'
       +'<div class="sc-hint">'+esc(t.hint)+'</div></div>';
   }
   html+='</div>'
-    +'<div class="sc-actions"><button class="btn btn-ghost btn-sm" onclick="resetScoring()">Reset to defaults</button>'
+    +'<div class="sc-actions"><span class="sc-dirty" id="scDirty"></span>'
+    +'<button class="btn btn-ghost btn-sm" onclick="resetScoring()">Reset to defaults</button>'
     +'<button class="btn btn-accent btn-sm" onclick="saveScoring()">Save scoring</button></div>'
     +'<div id="scorePreview"></div></div>';
   el.innerHTML=html;
+  if(!_savedScoring) _savedScoring={...scoring};
   renderScorePreview();
+  markScoringDirty();
 }
 
+/* Dragging a slider must not rebuild the slider. Update only what the value
+   changes — the labels, the curve and the preview — and leave inputs alone. */
 function setScore(k,v){
-  scoring[k]=+v;
-  renderScoringPanel();
+  scoring[k]=(k==='priceBenchmark')?v:+v;
+  if(k==='priceBenchmark'){ renderScoringPanel(); return; }
+  refreshScoreLabels();
+  refreshScoreCurve();
+  renderScorePreview();
+  markScoringDirty();
+}
+function setScoreBool(k,v){ scoring[k]=!!v; renderScoringPanel(); markScoringDirty(); }
+
+function refreshScoreLabels(){
+  const sum=SCORE_FIELDS.reduce((s,f)=>s+(+scoring[f.k]||0),0)||1;
+  for(const f of SCORE_FIELDS){
+    const v=+scoring[f.k]||0;
+    const pct=document.getElementById('scpct-'+f.k);
+    if(pct) pct.textContent=Math.round(v/sum*100)+'%';
+    const raw=document.getElementById('scraw-'+f.k);
+    if(raw) raw.textContent=v;
+  }
+}
+function refreshScoreCurve(){
+  const w=document.getElementById('scCurveWrap');
+  if(w) w.innerHTML=priceCurvePreview();
+}
+let _savedScoring=null;
+function markScoringDirty(){
+  const el=document.getElementById('scDirty');
+  if(!el) return;
+  const dirty=_savedScoring&&JSON.stringify(_savedScoring)!==JSON.stringify(scoring);
+  el.textContent=dirty?'unsaved changes':'';
+  el.className='sc-dirty'+(dirty?' on':'');
 }
 function resetScoring(){
   scoring={...DEFAULT_SCORING};
@@ -4431,8 +4594,10 @@ function resetScoring(){
 }
 async function saveScoring(){
   await savePresets();
+  _savedScoring={...scoring};
+  markScoringDirty();
   runAll();
-  toast('Scoring saved','success');
+  toast('Scoring saved — Overview and deck now use it','success');
 }
 
 /* Live preview: what every segment scores under the current settings */
@@ -4453,8 +4618,9 @@ function renderScorePreview(){
       +'<td class="sc-band">'+esc(band.word)+'</td></tr>';
   }
   el.innerHTML='<div class="sc-prev"><div class="ov-block-t">Preview · every segment under these settings</div>'
-    +'<table class="sc-table"><thead><tr><th>Segment</th><th class="r">Share</th><th class="r">Trend</th>'
-    +'<th class="r">Price</th><th class="r">Presence</th><th class="r">Total</th><th></th></tr></thead>'
+    +'<table class="sc-table"><thead><tr><th>Segment</th>'
+    +(list[0].healthParts||[]).map(p=>'<th class="r">'+esc(p.k)+'</th>').join('')
+    +'<th class="r">Total</th><th></th></tr></thead>'
     +'<tbody>'+rows+'</tbody></table></div>';
 }
 </script>
