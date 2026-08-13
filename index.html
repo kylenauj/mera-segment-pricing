@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Price Intelligence · Countryside</title>
+<title>Price Intelligence · Mera / Countryside</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tenor+Sans&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -350,6 +350,16 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
   text-transform:uppercase;letter-spacing:.12em;transition:all .15s}
 .ov-toggle:hover{color:var(--accent);border-color:var(--accent);background:var(--asoft)}
 
+/* ── Health breakdown + partial-month banner ── */
+.ov-hparts{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.ov-hparts b{font-weight:600}
+.ov-hparts .hp-ok b{color:var(--success)}
+.ov-hparts .hp-mid b{color:var(--accent)}
+.ov-hparts .hp-low b{color:var(--danger)}
+.ov-partial{background:var(--wbg);border:1px solid rgba(226,190,102,.3);border-radius:var(--rm);padding:12px 14px;margin-bottom:18px}
+.ov-partial b{display:block;color:var(--warn);font-size:12px;margin-bottom:3px}
+.ov-partial span{font-size:11.5px;color:var(--fg2);line-height:1.55}
+
 /* ── Context note ── */
 .ov-note{margin-top:11px;padding:10px 12px;border-radius:var(--r);background:var(--faint);border:1px solid var(--border);border-left:3px solid var(--accent)}
 .note-quote{font-size:12px;line-height:1.55;color:var(--fg2);font-style:italic}
@@ -487,6 +497,9 @@ textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 .field label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
 .field input,.field select{width:100%;background:var(--inset);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;font:inherit;font-size:12px;max-width:none}
 .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px}
+select[multiple]{max-width:none;width:100%;padding:4px;background:var(--surface);cursor:default}
+select[multiple] option{padding:3px 6px;border-radius:4px}
+select[multiple] option:checked{background:var(--accent);color:var(--accent-on)}
 textarea{background:var(--surface);color:var(--fg);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font:inherit;font-size:12px;width:100%;resize:vertical;line-height:1.5;font-family:var(--font)}
 textarea:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--accent)}
 .field-wide{grid-column:1/-1}
@@ -808,8 +821,8 @@ textarea:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--acce
         </div>
         <div class="field">
           <label>Sub-subcategory</label>
-          <select id="segSubsub"><option value="">(any)</option></select>
-          <div class="hint" id="subsubHint"></div>
+          <select id="segSubsub" multiple size="4"><option value="">(any)</option></select>
+          <div class="hint" id="subsubHint">Ctrl/Cmd-click to pick more than one. Leave on (any) to include every type, e.g. so mixed <b>Sample Packs</b> land in the same segment as <b>Single Strain Packs</b>.</div>
         </div>
         <div class="field-row">
           <div class="field">
@@ -1005,7 +1018,9 @@ function migrateSegment(s){
     name:s.name||'Untitled',
     brandGrp:s.brandGrp||'',
     subcategory:(s.subcategory||'').toLowerCase(),
-    subsub:(s.subsub||'').toLowerCase(),
+    subsub:Array.isArray(s.subsub)
+      ? s.subsub.map(x=>String(x).toLowerCase()).filter(Boolean)
+      : ((s.subsub||'').toLowerCase()?[(s.subsub||'').toLowerCase()]:[]),
     netContents:s.netContents||'',
     unitsPerPack:s.unitsPerPack||'',
     include:Array.isArray(s.include)?s.include:(s.keyword?[String(s.keyword).toLowerCase()]:[]),
@@ -1152,6 +1167,17 @@ function parseGrams(s){
   const g=s.match(/(\d+(?:\.\d+)?)/);
   if(g) return {units:1,per:+g[1],total:+g[1]};
   return null;
+}
+/* seg.subsub is a list: empty = any, otherwise match any one of them */
+function subsubList(seg){
+  const v=seg.subsub;
+  if(!v) return [];
+  return Array.isArray(v)?v.filter(Boolean):(String(v)?[String(v)]:[]);
+}
+function subsubMatch(seg,rowVal){
+  const list=subsubList(seg);
+  if(!list.length) return true;
+  return list.some(x=>loose(x,rowVal));
 }
 function contentsMatch(segVal,rowVal){
   if(!segVal) return true;
@@ -1558,7 +1584,7 @@ function segSkippedFilters(seg,monthKey){
   const a=fieldAvail[monthKey];
   if(!a) return [];
   const out=[];
-  if(seg.subsub&&!a.subsub) out.push('sub-subcategory');
+  if(subsubList(seg).length&&!a.subsub) out.push('sub-subcategory');
   if(seg.netContents&&!a.net) out.push('pack contents');
   if(seg.unitsPerPack&&!a.upp) out.push('units/pack');
   return out;
@@ -1597,6 +1623,12 @@ function fillSelect(id,values,emptyMsg){
   sel.innerHTML=first+opts;
   if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
 }
+function setMultiCI(id,vals){
+  const sel=document.getElementById(id);
+  const want=(vals||[]).map(v=>String(v).toLowerCase());
+  [...sel.options].forEach(o=>{ o.selected=want.includes(o.value.toLowerCase()); });
+  if(!want.length&&sel.options.length) sel.options[0].selected=true;
+}
 function setSelectCI(id,val){
   const sel=document.getElementById(id);
   const o=[...sel.options].find(o=>o.value.toLowerCase()===String(val||'').toLowerCase());
@@ -1621,7 +1653,7 @@ function readSegForm(){
     name,
     brandGrp:document.getElementById('segBrandGrp').value,
     subcategory:document.getElementById('segSubcat').value.toLowerCase(),
-    subsub:document.getElementById('segSubsub').value.toLowerCase(),
+    subsub:[...document.getElementById('segSubsub').selectedOptions].map(o=>o.value.toLowerCase()).filter(Boolean),
     netContents:document.getElementById('segContents').value,
     unitsPerPack:document.getElementById('segUnitsPP').value,
     include:parseKw(document.getElementById('segInclude').value),
@@ -1632,7 +1664,8 @@ function readSegForm(){
 }
 function clearSegForm(){
   ['segName','segInclude','segExclude'].forEach(id=>document.getElementById(id).value='');
-  ['segBrandGrp','segSubcat','segSubsub','segContents','segUnitsPP'].forEach(id=>document.getElementById(id).value='');
+  ['segBrandGrp','segSubcat','segContents','segUnitsPP'].forEach(id=>document.getElementById(id).value='');
+  setMultiCI('segSubsub',[]);
   document.getElementById('segManualOnly').checked=false;
   document.getElementById('segNotes').value='';
 }
@@ -1662,7 +1695,7 @@ function editSegment(id){
   setSelectCI('segBrandGrp',s.brandGrp);
   setSelectCI('segSubcat',s.subcategory);
   updateSubsubOptions();
-  setSelectCI('segSubsub',s.subsub);
+  setMultiCI('segSubsub',subsubList(s));
   setSelectCI('segContents',s.netContents);
   setSelectCI('segUnitsPP',s.unitsPerPack);
   document.getElementById('segInclude').value=(s.include||[]).join(', ');
@@ -1706,7 +1739,7 @@ function describeFilters(s){
   const p=[];
   if(s.manualOnly) p.push('manual-assign only');
   if(s.subcategory) p.push(s.subcategory);
-  if(s.subsub) p.push(s.subsub);
+  if(subsubList(s).length) p.push(subsubList(s).join(' / '));
   if(s.netContents) p.push('pack: '+s.netContents);
   if(s.unitsPerPack) p.push('units/pk: '+s.unitsPerPack);
   if(s.include?.length) p.push('kw: '+s.include.join('|'));
@@ -1728,7 +1761,7 @@ function matchesSeg(seg,row,avail){
   }
   if(seg.subcategory && !loose(seg.subcategory,row.subcategory)) return false;
   // Optional fields: only enforce when the month's file actually has the column
-  if(seg.subsub && (!avail||avail.subsub) && !loose(seg.subsub,row.subsub)) return false;
+  if(subsubList(seg).length && (!avail||avail.subsub) && !subsubMatch(seg,row.subsub)) return false;
   if(seg.netContents && (!avail||avail.net) && !contentsMatch(seg.netContents,row.netContents)) return false;
   if(seg.unitsPerPack && (!avail||avail.upp) && !uppMatch(seg.unitsPerPack,row.unitsPerPack)) return false;
   return true;
@@ -2989,20 +3022,27 @@ function analyzeSegment(seg){
   const priceGap=(d.meraAvg!=null&&vp)?((d.meraAvg-vp)/vp)*100:null;
 
   let sc=0;
-  sc+=40*Math.min(shareIdx/2,1);
-  if(shareMoM==null) sc+=15; else sc+=30*Math.max(0,Math.min(1,(shareMoM+2)/4));
+  const comp={};
+  comp.share=40*Math.min(shareIdx/2,1);            sc+=comp.share;
+  comp.trend=(shareMoM==null)?15:30*Math.max(0,Math.min(1,(shareMoM+2)/4)); sc+=comp.trend;
   /* Price is scored against the VOLUME price (where revenue actually trades)
      rather than the flat market average. */
   const off=priceGap!=null?Math.abs(priceGap):(d.meraVsMkt==null?0:Math.abs(d.meraVsMkt));
-  sc+=20*Math.max(0,Math.min(1,(15-Math.max(0,off-5))/15));
+  comp.price=20*Math.max(0,Math.min(1,(15-Math.max(0,off-5))/15)); sc+=comp.price;
   /* Breadth measured in revenue per competitor, not SKU count. */
   const compRev={};
   d.skus.forEach(r=>{ if(!r.isMera) compRev[r.brand]=(compRev[r.brand]||0)+r.revenue; });
   const compVals=Object.values(compRev).sort((a,b)=>a-b);
   const medCompRev=compVals.length?compVals[Math.floor(compVals.length/2)]:0;
   const ourRev=d.skus.filter(r=>r.isMera).reduce((s,r)=>s+r.revenue,0);
-  sc+=10*Math.min(1,medCompRev>0?ourRev/medCompRev:(d.meraCount?1:0));
+  comp.presence=10*Math.min(1,medCompRev>0?ourRev/medCompRev:(d.meraCount?1:0)); sc+=comp.presence;
   const health=Math.round(Math.max(0,Math.min(100,sc)));
+  const healthParts=[
+    {k:'Share',   got:Math.round(comp.share),   max:40},
+    {k:'Trend',   got:Math.round(comp.trend),   max:30},
+    {k:'Price',   got:Math.round(comp.price),   max:20},
+    {k:'Presence',got:Math.round(comp.presence),max:10},
+  ];
 
   const movers=[];
   if(ts.length>1){
@@ -3047,7 +3087,7 @@ function analyzeSegment(seg){
   const segGrowth=(prevTot&&prevTot>0)?((segRev-prevTot)/prevTot)*100:null;
 
   const a={seg,d,ts,hist,cur,shareMoM,slope,proj,fair,fairNaive,effBrands,shareIdx,vp,priceGap,
-           health,movers,newProducts,medCompRev,ourRev,shareDeltas,sizing,segGrowth,known};
+           health,healthParts,movers,newProducts,medCompRev,ourRev,shareDeltas,sizing,segGrowth,known};
   a.risks=detectRisks(a);
   a.opps=detectOpportunities(a);
   return a;
@@ -3130,6 +3170,20 @@ function healthBand(h){
        :{cls:'hb-bad',word:'At risk'};
 }
 
+/* An OCS export covering only part of a month makes every revenue comparison
+   look catastrophic. Detect it and say so rather than reporting a fake collapse. */
+function partialMonthWarning(){
+  if(!curMonth||!cmpMonth) return null;
+  const cur=monthTotalRev(curMonth), prev=monthTotalRev(cmpMonth);
+  if(!cur||!prev) return null;
+  const ratio=cur/prev;
+  if(ratio>=0.6) return null;
+  return {ratio,cur,prev,
+    text:monthLabel(curMonth)+' reports '+fmtRev(cur)+' against '+monthLabel(cmpMonth)+'’s '+fmtRev(prev)
+      +' — only '+Math.round(ratio*100)+'%. That usually means a partial-month export rather than a real collapse. '
+      +'Share percentages remain broadly comparable, but revenue and growth figures on this page will understate the month.'};
+}
+
 function renderOverview(){
   const el=document.getElementById('ovContent');
   if(!el) return;
@@ -3184,6 +3238,9 @@ function renderOverview(){
   });
 
   let html=ovSummaryPanel(list);
+
+  const pw=partialMonthWarning();
+  if(pw) html='<div class="ov-partial"><b>⚠ '+esc(monthLabel(curMonth))+' looks incomplete</b><span>'+esc(pw.text)+'</span></div>'+html;
 
   const cats={};
   for(const a of list){ const c=titleCase(a.seg.subcategory)||'Uncategorized'; (cats[c]=cats[c]||[]).push(a); }
@@ -3310,7 +3367,10 @@ function ovCard(a){
       +'<div class="ov-card-sub">'+esc(describeFilters(seg))+'</div></div>'
     +'<div class="ov-health"><div class="ov-health-row"><span class="ov-health-word">'+band.word+'</span>'
       +'<span class="ov-health-num">'+health+'<i>/100</i></span></div>'
-      +'<div class="ov-bar"><div class="ov-bar-fill" style="width:'+health+'%"></div></div></div>'
+      +'<div class="ov-bar"><div class="ov-bar-fill" style="width:'+health+'%"></div></div>'
+      +'<div class="ov-hparts">'+(a.healthParts||[]).map(p=>
+          '<span class="'+(p.got/p.max>=0.7?'hp-ok':p.got/p.max>=0.35?'hp-mid':'hp-low')+'" title="'+p.k+' component">'
+          +p.k+' <b>'+p.got+'</b>/'+p.max+'</span>').join('')+'</div></div>'
     +'<div class="ov-metrics">'
       +'<div class="ov-metric"><div class="ov-m-lbl">Our share</div><div class="ov-m-val">'+share.toFixed(1)+'%</div><div class="ov-m-sub">'+momHtml+'</div></div>'
       +'<div class="ov-metric"><div class="ov-m-lbl">Next month</div><div class="ov-m-val">'+(proj!=null?proj.toFixed(1)+'%':'—')+'</div><div class="ov-m-sub">projected</div></div>'
@@ -3482,8 +3542,8 @@ function whyFiltered(seg,row,monthKey){
   const avail=fieldAvail[monthKey]||{};
   if(seg.subcategory&&!loose(seg.subcategory,row.subcategory))
     return 'subcategory is "'+(row.subcategory||'blank')+'", segment wants "'+seg.subcategory+'"';
-  if(seg.subsub&&avail.subsub!==false&&!loose(seg.subsub,row.subsub))
-    return 'sub-subcategory is "'+(row.subsub||'blank')+'", segment wants "'+seg.subsub+'"';
+  if(subsubList(seg).length&&avail.subsub!==false&&!subsubMatch(seg,row.subsub))
+    return 'sub-subcategory is "'+(row.subsub||'blank')+'", segment wants '+subsubList(seg).map(x=>'"'+x+'"').join(' or ');
   if(seg.netContents&&avail.net!==false&&!contentsMatch(seg.netContents,row.netContents))
     return 'net contents is "'+(row.netContents||'blank')+'", segment wants "'+seg.netContents+'"';
   if(seg.unitsPerPack&&avail.upp!==false&&!uppMatch(seg.unitsPerPack,row.unitsPerPack))
@@ -3581,6 +3641,14 @@ function detectRisks(a){
       out.push({sev:'med',title:'No presence in a material segment',
         text:'This segment is '+a.sizing.ofMarket.toFixed(1)+'% of tracked market revenue ('+fmtRev(a.sizing.segRev)+') and we have no SKUs in it.'});
     return out;
+  }
+  // Long-run erosion, even if the newest month bounced
+  if(shareDeltas.m6&&shareDeltas.m6.pp<=-1&&shareDeltas.m6.months>=4){
+    const rebounding=shareMoM!=null&&shareMoM>0.3;
+    out.push({sev:rebounding?'med':'high',title:'Losing ground over '+shareDeltas.m6.months+' months',
+      text:'Down '+Math.abs(shareDeltas.m6.pp).toFixed(1)+'pp since '+monthLabel(shareDeltas.m6.from)
+        +(rebounding?', despite a '+shareMoM.toFixed(1)+'pp bounce this month — one good month has not reversed it.'
+                    :'. The decline is structural, not a blip.')});
   }
   // Sustained share loss
   if(shareDeltas.m3&&shareDeltas.m3.pp<=-1)
