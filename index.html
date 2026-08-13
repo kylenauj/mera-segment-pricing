@@ -253,6 +253,27 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .exited-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
 .exited-list{font-size:10px;color:var(--fg2);font-family:var(--mono);line-height:1.9;margin-top:6px}
 
+/* ── Health scoring panel ── */
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}
+.sc-item label{display:block;font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.sc-item label b{color:var(--accent);font-size:12px;margin-left:4px}
+.sc-item input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.sc-hint{font-size:10px;color:var(--muted);line-height:1.45;margin-top:4px}
+.sc-tune{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;padding-top:14px;border-top:1px solid var(--bsoft)}
+.sc-t label{display:block;font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+.sc-trow{display:flex;align-items:center;gap:6px}
+.sc-trow input{width:78px;max-width:78px}
+.sc-trow span{font-family:var(--mono);font-size:10px;color:var(--fg2)}
+.sc-actions{display:flex;gap:8px;justify-content:flex-end;padding:14px 0 4px}
+.sc-prev{margin-top:6px;padding-top:12px;border-top:1px solid var(--bsoft)}
+.sc-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+.sc-table th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:5px 8px;text-align:left}
+.sc-table th.r,.sc-table td.r{text-align:right}
+.sc-table td{padding:6px 8px;border-top:1px solid var(--bsoft);color:var(--fg2)}
+.sc-table td i{font-style:normal;color:var(--muted);font-size:9px}
+.sc-name{font-family:var(--font)!important;color:var(--fg)!important;font-weight:600}
+.sc-band{font-size:10px;color:var(--muted)}
+
 /* ── SKU finder ── */
 .fd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;margin-bottom:9px}
 .fd-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:7px}
@@ -785,7 +806,9 @@ textarea:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--acce
         <div class="upload-log" id="uploadLog"></div>
         <div class="month-chips" id="monthChips"></div>
       </div>
-      <div class="card">
+      <div id="scoringPanel"></div>
+
+<div class="card">
   <div class="card-title">SKU Finder <span class="lbl-hint">— trace any SKU through brand recognition and every segment filter</span></div>
   <div id="brandWarn"></div>
   <div class="field" style="margin-bottom:10px">
@@ -882,6 +905,15 @@ let monthsData  = {};
 let segments    = [];
 let portfolio   = [];
 let assignments = {};
+const DEFAULT_SCORING={
+  wShare:40, wTrend:30, wPrice:20, wPresence:10,   // weights, normalised to 100
+  shareTarget:2,     // full marks at this multiple of a meaningful player's share
+  trendRange:2,      // pp swing that spans the full trend range
+  priceFree:5,       // % from the volume price that costs nothing
+  priceRange:15,     // % beyond the free band where the score reaches zero
+  bandStrong:70, bandWatch:45,
+};
+let scoring = {...DEFAULT_SCORING};
 let exclusions  = {};      // { segmentId: [itemNumber,...] } SKUs pulled OUT of a segment
 let meraBrands  = DEFAULT_MERA.slice();
 let curMonth='', cmpMonth='';
@@ -1007,6 +1039,7 @@ async function loadAll(){
     if(Array.isArray(presets.meraBrands)&&presets.meraBrands.length) meraBrands=presets.meraBrands;
     if(presets.assignments&&typeof presets.assignments==='object') assignments=presets.assignments;
     if(presets.exclusions&&typeof presets.exclusions==='object') exclusions=presets.exclusions;
+    if(presets.scoring&&typeof presets.scoring==='object') scoring={...DEFAULT_SCORING,...presets.scoring};
   }
   const pf=await stGet('portfolio.json');
   if(Array.isArray(pf)) portfolio=pf.map(p=>({...p, pfKey:p.pfKey||(p.itemNumber+'::'+norm(p.size||''))}));
@@ -1030,7 +1063,7 @@ function migrateSegment(s){
   };
 }
 async function savePresets(){
-  try{ await stPut('presets.json',{segments,meraBrands,assignments,exclusions}); }
+  try{ await stPut('presets.json',{segments,meraBrands,assignments,exclusions,scoring}); }
   catch(e){ console.warn('savePresets',e); toast('Settings not saved: '+(isNetErr(e)?'network blocked':e.message),'error'); }
 }
 
@@ -2735,7 +2768,7 @@ function showTab(tab){
   if(st) st.classList.toggle('has-active',inSetup);
   const ttl=document.getElementById('pageTitle');
   if(ttl) ttl.textContent=TAB_TITLES[tab]||'Dashboard';
-  if(tab==='data'){ refreshSegOptions(); try{ brandRecognitionWarning(); renderSkuFinder(); }catch(e){} }
+  if(tab==='data'){ refreshSegOptions(); try{ brandRecognitionWarning(); renderSkuFinder(); renderScoringPanel(); }catch(e){} }
   if(tab==='trends') refreshTrendsAll();
   if(tab==='overview') renderOverview();
 }
@@ -3021,27 +3054,32 @@ function analyzeSegment(seg){
   const vp=volumePrice(d);
   const priceGap=(d.meraAvg!=null&&vp)?((d.meraAvg-vp)/vp)*100:null;
 
+  const W=scoring, wSum=(W.wShare+W.wTrend+W.wPrice+W.wPresence)||100;
+  const K=100/wSum;                                  // normalise whatever weights are set
+  const wShare=W.wShare*K, wTrend=W.wTrend*K, wPrice=W.wPrice*K, wPres=W.wPresence*K;
   let sc=0;
   const comp={};
-  comp.share=40*Math.min(shareIdx/2,1);            sc+=comp.share;
-  comp.trend=(shareMoM==null)?15:30*Math.max(0,Math.min(1,(shareMoM+2)/4)); sc+=comp.trend;
+  comp.share=wShare*Math.min(shareIdx/Math.max(0.1,W.shareTarget),1); sc+=comp.share;
+  const tr=Math.max(0.1,W.trendRange);
+  comp.trend=(shareMoM==null)?wTrend*0.5:wTrend*Math.max(0,Math.min(1,(shareMoM+tr)/(2*tr))); sc+=comp.trend;
   /* Price is scored against the VOLUME price (where revenue actually trades)
      rather than the flat market average. */
   const off=priceGap!=null?Math.abs(priceGap):(d.meraVsMkt==null?0:Math.abs(d.meraVsMkt));
-  comp.price=20*Math.max(0,Math.min(1,(15-Math.max(0,off-5))/15)); sc+=comp.price;
+  const pr=Math.max(1,W.priceRange);
+  comp.price=wPrice*Math.max(0,Math.min(1,(pr-Math.max(0,off-W.priceFree))/pr)); sc+=comp.price;
   /* Breadth measured in revenue per competitor, not SKU count. */
   const compRev={};
   d.skus.forEach(r=>{ if(!r.isMera) compRev[r.brand]=(compRev[r.brand]||0)+r.revenue; });
   const compVals=Object.values(compRev).sort((a,b)=>a-b);
   const medCompRev=compVals.length?compVals[Math.floor(compVals.length/2)]:0;
   const ourRev=d.skus.filter(r=>r.isMera).reduce((s,r)=>s+r.revenue,0);
-  comp.presence=10*Math.min(1,medCompRev>0?ourRev/medCompRev:(d.meraCount?1:0)); sc+=comp.presence;
+  comp.presence=wPres*Math.min(1,medCompRev>0?ourRev/medCompRev:(d.meraCount?1:0)); sc+=comp.presence;
   const health=Math.round(Math.max(0,Math.min(100,sc)));
   const healthParts=[
-    {k:'Share',   got:Math.round(comp.share),   max:40},
-    {k:'Trend',   got:Math.round(comp.trend),   max:30},
-    {k:'Price',   got:Math.round(comp.price),   max:20},
-    {k:'Presence',got:Math.round(comp.presence),max:10},
+    {k:'Share',   got:Math.round(comp.share),   max:Math.round(wShare)},
+    {k:'Trend',   got:Math.round(comp.trend),   max:Math.round(wTrend)},
+    {k:'Price',   got:Math.round(comp.price),   max:Math.round(wPrice)},
+    {k:'Presence',got:Math.round(comp.presence),max:Math.round(wPres)},
   ];
 
   const movers=[];
@@ -3165,8 +3203,10 @@ const ovOpen=new Set();
 function renderOverviewSafe(){ try{ renderOverview(); }catch(e){ console.error('overview',e); } }
 
 function healthBand(h){
-  return h>=70?{cls:'hb-good',word:'Strong'}
-       :h>=45?{cls:'hb-mid',word:'Watch'}
+  const st=(typeof scoring!=='undefined'?scoring.bandStrong:70);
+  const wa=(typeof scoring!=='undefined'?scoring.bandWatch:45);
+  return h>=st?{cls:'hb-good',word:'Strong'}
+       :h>=wa?{cls:'hb-mid',word:'Watch'}
        :{cls:'hb-bad',word:'At risk'};
 }
 
@@ -3902,7 +3942,7 @@ function brandRecognitionWarning(){
    EXECUTIVE DECK — one-button PowerPoint export
    Current month vs prior: scorecard, wins, flags, full table.
    ═══════════════════════════════════════════════════════════ */
-const DK={ bg:'1B1B1E', surf:'26262B', surf2:'2F2F36', line:'373F51',
+const DK={ bg:'1B1B1E', surf:'26262B', surf2:'2F2F36', line:'373F51', inset:'161619',
            fg:'F6F5FC', fg2:'C9C9D2', mut:'A9A9A9',
            gold:'E2BE66', good:'3DDC8A', bad:'FF6B5C', blue:'5B9BF0' };
 /* Change this one line if the brand font isn't installed on the viewing machine */
@@ -4073,7 +4113,8 @@ function buildExecPptx(){
 
     // Native chart: our share vs the share a meaningful player would hold
     const top=S.list.slice().sort((a,b)=>
-      (b.d.skus.reduce((s,r)=>s+r.revenue,0))-(a.d.skus.reduce((s,r)=>s+r.revenue,0))).slice(0,6).reverse();
+      (b.d.skus.filter(r=>r.isMera).reduce((s,r)=>s+r.revenue,0))
+     -(a.d.skus.filter(r=>r.isMera).reduce((s,r)=>s+r.revenue,0))).slice(0,6).reverse();
     if(top.length){
       sl.addText('Our share vs a meaningful player\u2019s share, by segment',
         {x:0.5,y:2.45,w:9,h:0.3,fontFace:DK_FONT,fontSize:11,color:DK.fg2});
@@ -4124,8 +4165,40 @@ function buildExecPptx(){
     }
 
     /* ── 5. One slide per segment, biggest opportunity first ── */
-    const bySize=S.list.slice().sort((a,b)=>b.sizing.segRev-a.sizing.segRev);
-    for(const a of bySize){
+    const ourOf=x=>x.d.skus.filter(r=>r.isMera).reduce((t,r)=>t+r.revenue,0);
+    const ourGrand=S.list.reduce((t,x)=>t+ourOf(x),0);
+    const catMap={};
+    for(const x of S.list){ const c=titleCase(x.seg.subcategory)||'Uncategorized'; (catMap[c]=catMap[c]||[]).push(x); }
+    const catOrder=Object.keys(catMap).sort((p,q)=>
+      catMap[q].reduce((t,x)=>t+ourOf(x),0)-catMap[p].reduce((t,x)=>t+ourOf(x),0));
+
+    const ordered=[];
+    for(const c of catOrder){
+      const grp=catMap[c].slice().sort((p,q)=>ourOf(q)-ourOf(p));
+      const catOur=grp.reduce((t,x)=>t+ourOf(x),0);
+      const catSize=grp.reduce((t,x)=>t+x.sizing.segRev,0);
+
+      /* Category divider — orients the room before the segment detail */
+      sl=pptx.addSlide(); sl.background={color:DK.bg};
+      sl.addText(c.toUpperCase(),{x:0.6,y:1.85,w:8.8,h:0.7,fontFace:DK_FONT,fontSize:34,bold:true,color:DK.fg,margin:0});
+      sl.addText(grp.length+' segment'+(grp.length>1?'s':''),
+        {x:0.6,y:1.55,w:8.8,h:0.25,fontFace:DK_FONT,fontSize:9,bold:true,color:DK.gold,charSpacing:2,margin:0});
+      const facts=[
+        {l:'OUR REVENUE',v:fmtRev(catOur)},
+        {l:'SHARE OF OUR TOTAL',v:(ourGrand>0?(catOur/ourGrand*100).toFixed(0):'0')+'%'},
+        {l:'ADDRESSABLE',v:fmtRev(catSize)},
+      ];
+      facts.forEach((f,i)=>{
+        const x=0.6+i*3.0;
+        sl.addText(f.l,{x,y:2.95,w:2.8,h:0.22,fontFace:DK_FONT,fontSize:8,bold:true,color:DK.mut,charSpacing:1,margin:0});
+        sl.addText(f.v,{x,y:3.15,w:2.8,h:0.45,fontFace:DK_FONT,fontSize:24,bold:true,color:i===0?DK.gold:DK.fg,margin:0});
+      });
+      sl.addNotes(c+': '+fmtRev(catOur)+' of our revenue across '+grp.length+' tracked segment(s).');
+
+      for(const g of grp) ordered.push(g);
+    }
+
+    for(const a of ordered){
       const d=a.d, sg=a.seg;
       const ourSegRev=d.skus.filter(r=>r.isMera).reduce((x,r)=>x+r.revenue,0);
       const band=healthBand(a.health);
@@ -4205,35 +4278,61 @@ function buildExecPptx(){
       sl.addNotes(trendNarrative(a)+(adv?'  Price: '+adv.text:''));
     }
 
-    /* ── 6. Segment table (paginated) ── */
-    const head=['Segment','Category','Size','% of cat.','Our share','MoM','Our price','vs Mkt','Health'];
-    const perPage=11;
-    for(let pg=0;pg*perPage<S.list.length;pg++){
+    /* ── 6. Segment table — mirrors the Overview panel, grouped by category ── */
+    const head=['Segment','Segment size','% of cat.','Our share','Our rev','% of our rev','MoM','6-mo','vs Mkt','Health'];
+    const colW=[2.1,0.85,0.7,0.8,0.8,0.85,0.65,0.65,0.75,0.85];
+
+    // flatten into category headers + segment rows, same order as the app
+    const flat=[];
+    for(const c of catOrder){
+      const grp=catMap[c].slice().sort((p,q)=>ourOf(q)-ourOf(p));
+      const catOur=grp.reduce((t,x)=>t+ourOf(x),0);
+      const catSize=grp.reduce((t,x)=>t+x.sizing.segRev,0);
+      flat.push({cat:c,grp:grp.length,our:catOur,size:catSize,
+                 pct:ourGrand>0?catOur/ourGrand*100:0});
+      for(const g of grp) flat.push({a:g});
+    }
+
+    const ppTxt=dd=>dd==null?'\u2014':(dd.pp>0?'+':'')+dd.pp.toFixed(1);
+    const ppCol=dd=>dd==null?DK.mut:dd.pp>0.3?DK.good:dd.pp<-0.3?DK.bad:DK.mut;
+    const perPage=13;
+    for(let pg=0;pg*perPage<flat.length;pg++){
       sl=pptx.addSlide(); sl.background={color:DK.bg};
-      sl.addText('Segment detail'+(S.list.length>perPage?'  ('+(pg+1)+'/'+Math.ceil(S.list.length/perPage)+')':''),
+      sl.addText('Where our revenue sits'+(flat.length>perPage?'  ('+(pg+1)+'/'+Math.ceil(flat.length/perPage)+')':''),
         {x:0.5,y:0.35,w:9,h:0.5,fontFace:DK_FONT,fontSize:26,bold:true,color:DK.fg});
-      const rows=[head.map(h=>({text:h,options:{bold:true,color:DK.mut,fontSize:9,fill:{color:DK.surf}}}))];
-      for(const a of S.list.slice(pg*perPage,(pg+1)*perPage)){
-        const d=a.d, mm=a.shareDeltas.m1;
-        const mmTxt=mm==null?'\u2014':(mm.pp>0?'+':'')+mm.pp.toFixed(1)+'pp';
-        const mmCol=mm==null?DK.mut:mm.pp>0.3?DK.good:mm.pp<-0.3?DK.bad:DK.mut;
+      const rows=[head.map(h=>({text:h,options:{bold:true,color:DK.mut,fontSize:8,fill:{color:DK.surf},valign:'middle'}}))];
+      for(const f of flat.slice(pg*perPage,(pg+1)*perPage)){
+        if(f.cat!==undefined){
+          rows.push([
+            {text:f.cat.toUpperCase()+'   \u00b7   '+f.grp+' segment'+(f.grp>1?'s':''),
+             options:{colspan:4,bold:true,color:DK.fg2,fontSize:8,fill:{color:DK.inset||'161619'},charSpacing:1}},
+            {text:fmtRev(f.our),options:{color:DK.fg2,fontSize:8,align:'right',bold:true,fill:{color:DK.inset||'161619'}}},
+            {text:f.pct.toFixed(0)+'%',options:{color:DK.gold,fontSize:8,align:'right',bold:true,fill:{color:DK.inset||'161619'}}},
+            {text:fmtRev(f.size)+' addressable',options:{colspan:4,color:DK.mut,fontSize:8,align:'right',fill:{color:DK.inset||'161619'}}},
+          ]);
+          continue;
+        }
+        const a=f.a, d=a.d, our=ourOf(a);
+        const pctOur=ourGrand>0?our/ourGrand*100:0;
         const vs=d.meraVsMkt;
         rows.push([
-          {text:pxTrunc(a.seg.name,30),options:{color:DK.fg,fontSize:9,bold:true}},
-          {text:pxTrunc(titleCase(a.seg.subcategory)||'\u2014',16),options:{color:DK.mut,fontSize:9}},
-          {text:fmtRev(a.sizing.segRev),options:{color:DK.fg2,fontSize:9,align:'right'}},
-          {text:a.sizing.ofSubcat!=null?a.sizing.ofSubcat.toFixed(1)+'%':'\u2014',options:{color:DK.gold,fontSize:9,align:'right',bold:true}},
-          {text:(a.cur?a.cur.share.toFixed(1):'0.0')+'%',options:{color:DK.fg2,fontSize:9,align:'right'}},
-          {text:mmTxt,options:{color:mmCol,fontSize:9,align:'right'}},
-          {text:d.meraAvg!=null?fmt$(d.meraAvg):'\u2014',options:{color:DK.fg2,fontSize:9,align:'right'}},
-          {text:vs!=null?fmtPct(vs):'\u2014',options:{color:vs==null?DK.mut:vs>1?DK.good:vs<-1?DK.bad:DK.mut,fontSize:9,align:'right'}},
-          {text:String(a.health),options:{color:a.health>=70?DK.good:a.health>=45?DK.gold:DK.bad,fontSize:9,align:'right',bold:true}},
+          {text:pxTrunc(a.seg.name,30),options:{color:DK.fg,fontSize:8,bold:true}},
+          {text:fmtRev(a.sizing.segRev),options:{color:DK.fg2,fontSize:8,align:'right'}},
+          {text:a.sizing.ofSubcat!=null?a.sizing.ofSubcat.toFixed(1)+'%':'\u2014',options:{color:DK.fg2,fontSize:8,align:'right'}},
+          {text:(a.cur?a.cur.share.toFixed(1):'0.0')+'%',options:{color:DK.fg2,fontSize:8,align:'right'}},
+          {text:fmtRev(our),options:{color:DK.fg2,fontSize:8,align:'right'}},
+          {text:pctOur.toFixed(1)+'%',options:{color:DK.gold,fontSize:8,align:'right',bold:true}},
+          {text:ppTxt(a.shareDeltas.m1),options:{color:ppCol(a.shareDeltas.m1),fontSize:8,align:'right'}},
+          {text:ppTxt(a.shareDeltas.m6),options:{color:ppCol(a.shareDeltas.m6),fontSize:8,align:'right'}},
+          {text:vs!=null?fmtPct(vs):'\u2014',options:{color:vs==null?DK.mut:vs>1?DK.good:vs<-1?DK.bad:DK.mut,fontSize:8,align:'right'}},
+          {text:String(a.health)+'  '+healthBand(a.health).word,
+           options:{color:a.health>=70?DK.good:a.health>=45?DK.gold:DK.bad,fontSize:8,align:'right',bold:true}},
         ]);
       }
-      sl.addTable(rows,{x:0.5,y:1.0,w:9,colW:[1.95,1.45,0.85,0.8,0.85,0.8,0.85,0.75,0.7],
-        border:{type:'solid',color:DK.line,pt:0.5},fill:{color:DK.bg},fontFace:DK_FONT,rowH:0.3,valign:'middle'});
-      sl.addText('Sorted by health, weakest first. % of cat. = segment size within its own product category.',
-        {x:0.5,y:5.15,w:9,h:0.3,fontFace:DK_FONT,fontSize:8,color:DK.mut});
+      sl.addTable(rows,{x:0.5,y:1.0,w:9,colW,border:{type:'solid',color:DK.line,pt:0.5},
+        fill:{color:DK.bg},fontFace:DK_FONT,rowH:0.28,valign:'middle'});
+      sl.addText('Grouped by category, ranked by share of our revenue. % of cat. = segment size within its own product category. MoM / 6-mo are share changes in percentage points.',
+        {x:0.5,y:5.2,w:9,h:0.3,fontFace:DK_FONT,fontSize:8,color:DK.mut});
     }
 
     /* ── 7. New products ── */
@@ -4262,6 +4361,101 @@ function buildExecPptx(){
     console.error('pptx',e);
     toast('Deck export failed: '+(e.message||e),'error');
   }
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   HEALTH SCORING PANEL
+   Weights are normalised, so they need not sum to 100.
+   Preview recalculates live before anything is saved.
+   ═══════════════════════════════════════════════════════════ */
+const SCORE_FIELDS=[
+  {k:'wShare',   l:'Share weight',     hint:'our share vs a meaningful player\u2019s share', min:0,max:100,step:5},
+  {k:'wTrend',   l:'Trend weight',     hint:'month-over-month share movement',              min:0,max:100,step:5},
+  {k:'wPrice',   l:'Price weight',     hint:'distance from the volume price',               min:0,max:100,step:5},
+  {k:'wPresence',l:'Presence weight',  hint:'our revenue vs the median competitor',         min:0,max:100,step:5},
+];
+const SCORE_TUNING=[
+  {k:'shareTarget',l:'Full marks at',   suffix:'\u00d7 fair share', min:0.5,max:5,step:0.5,
+   hint:'2 means we need double a meaningful player\u2019s share for full share points'},
+  {k:'trendRange', l:'Trend range',     suffix:'pp',                min:0.5,max:10,step:0.5,
+   hint:'a swing of this many points spans zero to full trend score'},
+  {k:'priceFree',  l:'Free price band', suffix:'%',                 min:0,max:20,step:1,
+   hint:'distance from the volume price that costs nothing'},
+  {k:'priceRange', l:'Price falls to 0 after',suffix:'%',           min:5,max:50,step:5,
+   hint:'how far beyond the free band the price score reaches zero'},
+  {k:'bandStrong', l:'Strong at',       suffix:'/100',              min:50,max:95,step:5,
+   hint:'score at or above this reads Strong'},
+  {k:'bandWatch',  l:'Watch at',        suffix:'/100',              min:20,max:80,step:5,
+   hint:'below this reads At risk'},
+];
+
+function renderScoringPanel(){
+  const el=document.getElementById('scoringPanel');
+  if(!el) return;
+  const sum=SCORE_FIELDS.reduce((s,f)=>s+(+scoring[f.k]||0),0)||1;
+  let html='<div class="card"><div class="card-title">Health scoring '
+    +'<span class="lbl-hint">— weights are normalised, so they need not add to 100</span></div>'
+    +'<div class="sc-grid">';
+  for(const f of SCORE_FIELDS){
+    const v=+scoring[f.k]||0, pct=Math.round(v/sum*100);
+    html+='<div class="sc-item"><label>'+esc(f.l)+' <b>'+pct+'%</b></label>'
+      +'<input type="range" min="'+f.min+'" max="'+f.max+'" step="'+f.step+'" value="'+v+'" '
+      +'oninput="setScore(\''+f.k+'\',this.value)">'
+      +'<div class="sc-hint">'+esc(f.hint)+'</div></div>';
+  }
+  html+='</div><div class="sc-tune">';
+  for(const t of SCORE_TUNING){
+    html+='<div class="sc-t"><label>'+esc(t.l)+'</label>'
+      +'<div class="sc-trow"><input type="number" min="'+t.min+'" max="'+t.max+'" step="'+t.step+'" value="'+(+scoring[t.k])+'" '
+      +'onchange="setScore(\''+t.k+'\',this.value)"><span>'+esc(t.suffix)+'</span></div>'
+      +'<div class="sc-hint">'+esc(t.hint)+'</div></div>';
+  }
+  html+='</div>'
+    +'<div class="sc-actions"><button class="btn btn-ghost btn-sm" onclick="resetScoring()">Reset to defaults</button>'
+    +'<button class="btn btn-accent btn-sm" onclick="saveScoring()">Save scoring</button></div>'
+    +'<div id="scorePreview"></div></div>';
+  el.innerHTML=html;
+  renderScorePreview();
+}
+
+function setScore(k,v){
+  scoring[k]=+v;
+  renderScoringPanel();
+}
+function resetScoring(){
+  scoring={...DEFAULT_SCORING};
+  renderScoringPanel();
+  toast('Scoring reset to defaults — save to keep it','info');
+}
+async function saveScoring(){
+  await savePresets();
+  runAll();
+  toast('Scoring saved','success');
+}
+
+/* Live preview: what every segment scores under the current settings */
+function renderScorePreview(){
+  const el=document.getElementById('scorePreview');
+  if(!el) return;
+  if(!segments.length||!curMonth){ el.innerHTML='<div class="sc-hint">Add segments and a month to preview.</div>'; return; }
+  let rows='';
+  const list=segments.map(sg=>{ try{ return analyzeSegment(sg); }catch(e){ return null; } }).filter(a=>a);
+  if(!list.length){ el.innerHTML='<div class="sc-hint">No segments matched this month.</div>'; return; }
+  list.sort((a,b)=>a.health-b.health);
+  for(const a of list){
+    const band=healthBand(a.health);
+    rows+='<tr><td class="sc-name">'+esc(a.seg.name)+'</td>'
+      +a.healthParts.map(p=>'<td class="r"><span class="'+(p.max&&p.got/p.max>=0.7?'c-up':p.max&&p.got/p.max>=0.35?'c-mut':'c-down')+'">'
+        +p.got+'</span><i>/'+p.max+'</i></td>').join('')
+      +'<td class="r"><b class="'+(band.cls==='hb-good'?'c-up':band.cls==='hb-mid'?'c-mut':'c-down')+'">'+a.health+'</b></td>'
+      +'<td class="sc-band">'+esc(band.word)+'</td></tr>';
+  }
+  el.innerHTML='<div class="sc-prev"><div class="ov-block-t">Preview · every segment under these settings</div>'
+    +'<table class="sc-table"><thead><tr><th>Segment</th><th class="r">Share</th><th class="r">Trend</th>'
+    +'<th class="r">Price</th><th class="r">Presence</th><th class="r">Total</th><th></th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></div>';
 }
 </script>
 
