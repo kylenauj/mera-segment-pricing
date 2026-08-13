@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Price Intelligence · Mera / Countryside</title>
+<title>Price Intelligence · Countryside</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tenor+Sans&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════
@@ -306,9 +305,29 @@ main{padding:20px 24px 60px;overflow-y:auto;flex:1}
 .sp-name{font-family:var(--font)!important;font-weight:600;color:var(--fg)!important;max-width:220px;overflow:hidden;text-overflow:ellipsis}
 .sp-cat{font-family:var(--font)!important;color:var(--muted)!important;font-size:11px}
 .sp-ofcat b{color:var(--accent);font-weight:500}
+.sp-cathead td{background:var(--inset);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  font-family:var(--mono)!important;font-size:9px!important;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--fg2)!important;padding:6px 10px!important}
+.sp-cathead{cursor:default!important}
+.sp-cathead:hover td{background:var(--inset)!important}
+.sp-catn{font-weight:400;letter-spacing:.04em;color:var(--muted);margin-left:8px;text-transform:none}
+.sp-catrev{color:var(--fg2)!important}
+.sp-catpct{color:var(--accent)!important}
+.sp-ourpct{white-space:nowrap}
+.sp-ourpct .sp-mini{display:inline-block;width:36px;height:4px;border-radius:var(--pill);background:var(--faint);overflow:hidden;vertical-align:middle;margin-right:6px}
+.sp-ourpct .sp-mini i{display:block;height:100%;background:var(--accent);border-radius:var(--pill)}
+.sp-ourpct b{color:var(--accent);font-weight:500}
 .sp-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:6px;vertical-align:middle}
 .sp-dot.sp-risk{background:var(--danger)}
 .sp-dot.sp-opp{background:var(--success)}
+.sp-cathead td{background:var(--inset);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--fg2);padding:7px 10px}
+.sp-cathead td b{color:var(--accent)}
+.sp-catn{margin-left:8px;font-weight:400;letter-spacing:.04em;color:var(--muted);text-transform:none}
+.sp-catsize{color:var(--muted)!important;font-weight:400!important;letter-spacing:.04em!important;text-transform:none!important}
+.sp-ourpct{min-width:96px}
+.sp-pctbar{display:inline-block;width:44px;height:5px;border-radius:var(--pill);background:var(--faint);overflow:hidden;margin-right:6px;vertical-align:middle}
+.sp-pctbar i{display:block;height:100%;background:var(--accent);border-radius:var(--pill)}
+.sp-ourpct b{color:var(--fg);font-weight:500}
 .sp-h{display:flex;align-items:center;gap:7px;min-width:96px}
 .sp-bar{flex:1;height:5px;border-radius:var(--pill);background:var(--faint);overflow:hidden;min-width:44px}
 .sp-bar i{display:block;height:100%;border-radius:var(--pill)}
@@ -3179,39 +3198,63 @@ function renderOverview(){
 /* Dense at-a-glance table: every segment on one screen, sized against
    its own category, before anyone scrolls into the detail cards. */
 function ovSummaryPanel(list){
-  const rows=list.map(a=>{
-    const d=a.d, band=healthBand(a.health);
-    const segRev=a.sizing.segRev;
-    const cat=titleCase(a.seg.subcategory)||'—';
-    const ofCat=a.sizing.ofSubcat!=null?a.sizing.ofSubcat.toFixed(1)+'%':'—';
-    const share=a.cur?a.cur.share:0;
-    const mm=a.shareDeltas.m1, m3=a.shareDeltas.m3;
-    const cell=dd=>dd==null?'<span class="c-mut">—</span>'
-      :'<span class="'+(dd.pp>0.3?'c-up':dd.pp<-0.3?'c-down':'c-mut')+'">'+(dd.pp>0?'+':'')+dd.pp.toFixed(1)+'</span>';
-    const nRisk=(a.risks||[]).filter(r=>r.sev==='high').length;
-    const nOpp=(a.opps||[]).filter(o=>o.kind==='launch-good').length;
-    return '<tr onclick="jumpToSegment('+JSON.stringify(a.seg.id)+')" title="Open this segment">'
-      +'<td class="sp-name">'+esc(a.seg.name)
-        +(nRisk?'<span class="sp-dot sp-risk" title="'+nRisk+' high risk"></span>':'')
-        +(nOpp?'<span class="sp-dot sp-opp" title="'+nOpp+' launch win"></span>':'')+'</td>'
-      +'<td class="sp-cat">'+esc(cat)+'</td>'
-      +'<td class="r">'+fmtRev(segRev)+'</td>'
-      +'<td class="r sp-ofcat"><b>'+ofCat+'</b></td>'
-      +'<td class="r">'+share.toFixed(1)+'%</td>'
-      +'<td class="r">'+cell(mm)+'</td>'
-      +'<td class="r">'+cell(m3)+'</td>'
-      +'<td class="r">'+(d.meraAvg!=null?fmt$(d.meraAvg):'—')+'</td>'
-      +'<td class="r">'+(d.meraVsMkt!=null?'<span class="'+(d.meraVsMkt>1?'c-up':d.meraVsMkt<-1?'c-down':'c-mut')+'">'+fmtPct(d.meraVsMkt)+'</span>':'—')+'</td>'
-      +'<td class="sp-h"><div class="sp-bar '+band.cls+'"><i style="width:'+a.health+'%"></i></div><span>'+a.health+'</span></td>'
-      +'</tr>';
-  }).join('');
-  return '<div class="card sp-card"><div class="card-title">All segments · '+list.length
-    +' <span class="sp-hint">sized against their own category · click a row to open</span></div>'
+  // Rank by contribution to OUR revenue, grouped by category.
+  const ourOf=a=>a.d.skus.filter(r=>r.isMera).reduce((s,r)=>s+r.revenue,0);
+  const ourTotal=list.reduce((s,a)=>s+ourOf(a),0);
+
+  const cats={};
+  for(const a of list){
+    const c=titleCase(a.seg.subcategory)||'Uncategorized';
+    (cats[c]=cats[c]||[]).push(a);
+  }
+  // categories ordered by how much of our revenue they carry
+  const catOrder=Object.keys(cats).sort((x,y)=>
+    cats[y].reduce((s,a)=>s+ourOf(a),0)-cats[x].reduce((s,a)=>s+ourOf(a),0));
+
+  const cell=dd=>dd==null?'<span class="c-mut">—</span>'
+    :'<span class="'+(dd.pp>0.3?'c-up':dd.pp<-0.3?'c-down':'c-mut')+'">'+(dd.pp>0?'+':'')+dd.pp.toFixed(1)+'</span>';
+
+  let body='';
+  for(const c of catOrder){
+    const grp=cats[c].slice().sort((x,y)=>ourOf(y)-ourOf(x));
+    const catOur=grp.reduce((s,a)=>s+ourOf(a),0);
+    const catSize=grp.reduce((s,a)=>s+a.sizing.segRev,0);
+    const catPct=ourTotal>0?catOur/ourTotal*100:0;
+    body+='<tr class="sp-cathead"><td colspan="4">'+esc(c)+'<span class="sp-catn">'+grp.length+' segment'+(grp.length>1?'s':'')+'</span></td>'
+      +'<td class="r">'+fmtRev(catOur)+'</td>'
+      +'<td class="r"><b>'+catPct.toFixed(0)+'%</b></td>'
+      +'<td colspan="4" class="sp-catsize">of our revenue · '+fmtRev(catSize)+' addressable</td></tr>';
+
+    for(const a of grp){
+      const d=a.d, band=healthBand(a.health);
+      const our=ourOf(a);
+      const pctOur=ourTotal>0?our/ourTotal*100:0;
+      const nRisk=(a.risks||[]).filter(r=>r.sev==='high').length;
+      const nOpp=(a.opps||[]).filter(o=>o.kind==='launch-good').length;
+      body+='<tr onclick="jumpToSegment('+JSON.stringify(a.seg.id)+')" title="Open this segment">'
+        +'<td class="sp-name">'+esc(a.seg.name)
+          +(nRisk?'<span class="sp-dot sp-risk" title="'+nRisk+' high risk"></span>':'')
+          +(nOpp?'<span class="sp-dot sp-opp" title="'+nOpp+' launch win"></span>':'')+'</td>'
+        +'<td class="r">'+fmtRev(a.sizing.segRev)+'</td>'
+        +'<td class="r sp-ofcat"><b>'+(a.sizing.ofSubcat!=null?a.sizing.ofSubcat.toFixed(1)+'%':'—')+'</b></td>'
+        +'<td class="r">'+(a.cur?a.cur.share.toFixed(1):'0.0')+'%</td>'
+        +'<td class="r">'+fmtRev(our)+'</td>'
+        +'<td class="r sp-ourpct"><div class="sp-pctbar"><i style="width:'+Math.min(100,pctOur).toFixed(0)+'%"></i></div><b>'+pctOur.toFixed(1)+'%</b></td>'
+        +'<td class="r">'+cell(a.shareDeltas.m1)+'</td>'
+        +'<td class="r">'+cell(a.shareDeltas.m6)+'</td>'
+        +'<td class="r">'+(d.meraVsMkt!=null?'<span class="'+(d.meraVsMkt>1?'c-up':d.meraVsMkt<-1?'c-down':'c-mut')+'">'+fmtPct(d.meraVsMkt)+'</span>':'—')+'</td>'
+        +'<td class="sp-h"><div class="sp-bar '+band.cls+'"><i style="width:'+a.health+'%"></i></div><span>'+a.health+'</span></td>'
+        +'</tr>';
+    }
+  }
+
+  return '<div class="card sp-card"><div class="card-title">Where our revenue sits'
+    +' <span class="sp-hint">ranked by share of our revenue, grouped by category · click a row to open</span></div>'
     +'<div class="sp-scroll"><table class="sp-table"><thead><tr>'
-    +'<th>Segment</th><th>Category</th><th class="r">Size</th><th class="r">% of cat.</th>'
-    +'<th class="r">Our share</th><th class="r">MoM</th><th class="r">3-mo</th>'
-    +'<th class="r">Our price</th><th class="r">vs Mkt</th><th>Health</th>'
-    +'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    +'<th>Segment</th><th class="r">Segment size</th><th class="r">% of cat.</th>'
+    +'<th class="r">Our share</th><th class="r">Our rev</th><th class="r">% of our rev</th>'
+    +'<th class="r">MoM</th><th class="r">6-mo</th><th class="r">vs Mkt</th><th>Health</th>'
+    +'</tr></thead><tbody>'+body+'</tbody></table></div></div>';
 }
 
 function ovStat(label,val,sub){
@@ -3542,7 +3585,9 @@ function detectRisks(a){
   // Sustained share loss
   if(shareDeltas.m3&&shareDeltas.m3.pp<=-1)
     out.push({sev:'high',title:'Sustained share loss',
-      text:'Down '+Math.abs(shareDeltas.m3.pp).toFixed(1)+'pp over 3 months (from '+monthLabel(shareDeltas.m3.from)+'). This is a trend, not a blip.'});
+      text:'Down '+Math.abs(shareDeltas.m3.pp).toFixed(1)+'pp over '+shareDeltas.m3.months+' month'
+        +(shareDeltas.m3.months>1?'s':'')+' (from '+monthLabel(shareDeltas.m3.from)+')'
+        +(shareDeltas.m3.months>=3?'. This is a trend, not a blip.':'.')});
   else if(shareMoM!=null&&shareMoM<=-1)
     out.push({sev:'med',title:'Sharp one-month drop',
       text:'Lost '+Math.abs(shareMoM).toFixed(1)+'pp of share this month.'});
@@ -3870,8 +3915,45 @@ function trendNarrative(a){
   return t;
 }
 
-function exportExecPptx(){
-  if(typeof PptxGenJS==='undefined'){ toast('PowerPoint library did not load — check your connection','error'); return; }
+/* pptxgenjs is not on cdnjs — load from jsDelivr on demand, with fallbacks,
+   so a single CDN hiccup doesn't kill the feature. */
+const PPTX_SOURCES=[
+  'https://cdn.jsdelivr.net/npm/pptxgenjs@4.0.1/dist/pptxgen.bundle.js',
+  'https://unpkg.com/pptxgenjs@4.0.1/dist/pptxgen.bundle.js',
+  'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+];
+let _pptxLoading=null;
+function ensurePptx(){
+  if(typeof PptxGenJS!=='undefined') return Promise.resolve(true);
+  if(_pptxLoading) return _pptxLoading;
+  _pptxLoading=new Promise((resolve,reject)=>{
+    let i=0;
+    const tryNext=()=>{
+      if(i>=PPTX_SOURCES.length){ _pptxLoading=null; reject(new Error('could not load from any CDN')); return; }
+      const url=PPTX_SOURCES[i++];
+      const sc=document.createElement('script');
+      sc.src=url;
+      sc.onload=()=>{ typeof PptxGenJS!=='undefined'?resolve(true):tryNext(); };
+      sc.onerror=()=>{ sc.remove(); tryNext(); };
+      document.head.appendChild(sc);
+    };
+    tryNext();
+  });
+  return _pptxLoading;
+}
+
+async function exportExecPptx(){
+  try{
+    toast('Building deck…','info');
+    await ensurePptx();
+  }catch(e){
+    toast('Could not load the PowerPoint library — check your connection, then retry','error');
+    return;
+  }
+  buildExecPptx();
+}
+
+function buildExecPptx(){
   const S=execSummary();
   if(!S){ toast('No segments with data to summarise','error'); return; }
   try{
